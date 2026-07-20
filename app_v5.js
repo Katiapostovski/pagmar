@@ -3275,8 +3275,14 @@ function advanceQ(lineWasDrawn) {
         if (qOpts)  { qOpts.style.transition  = fadeTrans; qOpts.style.opacity  = '0'; }
 
         setTimeout(() => {
-            if (qInner) { qInner.style.transition = ''; qInner.style.opacity = '1'; }
-            if (qOpts)  { qOpts.style.transition  = ''; qOpts.style.opacity  = '1'; }
+            // Only restore opacity when moving to another question.
+            // If this is the last answer, renderQ() handles the full screen
+            // transition itself — restoring to 1 here causes the flash.
+            const isLastQ = (qIndex + 1 >= QUESTIONS.length);
+            if (!isLastQ) {
+                if (qInner) { qInner.style.transition = ''; qInner.style.opacity = '1'; }
+                if (qOpts)  { qOpts.style.transition  = ''; qOpts.style.opacity  = '1'; }
+            }
             qIndex++;
             renderQ();
         }, FADE_MS + 50);
@@ -3312,7 +3318,7 @@ function renderQ() {
             });
 
             // 2. Sample 12 intermediate points along each line/path segment
-            const SAMPLES=6; // Cleaner constellation — fewer stars per segment
+            const SAMPLES=10; // Richer constellation — more stars per segment
             const segPts=[];
             Array.from(qSvg.querySelectorAll('line')).forEach(l => {
                 const x1=+l.getAttribute('x1'),y1=+l.getAttribute('y1'),
@@ -5152,9 +5158,17 @@ function skyLoop(ts) {
             interpPanel.style.opacity = userAlpha.toFixed(3);
             interpPanel.style.pointerEvents = userAlpha > 0.5 ? 'auto' : 'none';
         }
-    }
-
-    // ── Update Zoom Depth Bar ──
+        
+        // --- Sunrise Button Logic ---
+        const btnSunrise = document.getElementById('btn-sunrise');
+        if (btnSunrise && window.skyRevealState === 'revealed') {
+            if (cam.scale < 0.40) {
+                btnSunrise.classList.add('visible');
+            } else {
+                btnSunrise.classList.remove('visible');
+            }
+        }
+    }    // ── Update Zoom Depth Bar ──
     const zoomBar = document.getElementById('zoom-depth-bar');
     const zoomThumb = document.getElementById('zoom-thumb');
     const zoomLabelEl = document.getElementById('zoom-label');
@@ -5402,9 +5416,9 @@ function skyLoop(ts) {
             return;
         }
 
-        const ZOOM_SHOW = 1.45;   // higher threshold — only show text on deliberate zoom-in
+        const ZOOM_SHOW = 1.15;   // show text when moderately zoomed in
         const ZOOM_HIDE = 0.95;
-        const CENTER_THRESH = 70;
+        const CENTER_THRESH = 100; // wider zone so text triggers more easily
         const W_h = window.innerWidth / 2, H_h = window.innerHeight / 2;
 
         let textCandidate = null;
@@ -6579,14 +6593,31 @@ window.downloadSkyMap = function() {
 };
 
 window.showDeepText = function(text) {
-    // Disabled: user prefers not to have large centered text overlay
-    return;
+    const modal = document.getElementById('deep-text-modal');
+    if (!modal) return;
+    const content = document.getElementById('deep-text-content');
+    if (content) content.textContent = text;
+
+    // Ensure close button exists
+    let closeBtn = modal.querySelector('.deep-text-close');
+    if (!closeBtn) {
+        closeBtn = document.createElement('button');
+        closeBtn.className = 'deep-text-close';
+        closeBtn.textContent = '×';
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.closeDeepText();
+            window._autoTextPt = null;
+        });
+        modal.appendChild(closeBtn);
+    }
+
+    modal.classList.remove('hidden');
 };
 
 window.closeDeepText = function() {
     const modal = document.getElementById('deep-text-modal');
-    if(modal) modal.classList.add('hidden');
-    // Note: no forced zoom-out — user navigates by scroll only
+    if (modal) modal.classList.add('hidden');
 };
 
 function toggleSound() {
@@ -6639,3 +6670,33 @@ updateLang('he'); // Initialize text and default to Hebrew
         gc.style.boxShadow = '0 0 12px 4px rgba(200,180,255,0.5), 0 0 3px 1px rgba(255,255,255,0.9)';
     });
 })();
+
+// ── DAWN TRANSITION EVENTS ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const btnSunrise = document.getElementById('btn-sunrise');
+    const dawnOverlay = document.getElementById('dawn-overlay');
+    const epilogueScreen = document.getElementById('epilogue-screen');
+    const btnRestart = document.getElementById('btn-restart');
+    
+    if (btnSunrise && dawnOverlay && epilogueScreen) {
+        btnSunrise.addEventListener('click', () => {
+            // Hide button
+            btnSunrise.classList.remove('visible');
+            btnSunrise.style.display = 'none';
+            
+            // Trigger sunrise fade
+            dawnOverlay.classList.add('active');
+            epilogueScreen.classList.add('active');
+            
+            // Optionally fade out the WebGL elements slightly behind the dawn
+            const skyScreen = document.getElementById('sky-screen');
+            if (skyScreen) skyScreen.style.opacity = '0';
+        });
+    }
+
+    if (btnRestart) {
+        btnRestart.addEventListener('click', () => {
+            location.reload(); // Hard refresh to reset the entire experience
+        });
+    }
+});
