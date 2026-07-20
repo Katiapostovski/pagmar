@@ -1,0 +1,79 @@
+# ── OS ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── Python development files ──────────────────
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.py
+
+# ── Backup / old JS versions ──────────────────
+app.js
+app.js.backup
+app_broken_backup.js
+app_v16.js
+app_v17.js
+app_v18.js
+app_v19.js
+app_v20.js
+app_v21.js
+app_v22.js
+app_v5_backup_today.js
+app_v5_cut40.js
+app_v5_cut80.js
+app_v5_cut160.js
+app_v5_cut320.js
+app_v5_cut640.js
+app_v5_half.js
+app_v5_minimal.js
+app_v5_quarter.js
+app_v5_test.js
+
+# ── Duplicate Three.js copies ────────────────
+# (only three_direct.js is referenced in index.html)
+three.min.js
+three_global.js
+three_r128.js
+three_r128_backup.js
+
+# ── Unused font files ─────────────────────────
+# (only Hadassah + SimplerMono are in @font-face)
+AlfaBravo-*.otf
+AlfaBravo_Mono-*.otf
+FbAlfa-*.otf
+FbHadasaNew.ttf
+FbHadasaNewBlack.ttf
+FbHadasaNewBold.ttf
+FbHadasaNewLight.ttf
+GretaSerif-ItalicVF.ttf
+GretaSerifVF.ttf
+GretaTextPro_HL-*.otf
+GretaTextPro_HL-*.ttf
+LavaPro_HL-*.ttf
+LavaPro_HL-*.otf
+# Duplicate Hebrew-named fonts ("עותק של ...")
+"עותק של *"
+
+# ── Test / debug / dev-only files ────────────
+debug.html
+test.html
+test_three.html
+detective.js
+run_puppeteer.js
+test_app.js
+test_gen.js
+test_node.js
+server.py
+check.py
+
+# ── Hebrew-named dev folders ──────────────────
+רפרנסים/
+תיקיה ללא שם/
+
+# ── CSS old version ───────────────────────────
+# (index.html loads style_v5.css; style.css is old)
+style.css

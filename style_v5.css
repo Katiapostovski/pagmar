@@ -1,0 +1,697 @@
+/* ── Hadassah Hebrew ────────────────────────────── */
+@font-face {
+    font-family: 'Hadassah';
+    src: url('HadassahFriedlaender-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Hadassah';
+    src: url('HadassahFriedlaender-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Hadassah';
+    src: url('HadassahFriedlaender-Regular.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+/* ── Simpler Mono Hebrew ────────────────────────────── */
+@font-face {
+    font-family: 'SimplerMono';
+    src: url('SimplerPro_HLAR_Mono-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SimplerMono';
+    src: url('SimplerPro_HLAR_Mono-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SimplerMono';
+    src: url('SimplerPro_HLAR_Mono-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* =====================================================
+   PAGMAR — שמיים שנפתחים
+   Style Sheet
+   ===================================================== */
+
+:root {
+    --font-serif: 'Hadassah', serif;
+    --font-sans:  'SimplerMono', 'Inconsolata', monospace;
+    --font-mono:  'SimplerMono', 'Inconsolata', monospace;
+    --col-text:   #c8c8d8;
+    --col-muted:  #6a6d7a;
+    --col-accent: rgba(180,160,255,0.6);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── STRICT TYPOGRAPHY UNIFORMITY ── */
+#screen-opening h1,
+#q-text,
+#intro-title,
+#horizon-title,
+#constellation-info-title {
+    font-family: 'Hadassah', serif !important;
+    font-weight: 300 !important;
+    font-size: clamp(1.9rem, 4.2vw, 3.4rem) !important;
+    letter-spacing: 0.05em !important;
+    line-height: 1.3 !important;
+}
+
+html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    color: var(--col-text);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+#app { width: 100%; height: 100%; position: relative; }
+
+/* ── Screens ─────────────────────────────────────── */
+.screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 2rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 2.4s ease;
+    text-align: center;
+}
+.screen.active { opacity: 1; pointer-events: auto; }
+
+/* ── Opening ─────────────────────────────────────── */
+#screen-opening {
+    background: transparent;
+}
+
+#screen-opening h1 {
+    font-family: 'Hadassah', serif;
+    font-size: clamp(1.7rem, 4vw, 3.2rem);
+    font-weight: 300;
+    margin-bottom: 2rem;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+    opacity: 1;
+}
+
+@keyframes charSettle {
+    0%   { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
+    70%  { opacity: 1; }
+    100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; transform: scale(0.95); filter: blur(4px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+#screen-opening .tagline {
+    font-family: var(--font-mono);
+    font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+    color: var(--col-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 4rem;
+    line-height: 1.9;
+}
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.55);
+    padding: 0.75rem 2.4rem;
+    font-family: var(--font-sans);
+    font-weight: 300;
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.7s ease;
+}
+.btn:hover {
+    border-color: rgba(255,255,255,0.8);
+    color: rgba(255,255,255,0.95);
+    background: rgba(255,255,255,0.04);
+}
+
+/* =========================================
+   LEGEND UI
+========================================= */
+
+
+#legend-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 30px;
+    z-index: 2000;
+    color: #eee;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    transition: opacity 0.4s ease;
+}
+
+#legend-modal.hidden {
+    display: none;
+}
+
+/* ── Unified PAGMAR Modal ── all popups share this language ── */
+#constellation-info-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(460px, 90vw);
+    background: rgba(4, 4, 10, 0.93);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0;
+    padding: 2.2rem 2.4rem 2rem;
+    z-index: 2000;
+    color: rgba(200, 200, 215, 0.9);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+    transition: opacity 0.5s ease;
+    text-align: right;
+    direction: rtl;
+}
+
+#constellation-info-modal.hidden {
+    display: none;
+}
+
+#constellation-info-title {
+    font-family: 'Hadassah', serif;
+    margin-top: 0;
+    margin-bottom: 1.4rem;
+    font-weight: 300;
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    color: rgba(230, 230, 240, 0.92);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding-bottom: 1rem;
+}
+
+#constellation-info-text {
+    font-family: 'SimplerMono', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.9;
+    color: rgba(185, 185, 210, 0.88);
+}
+
+#legend-title {
+    font-family: 'Hadassah', serif;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 300;
+    font-size: 1.4rem; /* slightly larger for light font */
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.legend-close {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    cursor: pointer;
+    font-size: 18px;
+    color: rgba(255,255,255,0.5);
+    transition: color 0.2s;
+}
+
+.legend-close:hover {
+    color: #fff;
+}
+
+.legend-item {
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.8);
+}
+
+.legend-item b {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* ── Questionnaire ───────────────────────────────── */
+#screen-questionnaire {
+    background: transparent;
+    justify-content: center;
+    align-items: center;
+    padding-top: 0;
+}
+
+#q-inner { 
+    max-width: 520px; 
+    width: 90%; 
+    text-align: center;
+}
+
+.q-step {
+    position: absolute;
+    bottom: 3rem;
+    left: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.q-progress {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    width: 80px;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    overflow: hidden;
+}
+.q-progress-fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: rgba(255,255,255,0.8);
+    transition: width 0.8s ease;
+}
+
+#q-text {
+    margin-bottom: 0.6rem;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: -0.01em;
+    text-shadow: 0 0 10px #000, 0 0 20px #000, 0 0 40px #000;
+}
+
+#q-sub {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--col-muted);
+    min-height: 1.4em;
+    margin-bottom: 2.2rem;
+    letter-spacing: 0.06em;
+    opacity: 0;
+}
+
+.q-options { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    pointer-events: none; 
+    z-index: 10;
+}
+
+.q-opt {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    background: #000000;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #ffffff;
+    padding: 0.85rem 1.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    text-align: right;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: border-color 0.45s ease, background 0.45s ease, color 0.45s ease, box-shadow 0.45s ease;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.q-opt {
+    /* entrance animation handled per-button by JS stagger */
+    opacity: 0;
+}
+.q-opt:hover {
+    border-color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05);
+    transform: translate(-50%, calc(-50% - 3px)) scale(1);
+}
+.q-opt:active {
+    transform: translate(-50%, -50%) scale(0.97);
+    background: rgba(255,255,255,0.15);
+    transition: border-color 0.1s ease, background 0.1s ease, color 0.1s ease, box-shadow 0.1s ease;
+}
+
+#q-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.q-input-wrap { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 3rem;
+    position: absolute;
+    bottom: 8vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    max-width: 400px;
+}
+
+.q-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.88);
+    font-size: 1.4rem;
+    padding: 0.5rem 0.3rem;
+    font-family: var(--font-mono);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.5s;
+    letter-spacing: 0.04em;
+}
+.q-input::placeholder { color: rgba(255,255,255,0.15); font-style: italic; }
+.q-input:focus { border-bottom-color: rgba(255,255,255,0.8); }
+
+/* ── Sky Screen ──────────────────────────────────── */
+#screen-sky {
+    padding: 0;
+    cursor: none;
+    background: transparent;
+}
+
+#sky-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+}
+
+/* Text labels overlay */
+#sky-labels {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+}
+.sky-text {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-weight: 300;
+    font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+    color: rgba(255,255,255,0);
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 24px));
+    text-align: center;
+    line-height: 1.8;
+    max-width: 200px;
+    white-space: pre-line;
+    transition: color 3s ease, text-shadow 3s ease;
+    letter-spacing: 0.08em;
+    will-change: opacity, transform;
+    text-shadow: 0 0 10px rgba(0,0,0,0);
+}
+.sky-text.revealed {
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,1);
+}
+
+/* Custom cursor — global, works on all screens */
+#global-cursor, #sky-cursor {
+    position: fixed;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.75);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 12px 4px rgba(200,180,255,0.5), 0 0 3px 1px rgba(255,255,255,0.9);
+    transition: transform 0.12s ease;
+    top: -100px; /* start off-screen */
+}
+
+/* Sky UI overlay */
+.sky-ui {
+    position: absolute;
+    bottom: 2.2rem; left: 0; right: 0;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 1.1rem;
+    z-index: 20;
+    pointer-events: none;
+}
+.sky-ui p {
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.18);
+    text-transform: uppercase;
+}
+.sky-ui .btn { pointer-events: auto; }
+
+/* ── Horizon Screen ──────────────────────────────── */
+#screen-horizon {
+    background: transparent;
+}
+
+#horizon-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+
+#horizon-content {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 1.4rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+#horizon-content h2 {
+    font-family: 'Hadassah', serif;
+    font-weight: 300;
+    font-size: clamp(1.7rem, 3.8vw, 2.6rem);
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 0 50px rgba(180,150,255,0.35);
+}
+
+#horizon-name {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: rgba(180,160,255,0.6);
+    letter-spacing: 0.08em;
+}
+
+#horizon-desc {
+    font-family: var(--font-mono);
+    font-size: clamp(0.85rem, 1.7vw, 1rem);
+    color: rgba(200,200,220,0.58);
+    max-width: 480px;
+    line-height: 2;
+    white-space: pre-line;
+}
+
+/* ── Zoom Controls ────────────────────────────────────── */
+.zoom-controls {
+    position: absolute;
+    right: 2rem;
+    bottom: 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    z-index: 50;
+    pointer-events: auto;
+}
+.btn-icon {
+    padding: 0;
+    width: 2.8rem;
+    height: 2.8rem;
+    font-size: 1.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* ── Deep Text Modal ─────────────────────────────── */
+#deep-text-modal {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    transition: opacity 1.5s ease;
+    cursor: pointer;
+}
+
+#deep-text-content {
+    font-family: 'Hadassah', serif;
+    font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+    color: rgba(255,255,255,0.88);
+    text-shadow: 0 0 20px rgba(255,255,255,0.35);
+    max-width: 800px;
+    text-align: center;
+    line-height: 1.4;
+    animation: etherealFadeIn 4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes slowFadeIn {
+    0% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+#deep-text-modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes etherealFadeIn {
+    0% { opacity: 0; filter: blur(20px); transform: scale(0.9) translateY(20px); letter-spacing: 0.1em; }
+    50% { opacity: 0.8; filter: blur(2px); transform: scale(0.98) translateY(0); letter-spacing: 0.05em; }
+    100% { opacity: 1; filter: blur(0); transform: scale(1) translateY(0); letter-spacing: 0em; }
+}
+
+#deep-text-modal {
+    background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+    backdrop-filter: blur(8px);
+}
+
+@keyframes floatUpFade {
+    0% { opacity: 0; transform: translateY(15px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Title Animation ────────────────────────────── */
+@keyframes constellationReveal {
+    0% { 
+        opacity: 0; 
+        filter: blur(8px); 
+        transform: translate(var(--dx), var(--dy)) scale(0.8); 
+    }
+    30% {
+        opacity: 0.9;
+        filter: blur(2px);
+    }
+    100% { 
+        opacity: 1; 
+        filter: blur(0); 
+        transform: translate(0, 0) scale(1); 
+    }
+}
+.word-span {
+    display: inline-block;
+    white-space: nowrap;
+    margin-left: 0.3em;
+}
+.char-span {
+    display: inline-block;
+    /* Extra long, silky smooth glide */
+    animation: constellationReveal 6.5s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+.word-span {
+    display: inline-block;
+    white-space: nowrap;
+    margin-left: 0.3em;
+}
+.word-span:last-child {
+    margin-left: 0;
+}
+
+/* ── Technical HUD Labels ───────────────────────────── */
+.sky-dlabel {
+    position: absolute;
+    transform: translate(0, 0);
+    pointer-events: auto;
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: max-content;
+    max-width: 280px;
+    height: auto;
+    padding: 16px 20px;
+    background: rgba(5, 5, 10, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.7), 0 0 60px rgba(0,0,0,0.4);
+    transition: opacity 0.4s ease, border-color 0.3s ease, transform 0.3s ease;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.sky-dlabel:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translate(0, -2px);
+    background: rgba(15, 15, 20, 0.95);
+}
+
+.sky-dlabel .dlabel-category {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 400;
+    margin-bottom: 6px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+}
+
+.sky-dlabel .dlabel-text {
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+}
+
+/* ── Title Animation ────────────────────────────── */
+@keyframes starReveal {
+    0% { opacity: 0; transform: translateY(15px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.char-span {
+    display: inline-block;
+    opacity: 0;
+    animation: starReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.word-span {
+    display: inline-block;
+    white-space: nowrap;
+    margin-left: 0.3em;
+}
+.word-span:last-child {
+    margin-left: 0;
+}
