@@ -2494,6 +2494,18 @@ function showInterpretationPanel(userVision) {
             window._labelStaggerStart = null; // reset stagger so re-reveal is fresh after drag
             return;
         }
+        // HIDE ALL LABELS IN GALAXY VIEW — labels only show when zoomed into the prism
+        if (cam.scale < 1.2) {
+            labelData.forEach(function(item, idx) {
+                item.el.style.opacity = '0';
+                item.g.style.opacity = '0';
+                if (window._labelRevealStates && window._labelRevealStates[idx]) {
+                    window._labelRevealStates[idx].alpha = 0;
+                }
+            });
+            return;
+        }
+
         // Small cooldown after drag ends (prevents flash reveal during momentum)
         if (window._lastDragEndTime && performance.now() - window._lastDragEndTime < 500) {
             return;
@@ -3713,7 +3725,7 @@ function renderQ() {
         const inputHolder = document.createElement('div');
         inputHolder.style.cssText = 'position:absolute; top:52%; left:50%; transform:translateX(-50%); width:85%; max-width:400px; opacity:0; transition:opacity 1.2s ease; text-align:center;';
         inputHolder.appendChild(inp);
-        if (yearPreview) inputHolder.appendChild(yearPreview);
+        // yearPreview intentionally omitted (removed by design)
         inputArea.appendChild(inputHolder);
         
         // Button wrapper: stays fixed at the very bottom (q-input-wrap handles bottom:8vh)
@@ -3761,16 +3773,31 @@ function renderQ() {
         // Only the button goes in wrap (input is in inputHolder above)
         wrap.appendChild(nextBtn);
 
-        // Back button (secondary, appears only after first question)
-        if (qIndex > 0) {
+        // Back button: fixed top-right corner, always visible (from Q0 onwards = no back on Q0)
+        // Render into the questionnaire screen directly so it's always positioned correctly
+        const qScreen2 = document.getElementById('screen-questionnaire');
+        const existingBack = document.getElementById('q-back-fixed');
+        if (existingBack) existingBack.remove();
+        if (qIndex > 0 && qScreen2) {
             const backBtn = document.createElement('button');
-            backBtn.className = 'btn btn-back';
-            backBtn.innerText = currentLang === 'he' ? '\u05d7\u05d6\u05e8\u05d4' : 'Back';
+            backBtn.id = 'q-back-fixed';
+            backBtn.style.cssText = [
+                'position:fixed', 'top:22px', 'right:22px', 'z-index:9999',
+                'background:transparent', 'border:none',
+                'color:rgba(255,255,255,0.55)', 'font-size:1.4rem',
+                'cursor:pointer', 'padding:8px 12px',
+                'transition:color 0.25s ease',
+                'font-family:var(--font-serif,serif)'
+            ].join(';');
+            backBtn.textContent = '\u2190'; // ← arrow
+            backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
+            backBtn.onmouseenter = () => backBtn.style.color = 'rgba(255,255,255,0.9)';
+            backBtn.onmouseleave = () => backBtn.style.color = 'rgba(255,255,255,0.55)';
             backBtn.onclick = () => {
                 qIndex--;
                 renderQ();
             };
-            wrap.appendChild(backBtn);
+            qScreen2.appendChild(backBtn);
         }
         
         if (qData.allowUnknown) {
@@ -6064,15 +6091,11 @@ function initCameraEvents() {
         if (cursor) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; }
         if (!isDragging) return;
         window.dragDist = (window.dragDist || 0) + Math.hypot(e.movementX, e.movementY);
+        window._dwellLastMove = performance.now(); // reset dwell timer
         
-        // Panning the camera OR rotating the object
-        if (window.skyRevealState === 'revealed' && cam.scale > 0.8) {
-            targetGlobalRotY += e.movementX * 0.01;
-            targetGlobalRotX += e.movementY * 0.01;
-        } else {
-            targetCam.x -= e.movementX / cam.scale;
-            targetCam.y -= e.movementY / cam.scale;
-        }
+        // Always pan the camera — never rotate on drag (removed: rotation was confusing)
+        targetCam.x -= e.movementX / cam.scale;
+        targetCam.y -= e.movementY / cam.scale;
         
         lastMouse = { x: e.clientX, y: e.clientY };
     });
@@ -6090,14 +6113,11 @@ function initCameraEvents() {
         const t = e.touches[0];
         globalMouse.x = t.clientX;
         globalMouse.y = t.clientY;
+        window._dwellLastMove = performance.now(); // reset dwell timer
         
-        if (window.skyRevealState === 'revealed' && cam.scale > 0.8) {
-            targetGlobalRotY += (t.clientX - lastMouse.x) * 0.01;
-            targetGlobalRotX += (t.clientY - lastMouse.y) * 0.01;
-        } else {
-            targetCam.x -= (t.clientX - lastMouse.x) / cam.scale;
-            targetCam.y -= (t.clientY - lastMouse.y) / cam.scale;
-        }
+        // Always pan — never rotate on touch drag
+        targetCam.x -= (t.clientX - lastMouse.x) / cam.scale;
+        targetCam.y -= (t.clientY - lastMouse.y) / cam.scale;
         lastMouse = { x: t.clientX, y: t.clientY };
     }, { passive: false });
 
