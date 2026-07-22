@@ -4,51 +4,123 @@
    ===================================================== */
 
 // ======================================================
-// GEMINI API — Real-Time Personalized Interpretation
+// GEMINI API — מנוע פרשנות אישי חכם
 // ======================================================
-const GEMINI_API_KEY = ''; // ← הכניסי כאן את ה-API key שלך
+const GEMINI_API_KEY = ''; // ← הכניסי כאן את ה-API key שלך (Google AI Studio)
 
-const PAGMAR_SYSTEM_PROMPT = `אתה חלק מחוויה אינטראקטיבית בשם PAGMAR — כלי שמייצר מפת כוכבים אישית על בסיס תשובות המשתמש.
-המשימה שלך: לכתוב פרשנות אישית ייחודית בעברית שמרגישה כמו ראי — לא כמו AI.
+// ── שמות — משמעויות למנוע הפרשנות ──
+const HEBREW_NAME_MEANINGS = {
+    'נועה':'תנועה ואי-שקט יצירתי — נשמה שמסרבת לעמוד במקום',
+    'תמר':'ישרות וגאות שקטה — שורשים שמחזיקים גם כשהרוח חזקה',
+    'שירה':'שירה פנימית שמחפשת מוצא — ביטוי שגדול מהמילים',
+    'מיה':'מים וזרימה — מסתגלת לצורת הכלי אבל לא מאבדת את עצמה',
+    'מאיה':'מים, אשליה — מה שנראה ומה שממש קיים',
+    'ליאת':'שלי — בעלות עצמית, ידיעה ברורה של גבולות',
+    'עדן':'גן נעול — עונג שהיה ויכול לחזור',
+    'רוני':'שמחתי — ביטוי ישיר, נוכחות שמרגישים',
+    'יעל':'עלייה והר — יצירתיות שמגיעה ממקום גבוה',
+    'אריה':'כוח שלא מתנצל — מנהיגות שממתינה לרגע הנכון',
+    'דוד':'אהוב — חיבור עמוק, לב שנפתח לגמרי',
+    'יונתן':'מה שניתן מלמעלה — מתנה שדורשת אחריות',
+    'עמית':'עם — שייכות, הכוח נמצא בקשרים',
+    'ליאור':'אור שמחפש מקום — נוכחות שמאירה סביבה',
+    'איתן':'חוזק וקביעות — יציב גם כשהכל רועד',
+    'אלון':'שורשים עמוקים וגדילה אטית — עוצמה שאינה ממהרת',
+    'שחר':'זריחה וראשיות — חי/ה בתחילות',
+    'טל':'רטיבות בוקר וחידוש — עדינות שמחדשת',
+    'נגה':'זוהר שאינו שמש — אור עצמאי',
+    'כרמל':'גן ושפע — נוכחות שמזינה',
+    'שי':'מתנה — נוכחות שנתפסת כנדבה',
+    'עדי':'תכשיט וייחוד — אחד/ת מסוג שלא',
+    'אור':'אור עצמו — פשוט, ברור, הכרחי',
+    'בר':'פראי וחופשי — לא מחוייב/ת לציפיות',
+    'ירדן':'נהר הזורם לים — תנועה שלא עוצרת',
+    'זוהר':'בהירות שיוצאת מבפנים',
+    'שלי':'שלי — ידיעה ברורה של מה שייך',
+    'דניאל':'שיפוט אלוהי — ידיעה של מה נכון ומה לא',
+    'מיכאל':'מי כמו אל — השאלה עצמה היא התשובה',
+    'נמרוד':'ציד וחיפוש — אומץ ללכת אחרי מה שאחרים פוחדים',
+    'מרים':'עוצמה דרך כאב — יצאה מהמים חזקה יותר',
+    'אסתר':'כוכב נסתר — עוצמה שלא מודיעה על עצמה',
+    'שרה':'מנהיגה — לא בתואר, באנרגיה',
+    'Sofia':'חכמה — ידיעה שאינה צריכה אישות',
+    'Emma':'שלמות ונוכחות — ממלאת חדר',
+    'Lena':'אור עדין — נוכחות שמחממת',
+    'Anna':'חן ורחמים — עוצמה שמתחפשת לעדינות',
+    'Sarah':'שרה — מנהיגה',
+    'Daniel':'שיפוט אלוהי — ידיעה של מה נכון',
+    'Michael':'מי כמו אל — השאלה היא התשובה',
+    'Noah':'מנוחה בסערה — יציב כשהכל זז',
+    'Ethan':'חוזק שקט — לא צועק, סתם לא נשבר',
+    'Adam':'אדמה — שייכות לארץ, מחובר/ת',
+    'Ariel':'אריאל — כוח ועדינות בו זמנית',
+};
 
-חוקים ברורים:
-• דבר ישירות אל המשתמש בגוף שני. תמיד.
-• אל תזכיר "כוכבים", "יקום", "אסטרולוגיה" כתירוץ לתשובות — PAGMAR לא מכחיש שהוא לא כלי אסטרולוגי, אבל הוא לא מסביר את עצמו. הוא פשוט מחזיר.
-• כל אמירה חייבת להיות ספציפית לתשובה שהמשתמש נתן. אם הוא ענה "כחול" — הטקסט צריך לדבר על כחול, לא על "הצבע שבחרת".
-• השתמש בשאלות פתוחות אמיתיות שגורמות לאדם לחשוב — לא שאלות רטוריות.
-• אורך הפרשנות: 2-4 משפטים. תמציתי, אבל עמוק.
-• הטון: חם, ישיר, לא פסיכולוגי-מדי. כמו חבר/ה חכם/ה שרואה אותך.
-• אל תגיד "זה לא מפתיע ש...", "ברור ש...", "כולנו..." — דבר רק על המשתמש הספציפי.
-• אם המשתמש לא ענה על שאלה — אל תזכיר את היעדרה. פשוט התמקד במה שיש.
-• אל תסיים במשפטי "השראה" גנריים.`;
+// ── הנחיית מערכת ל-Gemini ──
+const PAGMAR_SYSTEM_PROMPT = `אתה הנפש של PAGMAR — כלי שמייצר חוויה אישית ומדויקת. משימתך: לכתוב 11 פרשנויות קצרות שכל אחת מרגישה כאילו כתבה מישהו שמכיר את המשתמש מבפנים.
 
-async function generatePersonalizedReading(answers, category, fieldKey) {
-    if (!GEMINI_API_KEY) return null; // fallback to static bank
+חוקים מוחלטים:
+1. 2-3 משפטים לכל פרשנות. לא יותר. לא פחות.
+2. השתמש בשם הפרטי של המשתמש לפחות פעם אחת.
+3. אל תכתוב: "הכוכבים מגלים", "הקוסמוס", "הגורל", "ייעוד", "זה לא מקרי", "אסטרולוגיה".
+4. לגבי "vision" — השתמש בידע הסמלי האמיתי של הסמל שהמשתמש ראה:
+   חתול = עצמאות, ניווט בין מצבים, אינטואיציה חדה
+   כלב = נאמנות שיכולה לבלוע, חיפוש אישור מבחוץ
+   ציפור = חופש שטרם נלקח, ראייה מעל, נאמנות לעצמי
+   דג = זרימה בלא-ידוע, שחייה בין שטחים
+   פרפר = שינוי שכבר קרה אבל עוד לא הושלם
+   נחש = שילול עור ישן, מחזור חדש מתחיל
+   אריה = כוח שעוצר את עצמו, מנהיגות שמחכה לרגע
+   סוס = אנרגיה צבורה שמחכה לכיוון
+   ינשוף = ראייה בחושך, חכמה שלא מוכרת את עצמה
+   עץ = שורשים שאינם נראים אבל מחזיקים הכל
+   לב = כל השאר עובר דרכו — זו נקודת ההתחלה
+   כוכב = אור שממשיך גם אחרי שהמקור כבר עבר
+   שמש = כוח שמחמם לא שורף — נותן/ת לאחרים בלי להתרוקן
+   ים = עומק שאנשים לא רואים אפילו כשמסתכלים ישר אליך
+5. לגבי "nameStory" — כתוב על משמעות השם שנתן/ה המשתמש וקשר אותה לתשובות שלו/ה.
+6. חבר 2-3 תשובות בכל פרשנות: לא "הצבע שבחרת" אלא "כחול — מה שמשך/ת אליו".
+7. סיים בשאלה אמיתית או בהצהרה חדה — לא ב"השראה" גנרית.
+8. כתוב ישירות אל המשתמש — לא "מישהו שבחר כחול", אלא "כחול שמשך אותך".
 
-    const name = (answers.name || '').split(' ')[0] || 'המשתמש';
+פלט: JSON בלבד, בפורמט הזה בדיוק:
+{
+  "color": "...",
+  "time": "...",
+  "home": "...",
+  "change": "...",
+  "request": "...",
+  "doubt": "...",
+  "dream": "...",
+  "unresolved": "...",
+  "vision": "...",
+  "closing": "...",
+  "nameStory": "..."
+}`;
 
-    // Build a concise context from answers
+// ── קריאה אחת ל-Gemini עבור כל הפרשנויות ──
+async function generateAllInterpretations(answers) {
+    if (!GEMINI_API_KEY) return null;
+    const firstName = (answers.name || '').split(' ')[0] || 'אורח';
+    const vision = (answers.pareidolia || '').trim().replace(/^ה/, '');
+    const nameMeaning = HEBREW_NAME_MEANINGS[answers.name] || HEBREW_NAME_MEANINGS[firstName] || null;
+
     const ctx = [
-        answers.name    ? `שם: ${answers.name}` : null,
+        `שם מלא: ${answers.name || '—'}`,
+        `שם פרטי: ${firstName}`,
+        nameMeaning ? `משמעות השם "${firstName}" (להשתמש בה): ${nameMeaning}` : null,
         answers.dob     ? `תאריך לידה: ${answers.dob}` : null,
-        answers.time    ? `שעת כובד: ${answers.time}` : null,
-        answers.color   ? `צבע הלך הרוח: ${answers.color}` : null,
+        answers.color   ? `הצבע שמשך: ${answers.color}` : null,
+        answers.time    ? `שעת הכובד: ${answers.time}` : null,
         answers.home    ? `תחושת בית: ${answers.home}` : null,
-        answers.change  ? `מוקד מחשבות: ${answers.change}` : null,
+        answers.change  ? `מה שממלא מחשבות: ${answers.change}` : null,
         answers.request ? `מה שמתבקש: ${answers.request}` : null,
-        answers.doubt   ? `תגובה לספק: ${answers.doubt}` : null,
-        answers.dream   ? `שאיפה גדולה: ${answers.dream}` : null,
-        answers.unresolved ? `מחכה לבהירות: ${answers.unresolved}` : null,
-        answers.pareidolia ? `ראה/ראתה בקונסטלציה: ${answers.pareidolia}` : null,
+        answers.doubt   ? `כשמתלבטים: ${answers.doubt}` : null,
+        answers.dream   ? `השאיפה הגדולה: ${answers.dream}` : null,
+        answers.unresolved ? `ממתין לבהירות: ${answers.unresolved}` : null,
+        vision ? `מה ראה/ראתה בכוכבים: ${vision}` : null,
+        vision ? `\nחשוב: עבור "vision", כתוב פרשנות ספציפית לסמל "${vision}" — מה הסמל הזה מייצג, וקשר אותו לתשובות האחרות של ${firstName}.` : null,
     ].filter(Boolean).join('\n');
-
-    const userPrompt = `תשובות המשתמש:
-${ctx}
-
-כתוב פרשנות אישית בנושא: "${category}"
-ההקשר הספציפי שעליו לדבר: ${fieldKey}
-קרא/י למשתמש בשם: ${name}
-זכור/י: 2-4 משפטים. ישיר. ספציפי. ללא קלישאות.`;
 
     try {
         const res = await fetch(
@@ -58,22 +130,52 @@ ${ctx}
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     system_instruction: { parts: [{ text: PAGMAR_SYSTEM_PROMPT }] },
-                    contents: [{ parts: [{ text: userPrompt }] }],
+                    contents: [{ parts: [{ text: ctx }] }],
                     generationConfig: {
-                        temperature: 0.85,
-                        maxOutputTokens: 220,
-                        topP: 0.9,
+                        temperature: 0.80,
+                        maxOutputTokens: 2000,
+                        topP: 0.92,
+                        responseMimeType: 'application/json'
                     }
                 })
             }
         );
         if (!res.ok) return null;
         const data = await res.json();
-        return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) return null;
+        return JSON.parse(text);
     } catch (e) {
-        console.warn('[PAGMAR] Gemini API error:', e);
+        console.warn('[PAGMAR] Gemini batch error:', e);
         return null;
     }
+}
+
+// ── מיפוי קטגוריה לשדה JSON ──
+const CATEGORY_TO_KEY = {
+    'גוון':'color','זמן':'time','בית':'home','מחשבה':'change',
+    'בקשה':'request','ספק':'doubt','שאיפה':'dream','אור':'unresolved',
+    'צורה':'vision','ציון':'closing','מה ראית':'vision','שם':'nameStory','חודש':'closing',
+    'HUE':'color','TIME':'time','HOME':'home','MIND':'change',
+    'ASK':'request','DOUBT':'doubt','ASPIRE':'dream','LIGHT':'unresolved',
+    'FORM':'vision','MARK':'closing'
+};
+
+// ── קריאה בודדת (legacy — מחזירה מהמטמון אם קיים) ──
+async function generatePersonalizedReading(answers, category, fieldKey) {
+    if (!GEMINI_API_KEY) return null;
+    // אם המטמון מוכן, תחזיר ממנו מיד
+    if (window._pagmarInterpretations) {
+        const key = CATEGORY_TO_KEY[category] || CATEGORY_TO_KEY[fieldKey] || null;
+        return key ? (window._pagmarInterpretations[key] || null) : null;
+    }
+    // אם המטמון עדיין נטען, המתן לו
+    if (window._pagmarInterpPromise) {
+        const result = await window._pagmarInterpPromise;
+        const key = CATEGORY_TO_KEY[category] || CATEGORY_TO_KEY[fieldKey] || null;
+        return (result && key) ? (result[key] || null) : null;
+    }
+    return null;
 }
 
 let currentLang = 'he';
@@ -1285,6 +1387,19 @@ function showInterpretationPanel(userVision) {
     const skyScreen = document.getElementById('screen-sky');
     if (!skyScreen || document.getElementById('sky-data-overlay')) return;
 
+    // ── הפעל יצירת פרשנויות מ-Gemini מיד (קריאה אחת לכל הפרשנויות) ──
+    if (GEMINI_API_KEY && !window._pagmarInterpretations && !window._pagmarInterpPromise) {
+        window._pagmarInterpPromise = generateAllInterpretations(answers).then(function(result) {
+            window._pagmarInterpretations = result;
+            // עדכן פאנל פתוח אם קיים
+            if (result && typeof window._pagmarPanelUpdateFn === 'function') {
+                window._pagmarPanelUpdateFn(result);
+                window._pagmarPanelUpdateFn = null;
+            }
+            return result;
+        });
+    }
+
     // Update the title if user provided a pareidolia vision name
     const existingTitle = document.getElementById('user-constellation-title');
     if (existingTitle && userVision) {
@@ -2408,22 +2523,43 @@ function showInterpretationPanel(userVision) {
                         });
                     }
 
-                    // Show static text with short lead-in (not 400ms)
-                    revealText(ft, 150);
+                    // בדוק אם פרשנות Gemini כבר מוכנה במטמון
+                    var batchKey = CATEGORY_TO_KEY[cat] || null;
+                    var cachedText = window._pagmarInterpretations && batchKey
+                        ? window._pagmarInterpretations[batchKey] : null;
 
-                    // Try Gemini for a live upgrade
-                    generatePersonalizedReading(answers, cat, fk).then(function(liveText) {
-                        if (liveText && panel.isConnected) {
-                            // Smooth cross-fade: fade out → swap text → fade in
-                            textDiv.style.transition = 'opacity 0.6s ease';
-                            textDiv.style.opacity = '0';
-                            setTimeout(function() {
-                                if (!panel.isConnected) return;
-                                revealText(liveText, 0);
-                                textDiv.style.opacity = '1';
-                            }, 650);
+                    if (cachedText) {
+                        // Gemini מוכן — הצג ישירות
+                        revealText(cachedText, 80);
+                    } else {
+                        // הצג טקסט סטטי
+                        revealText(ft, 150);
+
+                        // רשום callback לכשה-Gemini יחזור
+                        window._pagmarPanelUpdateFn = function(result) {
+                            var k = CATEGORY_TO_KEY[cat] || null;
+                            var liveText = k && result ? result[k] : null;
+                            if (liveText && panel.isConnected) {
+                                textDiv.style.transition = 'opacity 0.6s ease';
+                                textDiv.style.opacity = '0';
+                                setTimeout(function() {
+                                    if (!panel.isConnected) return;
+                                    revealText(liveText, 0);
+                                    textDiv.style.opacity = '1';
+                                }, 650);
+                            }
+                        };
+
+                        // אם promise קיים, חכה לו
+                        if (window._pagmarInterpPromise) {
+                            window._pagmarInterpPromise.then(function(result) {
+                                if (typeof window._pagmarPanelUpdateFn === 'function') {
+                                    window._pagmarPanelUpdateFn(result);
+                                    window._pagmarPanelUpdateFn = null;
+                                }
+                            });
                         }
-                    });
+                    }
                 });
             })(category, fullText, pool[idx][2] || '');
 
