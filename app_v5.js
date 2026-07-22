@@ -2017,29 +2017,14 @@ function showInterpretationPanel(userVision) {
         'גשר': firstName + ', הגשר בכוכבים סמל מעבר בין שני מצבים או שני אנשים. יש מעבר שאתה/את צריך/ת ללכת דרךו. הקונסטלציה אומרת: הגשר כבר נבנה, נדרשת רק העברה.',
         'שער': firstName + ', השער בכוכבים סמל מעבר, סיום והתחלה. יש פרק שעומד לפניך. הקונסטלציה שואלת: האם אתה/את מוכן/ת לעבור?',
         'מפתח': firstName + ', המפתח בכוכבים סמל האפשרות שקיימת תמיד אבל שאתה/את לא יצא אליה. הקונסטלציה אומרת: המפתח בידך, הדלת פתוחה.',
-            firstName + ', הספר בכוכבים סמל חכמה שממתינה להעברה. יש סיפור שאתה/את צריך/ת לדעת אותו. הקונסטלציה אומרת: אתה/את כבר כותב/ת אותו.',
+        'ספר': firstName + ', הספר בכוכבים סמל חכמה שממתינה להעברה. יש סיפור שאתה/את צריך/ת לדעת אותו. הקונסטלציה אומרת: אתה/את כבר כותב/ת אותו.',
         'בית': firstName + ', הבית בכוכבים הוא סמל השרשים והשייכות. יש בך צורך עמוק להרגיש בטוחה בתוך עצמך. הקונסטלציה מגלה: הבית מתחיל באותך.',
         'כתר': firstName + ', הכתר בכוכבים אינו רק שלטון אלא אחריות. יש בך יכולת להוביל ולשאת. הקונסטלציה מגלה: הגיעה שלך דרושה, אל תמתין/י.',
         'גלגל': firstName + ', הגלגל בכוכבים סמל המחזוריות, החזרה והתנועה. יש דבר שמתנועע במהלך שמבקש חזרה. הקונסטלציה שואלת: האם אתה/את מוכן/ת לשחרר את הגלגל?',
         'ארבע': firstName + ', ארבע הוא יסוד המרחב והזמן בקוסמולוגיה ובכל מסורת. אתה/את עומד/ת על רגליים יציבות. הקונסטלציה אומרת: היסוד שלך חזק, בנה עליו.',
         'צלב': firstName + ', הצלב בכוכבים סמל נקודת הפגישה של שני מחזורים. יש בחייך/חייך שני כיוונים שמבקשים שילוב. הקונסטלציה מגלה: הנקודה שבה הם נפגשים היא המיקום שבו צמיחה שלמות.'
     };
-    
-    // ── ZOOM-STEP SEQUENTIAL REVEAL ─────────────────────────────────
-    // Sort labels by distance from origin (closest star = revealed first)
-    // Each label gets a zoom threshold; only ONE label is shown at a time
-    window.labelDataSorted = [...labelData].sort((a, b) => {
-        const da = Math.hypot(a.pt.x, a.pt.y);
-        const db = Math.hypot(b.pt.x, b.pt.y);
-        return da - db;
-    });
-    window.labelDataSorted.forEach((item, i) => {
-        item.zoomThreshold = 1.3 + i * 0.5; // 1.3, 1.8, 2.3, 2.8...
-    });
 
-    // ── UPDATE LOOP — Zoom-step reveal ──────────────────────────────
-    window._labelRevealStates = labelData.map(function() { return { revealed: false, alpha: 0, hasPlayedSound: false }; });
-    
     let pareidoliaSpecificMsgHe = pareidoliaWordMap[_cleanVision]
         || pareidoliaWordMap[_rawVision]
         || (_rawVision ? (
@@ -2477,8 +2462,18 @@ function showInterpretationPanel(userVision) {
     });
 
 
+    // ── ZOOM-STEP SEQUENTIAL REVEAL ──────────────────────────────
+    // Sort labels by distance from origin so closest star reveals first
+    window.labelDataSorted = [...labelData].sort(function(a, b) {
+        return Math.hypot(a.pt.x, a.pt.y) - Math.hypot(b.pt.x, b.pt.y);
+    });
+    window.labelDataSorted.forEach(function(item, i) {
+        item.zoomThreshold = 1.3 + i * 0.5; // 1.3, 1.8, 2.3, 2.8 ...
+    });
+
     // ── UPDATE LOOP — Proximity & Zoom reveal ──────────────
     window._labelRevealStates = labelData.map(function() { return { revealed: false, alpha: 0, hasPlayedSound: false }; });
+
 
     window.updateDataLabels = function() {
         // HIDE LABELS DURING INITIAL BUILD-UP (first 8 seconds)
