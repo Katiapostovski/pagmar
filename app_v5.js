@@ -6657,26 +6657,7 @@ window.downloadSkyMap = function() {
 };
 
 window.showDeepText = function(text) {
-    const modal = document.getElementById('deep-text-modal');
-    if (!modal) return;
-    const content = document.getElementById('deep-text-content');
-    if (content) content.textContent = text;
-
-    // Ensure close button exists
-    let closeBtn = modal.querySelector('.deep-text-close');
-    if (!closeBtn) {
-        closeBtn = document.createElement('button');
-        closeBtn.className = 'deep-text-close';
-        closeBtn.textContent = '×';
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.closeDeepText();
-            window._autoTextPt = null;
-        });
-        modal.appendChild(closeBtn);
-    }
-
-    modal.classList.remove('hidden');
+    // Modal disabled — secrets are discovered silently without a popup
 };
 
 window.closeDeepText = function() {
