@@ -2452,10 +2452,10 @@ function showInterpretationPanel(userVision) {
         g.appendChild(dotCirc);
         svg.appendChild(g);
 
-        // Let the WebGL shader know this star has a label so it can render the internal indicator
-        if (pt.mesh && pt.mesh.material.uniforms && pt.mesh.material.uniforms.uHasLabel) {
-            pt.mesh.material.uniforms.uHasLabel.value = 1.0;
-        }
+        // Do NOT mark stars with uHasLabel — removes warm orange glow indicator
+        // if (pt.mesh && pt.mesh.material.uniforms && pt.mesh.material.uniforms.uHasLabel) {
+        //     pt.mesh.material.uniforms.uHasLabel.value = 1.0;
+        // }
 
         var minZoom = 1.5 + Math.random() * 1.0;
         labelData.push({ pt: pt, el: el, g: g, hudLine: hudLine, dotCirc: dotCirc, anchorDot: anchorDot, offsetX: offsetX, offsetY: offsetY, alpha: 0, minZoom: minZoom, isConstellation: isConstellation, fullText: fullText, category: category });
@@ -2577,10 +2577,7 @@ function showInterpretationPanel(userVision) {
 
             // Anchor dot: always show near stars with labels, pulse when approaching
             if (item.anchorDot) {
-                item.anchorDot.style.left  = sx + 'px';
-                item.anchorDot.style.top   = sy + 'px';
-                item.anchorDot.style.opacity = isApproaching || shouldShow ? (isApproaching ? Math.min(0.7, hintAlpha * 5) : 0.9) : '0';
-                item.anchorDot.className = 'sky-dlabel-anchor-dot' + (shouldShow ? ' revealed' : (isApproaching ? ' hinting' : ''));
+                item.anchorDot.style.opacity = '0'; // Hidden — no visual circle markers
             }
             // Label pulsing hint class
             if (!shouldShow && isApproaching) {
@@ -3680,7 +3677,8 @@ function renderQ() {
             inp.type = 'number';
             inp.min = '1900';
             inp.max = new Date().getFullYear();
-            inp.placeholder = currentLang === 'he' ? 'שנת לידה, לדוגמה 1993' : 'Birth year, e.g. 1993';
+            inp.placeholder = '1993';
+            inp.dir = 'ltr';  // Year numbers are always LTR
             inp.style.textAlign = 'center';
             inp.style.letterSpacing = '0.2em';
             inp.style.fontSize = '1.6rem';
@@ -4962,9 +4960,9 @@ async function buildSignalField() {
                         // *** BLOOM FIX: activate bloom so the initial huge glow fades naturally
                         // to the normal calm baseGlow (0.55). Without this, bloomProgress=0 forever
                         // → glowValue stays at 3.55 creating a huge diffuse "ghost" image.
-                        window.isBloomTriggered = true;   // FIXED: was false — now bloom animates
-                        window.bloomProgress = 0.0;       // Start at max-glow, settle to calm
-                        window.bloomShockwave = null;      // Reset shockwave
+                        window.isBloomTriggered = true;
+                        window.bloomProgress = 0.28;  // Skip violent Phase-1 inhale — start directly at gentle expansion
+                        window.bloomShockwave = null;  // No shockwave jump
                         window.userConstellationName = userVision;
                         
                         // Show title immediately
