@@ -2887,7 +2887,7 @@ function initConstellationSystem(userVision) {
     // ── WEBGL GHOST GEOMETRY ─────────────────────────────────────────
     const ghostPlaneGeo = new THREE.PlaneGeometry(200, 200);
     const ghostLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false });
-    const ghostState = ghostDefs.map(g => ({ alpha: 0, group: null, lineMat: null, pointMats: [] }));
+    const ghostState = ghostDefs.map(g => ({ alpha: 0, group: null, lineMat: null, lineMesh: null, pointMats: [], starMeshes: [] }));
     
     ghostDefs.forEach((ghost, gi) => {
         const gs = ghostState[gi];
@@ -2913,9 +2913,11 @@ function initConstellationSystem(userVision) {
         gs.lineMat = ghostLineMat.clone();
         gs.lineMat.color = new THREE.Color(1, 1, 1); // white lines — same as user's constellation
         const lineMesh = new THREE.LineSegments(lineGeo, gs.lineMat);
+        gs.lineMesh = lineMesh; // store reference for dynamic updates
         gs.group.add(lineMesh);
 
-        // Create Points
+        // Create Points — store mesh references for animation
+        gs.starMeshes = [];
         ghost.pts.forEach(pt => {
             const gAngle = Math.random() * Math.PI; // unique beam direction per ghost star
             const mat = new THREE.ShaderMaterial({
@@ -2924,7 +2926,7 @@ function initConstellationSystem(userVision) {
                 uniforms: {
                     uTime: { value: Math.random() * 100 },
                     uColor: { value: c },
-                    uType: { value: 0.0 }, // bladeFn — same single-beam prism look as user's constellation
+                    uType: { value: 0.0 },
                     uOpacity: { value: 0.0 },
                     uGlow: { value: 0.45 },
                     uState: { value: 1.0 },
@@ -2938,9 +2940,10 @@ function initConstellationSystem(userVision) {
             });
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
-            mesh.rotation.z = gAngle; // rotated prism beam
+            mesh.rotation.z = gAngle;
             mesh.scale.set(1.4, 1.4, 1);
             mesh.position.set(pt.x, pt.y, 0);
+            gs.starMeshes.push(mesh);
             gs.group.add(mesh);
         });
 
@@ -3064,23 +3067,47 @@ function initConstellationSystem(userVision) {
                 const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
-                // Each ghost self-rotates around its own Y axis with a unique phase
-                if (gs.selfRotY === undefined) gs.selfRotY = gi * 0.42; // unique starting angle per ghost
-                gs.selfRotY += 0.0004;
+
+                // Self-rotation: faster + X-axis wobble for organic 3D feel
+                if (gs.selfRotY === undefined) gs.selfRotY = gi * 0.42;
+                gs.selfRotY += 0.006; // much faster than before
                 gs.group.rotation.y = gs.selfRotY;
-                gs.group.rotation.x = 0; 
+                gs.group.rotation.x = Math.sin(gs.selfRotY * 0.31 + gi * 0.7) * 0.4;
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
+                // ── Animate star positions within the constellation ────────
+                if (gs.starMeshes && gs.starMeshes.length > 0) {
+                    const t = gs.selfRotY;
+                    gs.starMeshes.forEach((mesh, si) => {
+                        const origPt = ghost.pts[si];
+                        if (!origPt) return;
+                        const phase = si * 1.618 + gi * 2.3;
+                        mesh.position.x = origPt.x + Math.sin(t * 0.45 + phase) * 7;
+                        mesh.position.y = origPt.y + Math.cos(t * 0.33 + phase) * 7;
+                    });
+                    // Update line geometry to follow animated star positions
+                    if (gs.lineMesh) {
+                        const posAttr = gs.lineMesh.geometry.getAttribute('position');
+                        let idx = 0;
+                        ghost.lines.forEach(([a, b]) => {
+                            const ma = gs.starMeshes[a];
+                            const mb = gs.starMeshes[b];
+                            if (ma && mb) {
+                                posAttr.setXYZ(idx,   ma.position.x, ma.position.y, 0);
+                                posAttr.setXYZ(idx+1, mb.position.x, mb.position.y, 0);
+                            }
+                            idx += 2;
+                        });
+                        posAttr.needsUpdate = true;
+                    }
+                }
+
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
-                // At low cam.scale the group shrinks, making stars tiny (< 30px).
-                // Counter-scale every Mesh child so stars keep a minimum screen size.
-                const BASE_STAR_PX = 200 * 1.4;  // plane geometry (200) × original scale (1.4)
-                const MIN_STAR_PX  = 72;          // minimum visible size in screen pixels
+                const BASE_STAR_PX = 200 * 1.4;
+                const MIN_STAR_PX  = 72;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
                 gs.group.children.forEach(child => {
-                    if (child.isMesh) {
-                        child.scale.set(1.4 * compensation, 1.4 * compensation, 1);
-                    }
+                    if (child.isMesh) child.scale.set(1.4 * compensation, 1.4 * compensation, 1);
                 });
             }
             // Boost ghost brightness in galaxy view so they're clearly visible
@@ -3768,11 +3795,8 @@ function renderQ() {
             const backBtn = document.createElement('button');
             backBtn.id = 'q-back-fixed';
             backBtn.className = 'btn';
-            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:6px 16px; font-size:0.8rem; display:flex; align-items:center; justify-content:center;';
-            const arrowSpan = document.createElement('span');
-            arrowSpan.textContent = '\u2192';
-            arrowSpan.style.cssText = 'font-size:1.6rem; line-height:1; display:block;';
-            backBtn.appendChild(arrowSpan);
+            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:6px 20px; font-size:1.4rem; line-height:1; display:inline-flex; align-items:center; justify-content:center;';
+            backBtn.textContent = '\u2192'; // \u2192 RTL back arrow
             backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
             backBtn.onclick = () => {
                 qIndex--;
@@ -5070,44 +5094,41 @@ async function buildSignalField() {
         guide.id = 'discovery-guide';
         const isHe = (typeof currentLang !== 'undefined') ? currentLang === 'he' : true;
 
-        // Permanent controls guide — always visible in the sky view
         const controls = isHe ? [
             '\u05d2\u05e8\u05d5\u05e8 \u2192 \u05ea\u05e0\u05d5\u05e2\u05d4',
             '\u05d2\u05dc\u05d2\u05dc \u2192 \u05e7\u05e8\u05d5\u05d1 / \u05e8\u05d7\u05d5\u05e7',
             '\u05dc\u05d7\u05e5 \u05d9\u05de\u05d9\u05e0\u05d9 + \u05d2\u05e8\u05d5\u05e8 \u2192 \u05e1\u05d9\u05d1\u05d5\u05d1',
-            '\u05dc\u05d7\u05e5 \u05e2\u05dc \u05e9\u05dd \u05e7\u05d5\u05e0\u05e1\u05d8\u05dc\u05e6\u05d9\u05d4 \u2192 \u05d4\u05ea\u05e7\u05e8\u05d1'
+            '\u05dc\u05d7\u05e5 \u05e9\u05dd \u2192 \u05d7\u05e7\u05d5\u05e8'
         ] : [
             'Drag \u2192 move',
             'Scroll \u2192 near / far',
             'Right-click + drag \u2192 rotate',
-            'Click constellation name \u2192 explore'
+            'Click name \u2192 explore'
         ];
 
         guide.innerHTML = controls.map(c =>
-            `<span style="margin:0 6px; opacity:0.75; white-space:nowrap;">${c}</span>`
-        ).join('<span style="opacity:0.35;">\u00b7</span>');
+            `<span style="margin:0 8px; white-space:nowrap;">${c}</span>`
+        ).join('<span style="opacity:0.3;">\u00b7</span>');
 
         Object.assign(guide.style, {
             position: 'absolute',
             bottom: '72px',
-            left: '0',
-            right: '0',
+            left: '0', right: '0',
             textAlign: 'center',
             fontFamily: 'SimplerMono, Courier New, monospace',
-            fontSize: '0.68rem',
-            letterSpacing: '0.06em',
-            color: '#cce8ff',
+            fontSize: '0.65rem',
+            letterSpacing: '0.05em',
+            color: 'rgba(255,255,255,0.55)',
             opacity: '0',
             pointerEvents: 'none',
-            transition: 'opacity 1.2s ease',
+            transition: 'opacity 1.5s ease',
             zIndex: '50',
             direction: isHe ? 'rtl' : 'ltr'
         });
 
         skyScreen.appendChild(guide);
         window.discoveryGuideReady = true;
-        // Fade in after a short delay
-        setTimeout(() => { guide.style.opacity = '0.85'; }, 1800);
+        window._guideRevealScheduled = false; // shown only after prism reveals
     })();
 }
 
@@ -5258,29 +5279,9 @@ function skyLoop(ts) {
             }
         }
 
-        // --- Dynamic sky guide hints (update based on zoom + state) ---
+        // Sky guide: hidden — permanent discovery-guide replaces it
         const skyGuideEl = document.getElementById('ui-skyguide');
-        if (skyGuideEl && window.skyRevealState === 'revealed') {
-            const isHe = (typeof currentLang !== 'undefined') ? currentLang === 'he' : true;
-            let guideText;
-            if (cam.scale < 0.42) {
-                // Far out galaxy view — exploring other constellations
-                guideText = isHe
-                    ? 'גרור/י לשוטט · לחץ/י על צורה להתקרב'
-                    : 'Drag to wander · Click a shape to explore';
-            } else if (cam.scale < 1.25) {
-                // Mid zoom — personal prism visible
-                guideText = isHe
-                    ? 'גלגל/י פנימה לגלות · גרור/י לנוע'
-                    : 'Scroll in to discover · Drag to move';
-            } else {
-                // Zoomed in — inside prism, text labels reveal + rotation hint
-                guideText = isHe
-                    ? 'גלגל/י לגלות · לחץ ימני + גרור לסיבוב'
-                    : 'Scroll to reveal · Right-click + drag to rotate';
-            }
-            if (skyGuideEl.textContent !== guideText) skyGuideEl.textContent = guideText;
-        }
+        if (skyGuideEl) skyGuideEl.style.display = 'none';
 
         // --- Dwell interaction: 2s stillness → bloom pulse in the prism ---
         if (window.skyRevealState === 'revealed') {
@@ -5600,14 +5601,14 @@ function skyLoop(ts) {
         const lang = (typeof currentLang !== 'undefined') ? currentLang : 'he';
         const phase = window.discoveryPhase || 0;
 
-        // Permanent guide — just keep it visible (no phase logic needed)
         if (guide) {
-            // Stay visible throughout, but hide during recognition
-            if (window.skyRevealState === 'recognition') {
-                guide.style.opacity = '0';
-            } else if (parseFloat(guide.style.opacity) < 0.8) {
-                guide.style.opacity = '0.85';
+            // Show only after prism is revealed (not during recognition/line-drawing phase)
+            if (window.skyRevealState === 'revealed' && !window._guideRevealScheduled) {
+                window._guideRevealScheduled = true;
+                setTimeout(() => { if (guide) guide.style.opacity = '0.85'; }, 2000);
             }
+            // Hide during recognition
+            if (window.skyRevealState === 'recognition') guide.style.opacity = '0';
         }
     })();
 }
