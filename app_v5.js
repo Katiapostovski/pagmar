@@ -2864,7 +2864,12 @@ function initConstellationSystem(userVision) {
         const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
             .filter(g => {
                 const name = (g.nameHe || g.nameEn || '').trim();
-                const blocklist = ['\u05d7\u05ea\u05d5\u05dc', 'cat', '\u05d9\u05d4\u05dc\u05d5\u05dd', 'diamond', '\u05d9\u05d4\u05dc\u05d5\u05dd'];
+                const blocklist = [
+                    '\u05d7\u05ea\u05d5\u05dc', 'cat',
+                    '\u05d9\u05d4\u05dc\u05d5\u05dd', 'diamond',
+                    '\u05e4\u05e8\u05d4', 'cow',
+                    '\u05e9\u05d5\u05e2\u05dc', '\u05e9\u05d5\u05e2\u05dc \u05e8\u05d0\u05e9\u05d5\u05df', 'fox'
+                ];
                 return !blocklist.some(b => name.toLowerCase() === b.toLowerCase());
             });
         // Persist cleaned list permanently
@@ -4037,8 +4042,7 @@ function initDiscoverySystem() {
 
     // ── 8. POSITION TEXT MESSAGES ───────────────────────────────────
     const posMsgs = [
-        { min:550,  max:1100, text:'מתרחקת מהקונסטלציה שלך...' },
-        { min:1100, max:2400, text:'קונסטלציות של מבקרים קודמים מופיעות — לחצ/י על שמותיהן לקרוא.' },
+        { min:1100, max:2400, text:'\u05e7\u05d5\u05e0\u05e1\u05d8\u05dc\u05e6\u05d9\u05d5\u05ea \u05e9\u05dc \u05de\u05d1\u05e7\u05e8\u05d9\u05dd \u05e7\u05d5\u05d3\u05de\u05d9\u05dd \u05de\u05d5\u05e4\u05d9\u05e2\u05d5\u05ea \u2014 \u05dc\u05d7\u05e5/\u05d9 \u05e2\u05dc \u05e9\u05de\u05d5\u05ea\u05d9\u05d4\u05df \u05dc\u05e7\u05e8\u05d5\u05d0.' },
         { min:2400, max:5000, text:'שמיים שחולקו על ידי אחרים שחיפשו את אותו הדבר.' },
         { min:5000, max:Infinity, text:'שולי הגלקסיה. מעטים הגיעו עד כאן.' },
     ];
@@ -4638,12 +4642,12 @@ async function buildSignalField() {
     const nonMajorPts = skyPoints.filter(p => !p.isMajor && !p.isVertexStar && !p.isQPathStar);
 
     // All Q-shape stars: sequential drawing order — ONE unified reveal
-    // Fast stagger so the whole constellation outline appears in ~1.5s, not 5s.
-    let qDelay = 0.0;
+    // ~5s total: each star pops in one after another, building the prism shape gradually
+    let qDelay = 0.4; // brief pause before first star
     allQPts.forEach((pt) => {
         pt.revealDelay = qDelay;
-        if (pt.isVertexStar) pt.isFirstWave = true; // vertex stars still chime
-        qDelay += 0.05 + rand() * 0.03; // 0.05–0.08s per star → full shape in ~1.5s
+        if (pt.isVertexStar) pt.isFirstWave = true; // vertex stars chime
+        qDelay += 0.12 + rand() * 0.06; // 0.12–0.18s per star → ~5s for 35 stars
     });
     const qTotal = qDelay;
 
@@ -5622,7 +5626,7 @@ function updatePoint(pt, dt, isClosest) {
     // ── STAGGERED APPEAR: fade in after revealDelay (only during revelation, not recognition) ──
     if (pt.revealDelay !== undefined && pt.appearP < 1.0 && window.skyRevealState === 'revealed') {
         if (skyIntroTime >= pt.revealDelay) {
-            pt.appearP = clamp(pt.appearP + dt * 0.8, 0, 1); // ~1.25s per star — quick but visible
+            pt.appearP = clamp(pt.appearP + dt * 3.5, 0, 1); // ~0.29s per star — crisp one-by-one pop
             // Play a subtle chime when first-wave stars appear (only in revealed mode)
             if (pt.isFirstWave && pt.appearP > 0.01 && !pt._chimePlayedOnAppear) {
                 pt._chimePlayedOnAppear = true;
