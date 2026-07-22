@@ -644,6 +644,7 @@ let skyMeshes = [];
 // Global 3D rotation
 let globalRotX = 0, globalRotY = 0;
 let targetGlobalRotX = 0, targetGlobalRotY = 0;
+let ghostRotY = 0; // Independent slow rotation for ghost constellations
 
 let webglLines;
 let webglLineGeo;
@@ -2860,7 +2861,13 @@ function initConstellationSystem(userVision) {
     ];
 
     try {
-        const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]');
+        const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
+            .filter(g => {
+                const name = (g.nameHe || g.nameEn || '').trim();
+                return name !== '\u05d7\u05ea\u05d5\u05dc' && name.toLowerCase() !== 'cat';
+            });
+        // Persist the cleaned-up list (removes cat permanently from localStorage)
+        try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
         saved.forEach((g, i) => {
             const seed = (i + 1) * 137.5;
             const angle = seed * (Math.PI / 180);
@@ -3052,11 +3059,12 @@ function initConstellationSystem(userVision) {
 
             // Update WebGL uniforms and position
             if (gs.group) {
-                // Ghost constellations are always frontal — not affected by global prism rotation
-                const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
+                // Ghost constellations use their own slow independent rotation (ghostRotY)
+                // so they revolve gently in galaxy view but are NOT affected by prism manual rotation
+                const rp = rotate3D(ghost.offset.x, ghost.offset.y, 0, 0, ghostRotY);
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
-                // Group internal rotation: always face the viewer (no globalRot applied)
+                // Group internal rotation: always face the viewer (frontal)
                 gs.group.rotation.x = 0;
                 gs.group.rotation.y = 0; 
                 gs.group.scale.set(cam.scale, cam.scale, 1);
@@ -3146,8 +3154,8 @@ function initConstellationSystem(userVision) {
             }
             
             if (a > 0.04) {
-                // Ghost label: always frontal, no global rotation applied
-                const rp2 = { x: ghost.offset.x, y: ghost.offset.y };
+                // Ghost label: uses ghostRotY for gentle auto-rotation (not prism globalRot)
+                const rp2 = rotate3D(ghost.offset.x, ghost.offset.y, 0, 0, ghostRotY);
                 const s2 = w2s(rp2.x, rp2.y);
                 const col2 = ghost.color;
                 
@@ -5166,8 +5174,9 @@ function skyLoop(ts) {
     if (window.skyRevealState === 'revealed') {
         // Auto drift the 3D object rotation instead of panning the camera
         if (!isDragging) {
-            targetGlobalRotY += 0.0005; // Very slow continuous auto-rotation
+            targetGlobalRotY += 0.0005; // Very slow continuous auto-rotation for user prism
         }
+        ghostRotY += 0.00035; // Ghost constellations rotate independently at their own pace
         
         // Smoothly interpolate rotation
         globalRotX = lerp(globalRotX, targetGlobalRotX, 0.05);
@@ -5233,10 +5242,10 @@ function skyLoop(ts) {
                     ? 'גלגל/י פנימה לגלות · גרור/י לנוע'
                     : 'Scroll in to discover · Drag to move';
             } else {
-                // Zoomed in — inside prism, text labels reveal
+                // Zoomed in — inside prism, text labels reveal + rotation hint
                 guideText = isHe
-                    ? 'גלגל/י פנימה — יתגלה טקסט · גלגל/י החוצה לטקסט הבא'
-                    : 'Scroll in to reveal · Scroll out for next';
+                    ? 'גלגל/י לגלות · לחץ ימני + גרור לסיבוב'
+                    : 'Scroll to reveal · Right-click + drag to rotate';
             }
             if (skyGuideEl.textContent !== guideText) skyGuideEl.textContent = guideText;
         }
