@@ -3671,19 +3671,16 @@ function renderQ() {
         inp.dir = currentLang === 'he' ? 'rtl' : 'ltr';
         if (q.placeholder) inp.placeholder = q.placeholder;
 
-        // ── Year-only special input ──────────────────────────────────
+        // ── Date input (dd/mm/yyyy as text) with live age preview ──
         let yearPreview = null;
         if (qData.type === 'year') {
-            inp.type = 'number';
-            inp.min = '1900';
-            inp.max = new Date().getFullYear();
-            inp.placeholder = '1993';
-            inp.dir = 'ltr';  // Year numbers are always LTR
+            inp.type = 'text';
+            inp.placeholder = 'dd/mm/yyyy';
+            inp.dir = 'ltr';
+            inp.maxLength = 10;
             inp.style.textAlign = 'center';
-            inp.style.letterSpacing = '0.2em';
-            inp.style.fontSize = '1.6rem';
-            // remove spin arrows
-            inp.style.MozAppearance = 'textfield';
+            inp.style.letterSpacing = '0.18em';
+            inp.style.fontSize = '1.4rem';
 
             yearPreview = document.createElement('p');
             yearPreview.style.cssText = [
@@ -3694,20 +3691,29 @@ function renderQ() {
             ].join(';');
 
             inp.addEventListener('input', () => {
-                const yr = parseInt(inp.value, 10);
-                const now = new Date().getFullYear();
-                if (!isNaN(yr) && yr > 1900 && yr <= now) {
-                    const diff = now - yr;
-                    if (currentLang === 'he') {
-                        yearPreview.textContent = 'לפני ' + diff + ' שנ' + (diff === 1 ? 'ה' : 'ים');
-                    } else {
-                        yearPreview.textContent = diff + (diff === 1 ? ' year ago' : ' years ago');
+                const val = inp.value.trim();
+                // Accept dd/mm/yyyy
+                const parts = val.split('/');
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const y = parseInt(parts[2], 10);
+                    const dob = new Date(y, m, d);
+                    const now = new Date();
+                    if (!isNaN(dob.getTime()) && y > 1900 && y <= now.getFullYear()) {
+                        let years = now.getFullYear() - y;
+                        if (now < new Date(now.getFullYear(), m, d)) years--;
+                        if (currentLang === 'he') {
+                            yearPreview.textContent = 'לפני ' + years + ' שנ' + (years === 1 ? 'ה' : 'ים');
+                        } else {
+                            yearPreview.textContent = years + (years === 1 ? ' year ago' : ' years ago');
+                        }
+                        yearPreview.style.opacity = '1';
+                        return;
                     }
-                    yearPreview.style.opacity = '1';
-                } else {
-                    yearPreview.textContent = '';
-                    yearPreview.style.opacity = '0';
                 }
+                yearPreview.textContent = '';
+                yearPreview.style.opacity = '0';
             });
         } else {
             inp.type = 'text';
@@ -3732,13 +3738,26 @@ function renderQ() {
         nextBtn.innerText = UI_TEXTS[currentLang].btnNext;
         nextBtn.onclick = () => { 
             if (inp.value.trim() !== '') {
-                // For year type, store the human-readable string
+                // For year/date type, calculate age and store as Hebrew text
                 if (qData.type === 'year') {
-                    const yr = parseInt(inp.value.trim(), 10);
-                    const diff = new Date().getFullYear() - yr;
-                    answers[qData.id] = currentLang === 'he'
-                        ? 'לפני ' + diff + ' שנ' + (diff === 1 ? 'ה' : 'ים')
-                        : diff + (diff === 1 ? ' year ago' : ' years ago');
+                    const val = inp.value.trim();
+                    const parts = val.split('/');
+                    let ageStr = val;
+                    if (parts.length === 3) {
+                        const d = parseInt(parts[0], 10);
+                        const m = parseInt(parts[1], 10) - 1;
+                        const y = parseInt(parts[2], 10);
+                        const dob = new Date(y, m, d);
+                        const now = new Date();
+                        if (!isNaN(dob.getTime()) && y > 1900) {
+                            let years = now.getFullYear() - y;
+                            if (now < new Date(now.getFullYear(), m, d)) years--;
+                            ageStr = currentLang === 'he'
+                                ? 'לפני ' + years + ' שנ' + (years === 1 ? 'ה' : 'ים')
+                                : years + (years === 1 ? ' year ago' : ' years ago');
+                        }
+                    }
+                    answers[qData.id] = ageStr;
                 } else {
                     answers[qData.id] = inp.value.trim();
                 }
