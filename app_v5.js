@@ -4089,33 +4089,21 @@ function initDiscoverySystem() {
         if (window.skyRevealState === 'revealed') {
             secrets.forEach((s, i) => {
                 const wDist = Math.hypot(s.wx - camObj.x, s.wy - camObj.y);
-                const PROX = 350;
+                const PROX = 700;   // was 350 — now easier to get close enough
                 if (wDist < PROX) {
                     const tgt = Math.max(0, (1 - wDist/PROX)*0.9);
                     s.alpha += (tgt - s.alpha)*0.05;
-                    if (!s.found && wDist < 130) {
+                    if (!s.found && wDist < 400) {  // was 130 — much more forgiving now
                         s.found = true; secretsFound++;
                         updateCounter();
                         revealSecret(s.text);
                     }
-                    const sx = (s.wx - camObj.x)*camObj.scale + CX;
-                    const sy = (s.wy - camObj.y)*camObj.scale + CY;
-                    if (sx >= -20 && sx <= W+20 && sy >= -20 && sy <= H+20) {
-                        const pulse = 0.5 + 0.5*Math.sin(totalT*2.2 + i*1.3);
-                        const sr2 = 14 + pulse*10;
-                        const sg = actx.createRadialGradient(sx, sy, 0, sx, sy, sr2);
-                        sg.addColorStop(0,   `rgba(255,235,190,${s.alpha*0.9})`);
-                        sg.addColorStop(0.5, `rgba(255,195,90,${s.alpha*0.35})`);
-                        sg.addColorStop(1,   'rgba(255,180,60,0)');
-                        actx.fillStyle = sg;
-                        actx.beginPath();
-                        actx.arc(sx, sy, sr2, 0, Math.PI*2);
-                        actx.fill();
-                    }
+                    // No visual circles — discovery is purely by proximity
                 } else {
                     s.alpha *= 0.93;
                 }
             });
+
         }
 
         // ── POSITION TEXT ─────────────────────────────────────────
@@ -5148,7 +5136,18 @@ function skyLoop(ts) {
             window.titleRevealed = true;
             setTimeout(() => {
                 showInterpretationPanel(window.userConstellationName);
-                targetCam.scale = Math.max(0.1, vp.startScale * 0.5); // Zoom out slowly for wander mode
+                // Smooth, slow zoom-out — avoid sudden jump by animating over ~3 seconds
+                const zoomTarget = Math.max(0.1, vp.startScale * 0.5);
+                const steps = 90; // ~3 seconds at 30fps
+                let step = 0;
+                const startScale = cam.scale;
+                const zoomTimer = setInterval(() => {
+                    step++;
+                    const t = step / steps;
+                    const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease-in-out
+                    targetCam.scale = startScale + (zoomTarget - startScale) * eased;
+                    if (step >= steps) clearInterval(zoomTimer);
+                }, 33);
                 const skyUi = document.querySelector('.sky-ui');
                 if (skyUi) {
                     skyUi.style.display = 'flex';
@@ -6657,4 +6656,94 @@ window.showDeepText = function(text) {
             window.closeDeepText();
             window._autoTextPt = null;
         });
-        modal.appendChild(closeBtn)
+        modal.appendChild(closeBtn);
+    }
+
+    modal.classList.remove('hidden');
+};
+
+window.closeDeepText = function() {
+    const modal = document.getElementById('deep-text-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+function toggleSound() {
+    const muted = AudioEngine.toggleMute();
+    const btn = document.getElementById('btn-sound-toggle');
+    if (btn) {
+        btn.textContent = muted ? '—' : '♪';
+        btn.style.opacity = muted ? '0.3' : '0.6';
+        btn.title = muted ? 'Sound off' : 'Sound on';
+    }
+}
+
+function toggleLegend() {
+    const modal = document.getElementById('legend-modal');
+    if (!modal) return;
+    if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        modal.style.opacity = 0;
+        setTimeout(() => modal.style.opacity = 1, 10);
+    } else {
+        modal.style.opacity = 0;
+        setTimeout(() => modal.classList.add('hidden'), 400);
+    }
+}
+
+
+// ======================================================
+// BOOT
+// ======================================================
+window.toggleLegend = toggleLegend; // expose globally for onclick
+buildDOM();
+updateLang('he'); // Initialize text and default to Hebrew
+
+// ── GLOBAL LIGHT-POINT CURSOR (all screens) ──
+(function initGlobalCursor() {
+    document.body.style.cursor = 'none'; // hide native cursor everywhere
+    const gc = document.getElementById('global-cursor');
+    if (!gc) return;
+    document.addEventListener('mousemove', e => {
+        gc.style.left = e.clientX + 'px';
+        gc.style.top  = e.clientY + 'px';
+    }, { passive: true });
+    // Pulse on click
+    document.addEventListener('mousedown', () => {
+        gc.style.transform = 'translate(-50%,-50%) scale(1.8)';
+        gc.style.boxShadow = '0 0 20px 8px rgba(200,180,255,0.7), 0 0 5px 2px rgba(255,255,255,1)';
+    });
+    document.addEventListener('mouseup', () => {
+        gc.style.transform = 'translate(-50%,-50%) scale(1)';
+        gc.style.boxShadow = '0 0 12px 4px rgba(200,180,255,0.5), 0 0 3px 1px rgba(255,255,255,0.9)';
+    });
+})();
+
+// ── DAWN TRANSITION EVENTS ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const btnSunrise = document.getElementById('btn-sunrise');
+    const dawnOverlay = document.getElementById('dawn-overlay');
+    const epilogueScreen = document.getElementById('epilogue-screen');
+    const btnRestart = document.getElementById('btn-restart');
+    
+    if (btnSunrise && dawnOverlay && epilogueScreen) {
+        btnSunrise.addEventListener('click', () => {
+            // Hide button
+            btnSunrise.classList.remove('visible');
+            btnSunrise.style.display = 'none';
+            
+            // Trigger sunrise fade
+            dawnOverlay.classList.add('active');
+            epilogueScreen.classList.add('active');
+            
+            // Optionally fade out the WebGL elements slightly behind the dawn
+            const skyScreen = document.getElementById('sky-screen');
+            if (skyScreen) skyScreen.style.opacity = '0';
+        });
+    }
+
+    if (btnRestart) {
+        btnRestart.addEventListener('click', () => {
+            location.reload(); // Hard refresh to reset the entire experience
+        });
+    }
+});
