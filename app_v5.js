@@ -3052,16 +3052,13 @@ function initConstellationSystem(userVision) {
 
             // Update WebGL uniforms and position
             if (gs.group) {
-                // Apply global rotation to the ghost's base offset
-                const rp = rotate3D(ghost.offset.x, ghost.offset.y, 0, globalRotX, globalRotY);
-                // Convert rotated world position to screen-relative offsets for ThreeJS Group
-                // ThreeJS handles center at (0,0), so no W*0.5 offset. 
-                // But w2s adds W*0.5, so we just do it manually:
+                // Ghost constellations are always frontal — not affected by global prism rotation
+                const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
-                // Group internal rotation to match perspective
-                gs.group.rotation.x = globalRotX;
-                gs.group.rotation.y = -globalRotY; 
+                // Group internal rotation: always face the viewer (no globalRot applied)
+                gs.group.rotation.x = 0;
+                gs.group.rotation.y = 0; 
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
@@ -3149,7 +3146,8 @@ function initConstellationSystem(userVision) {
             }
             
             if (a > 0.04) {
-                const rp2 = rotate3D(ghost.offset.x, ghost.offset.y, 0, globalRotX, globalRotY);
+                // Ghost label: always frontal, no global rotation applied
+                const rp2 = { x: ghost.offset.x, y: ghost.offset.y };
                 const s2 = w2s(rp2.x, rp2.y);
                 const col2 = ghost.color;
                 
@@ -3755,7 +3753,7 @@ function renderQ() {
             const backBtn = document.createElement('button');
             backBtn.id = 'q-back-fixed';
             backBtn.className = 'btn';
-            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:8px 18px; font-size:1rem;';
+            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:8px 22px; font-size:1.5rem; line-height:1;';
             backBtn.textContent = '\u2192'; // → arrow (RTL: points back = right)
             backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
             backBtn.onclick = () => {
@@ -6015,12 +6013,19 @@ function initCameraEvents() {
     const el = document.getElementById('screen-sky');
     const cursor = document.getElementById('global-cursor') || document.getElementById('sky-cursor');
 
+    // Track drag mode: left-click = pan, right-click = rotate
+    let dragMode = 'pan';
+
     el.addEventListener('mousedown', e => {
         if (window.skyRevealState === 'recognition') return;
-        isDragging = true; 
+        isDragging = true;
         lastMouse = { x: e.clientX, y: e.clientY };
         window.dragDist = 0;
+        // Left button (0) = pan/explore, Right button (2) = rotate prism
+        dragMode = (e.button === 2) ? 'rotate' : 'pan';
     });
+    // Prevent context menu on right-click so rotation works smoothly
+    el.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('mouseup', e => { 
         isDragging = false; 
         if (window.dragDist < 5) {
@@ -6058,9 +6063,10 @@ function initCameraEvents() {
         window.dragDist = (window.dragDist || 0) + Math.hypot(e.movementX, e.movementY);
         window._dwellLastMove = performance.now();
         
-        // When zoomed into the prism (scale > 0.8): drag rotates the constellation
-        // When in galaxy view (scale ≤ 0.8): drag pans the camera
-        if (window.skyRevealState === 'revealed' && cam.scale > 0.8) {
+        // Left-click drag = PAN (explore within the prism or galaxy)
+        // Right-click drag = ROTATE the prism (only when revealed and zoomed in)
+        const wantRotate = dragMode === 'rotate' && window.skyRevealState === 'revealed' && cam.scale > 0.8;
+        if (wantRotate) {
             targetGlobalRotY += e.movementX * 0.008;
             targetGlobalRotX += e.movementY * 0.008;
         } else {
