@@ -3118,7 +3118,10 @@ function initConstellationSystem(userVision) {
                 ].join(';');
                 gs.labelEl.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showGhostInfoPanel(ghost, e.clientX, e.clientY);
+                    // Zoom camera into this ghost constellation
+                    targetCam.x = ghost.offset.x;
+                    targetCam.y = ghost.offset.y;
+                    targetCam.scale = 1.8;
                 });
                 gs.labelEl.addEventListener('mouseover', () => {
                     gs.isHovered = true;
@@ -3765,10 +3768,10 @@ function renderQ() {
             const backBtn = document.createElement('button');
             backBtn.id = 'q-back-fixed';
             backBtn.className = 'btn';
-            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:6px 14px; font-size:0.8rem;';
+            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:6px 16px; font-size:0.8rem; display:flex; align-items:center; justify-content:center;';
             const arrowSpan = document.createElement('span');
-            arrowSpan.textContent = '\u2192'; // → RTL back arrow
-            arrowSpan.style.cssText = 'font-size:1.6rem; line-height:0; vertical-align:middle; display:inline-block;';
+            arrowSpan.textContent = '\u2192';
+            arrowSpan.style.cssText = 'font-size:1.6rem; line-height:1; display:block;';
             backBtn.appendChild(arrowSpan);
             backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
             backBtn.onclick = () => {
@@ -5065,24 +5068,46 @@ async function buildSignalField() {
 
         const guide = document.createElement('div');
         guide.id = 'discovery-guide';
-        Object.assign(guide.style, {
-            position: 'absolute', bottom: '80px',
-            left: '0', right: '0',
-            textAlign: 'center',
-            fontFamily: 'serif', fontSize: '1rem',
-            color: '#fff', opacity: '0.5',
-            pointerEvents: 'none',
-            transition: 'opacity 0.8s ease',
-            zIndex: '50'
-        });
-        guide.textContent = '';
-        skyScreen.appendChild(guide);
+        const isHe = (typeof currentLang !== 'undefined') ? currentLang === 'he' : true;
 
-        // Initialise discovery state
-        window.discoveryPhase = 0;
-        window.discoveryMoveAccum = 0;
-        window.discoveryPhase2Time = 0;
+        // Permanent controls guide — always visible in the sky view
+        const controls = isHe ? [
+            '\u05d2\u05e8\u05d5\u05e8 \u2192 \u05ea\u05e0\u05d5\u05e2\u05d4',
+            '\u05d2\u05dc\u05d2\u05dc \u2192 \u05e7\u05e8\u05d5\u05d1 / \u05e8\u05d7\u05d5\u05e7',
+            '\u05dc\u05d7\u05e5 \u05d9\u05de\u05d9\u05e0\u05d9 + \u05d2\u05e8\u05d5\u05e8 \u2192 \u05e1\u05d9\u05d1\u05d5\u05d1',
+            '\u05dc\u05d7\u05e5 \u05e2\u05dc \u05e9\u05dd \u05e7\u05d5\u05e0\u05e1\u05d8\u05dc\u05e6\u05d9\u05d4 \u2192 \u05d4\u05ea\u05e7\u05e8\u05d1'
+        ] : [
+            'Drag \u2192 move',
+            'Scroll \u2192 near / far',
+            'Right-click + drag \u2192 rotate',
+            'Click constellation name \u2192 explore'
+        ];
+
+        guide.innerHTML = controls.map(c =>
+            `<span style="margin:0 6px; opacity:0.75; white-space:nowrap;">${c}</span>`
+        ).join('<span style="opacity:0.35;">\u00b7</span>');
+
+        Object.assign(guide.style, {
+            position: 'absolute',
+            bottom: '72px',
+            left: '0',
+            right: '0',
+            textAlign: 'center',
+            fontFamily: 'SimplerMono, Courier New, monospace',
+            fontSize: '0.68rem',
+            letterSpacing: '0.06em',
+            color: '#cce8ff',
+            opacity: '0',
+            pointerEvents: 'none',
+            transition: 'opacity 1.2s ease',
+            zIndex: '50',
+            direction: isHe ? 'rtl' : 'ltr'
+        });
+
+        skyScreen.appendChild(guide);
         window.discoveryGuideReady = true;
+        // Fade in after a short delay
+        setTimeout(() => { guide.style.opacity = '0.85'; }, 1800);
     })();
 }
 
@@ -5575,31 +5600,14 @@ function skyLoop(ts) {
         const lang = (typeof currentLang !== 'undefined') ? currentLang : 'he';
         const phase = window.discoveryPhase || 0;
 
-        if (phase === 0) {
-            guide.textContent = (lang === 'he')
-                ? '\u05d2\u05e8\u05d5\u05e8/\u05d9 \u05dc\u05e0\u05d5\u05e2 \u00b7 \u05d2\u05dc\u05d2\u05dc/\u05d9 \u05dc\u05d6\u05d5\u05dd'
-                : 'Drag to move \u00b7 Scroll to zoom';
-            guide.style.opacity = '0.55';
-            // Advance after user has moved
-            if (camVelocity > 10) window.discoveryMoveAccum += dt;
-            if (window.discoveryMoveAccum >= 2) window.discoveryPhase = 1;
-        } else if (phase === 1) {
-            guide.textContent = (lang === 'he')
-                ? '\u05dc\u05d7\u05e5 \u05d9\u05de\u05d9\u05e0\u05d9 + \u05d2\u05e8\u05d5\u05e8 \u2192 \u05e1\u05d9\u05d1\u05d5\u05d1 \u05d4\u05e4\u05e8\u05d9\u05d6\u05de\u05d4'
-                : 'Right-click + drag \u2192 rotate your constellation';
-            guide.style.opacity = '0.55';
-            // Advance once user zooms in toward prism
-            if (cam.scale > 0.4) { window.discoveryPhase = 2; window.discoveryPhase2Time = 0; }
-        } else if (phase === 2) {
-            guide.textContent = (lang === 'he')
-                ? '\u05e2\u05e9\u05d9 \u05d6\u05d5\u05dd \u05d0\u05d0\u05d5\u05d8 \u05dc\u05d7\u05e7\u05d5\u05e8 \u05e7\u05d5\u05e0\u05e1\u05d8\u05dc\u05e6\u05d9\u05d5\u05ea \u05d0\u05d7\u05e8\u05d5\u05ea'
-                : 'Zoom out to explore other constellations';
-            window.discoveryPhase2Time += dt;
-            const fadeT = clamp(1 - (window.discoveryPhase2Time - 3) / 2, 0, 0.55);
-            guide.style.opacity = String(fadeT);
-            if (window.discoveryPhase2Time >= 5) { guide.style.opacity = '0'; window.discoveryPhase = 3; }
-        } else {
-            guide.style.opacity = '0';
+        // Permanent guide — just keep it visible (no phase logic needed)
+        if (guide) {
+            // Stay visible throughout, but hide during recognition
+            if (window.skyRevealState === 'recognition') {
+                guide.style.opacity = '0';
+            } else if (parseFloat(guide.style.opacity) < 0.8) {
+                guide.style.opacity = '0.85';
+            }
         }
     })();
 }
