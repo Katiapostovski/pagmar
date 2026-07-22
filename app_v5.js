@@ -3005,9 +3005,8 @@ function initConstellationSystem(userVision) {
         // 10-second delay requirement
         const timeMet = (typeof skyIntroTime !== 'undefined' && skyIntroTime > 10.0);
         
-        // Zoom-out requirement
-        // cam.scale typically goes from ~0.3 (out) to 1.35 (in)
-        const zoomFactor = Math.max(0, 1.0 - Math.max(0, (cam.scale - 0.5) / 0.3));
+        // Ghosts remain visible at any zoom level so the user can explore them
+        const zoomFactor = 1.0;
 
         const isHe = currentLang === 'he';
 
@@ -3163,34 +3162,9 @@ function initConstellationSystem(userVision) {
                 gs.labelEl.style.color = `${col2}1)`;
                 gs.labelEl.textContent = (isHeGhost ? ghost.nameHe : ghost.nameEn).toUpperCase();
                 
-                // Text card — appears only when close (a > 0.65) AND zoomed in (cam.scale > 1.1)
-                const textAlpha = Math.max(0, Math.min(1,
-                    (a - 0.65) / 0.25 * Math.min(1, (cam.scale - 1.0) / 0.4)
-                ));
-                if (textAlpha > 0.01) {
-                    const ghostText = isHeGhost
-                        ? (ghost.textHe || ghost.text || '')
-                        : (ghost.textEn || ghost.text || '');
-                    gs.infoEl.innerHTML = `
-                        <div style="
-                            font-size:0.65rem;
-                            letter-spacing:0.22em;
-                            color:${col2}${Math.min(0.6, textAlpha * 0.7)});
-                            margin-bottom:8px;
-                            text-transform:uppercase;
-                        ">${(isHeGhost ? ghost.nameHe : ghost.nameEn)}</div>
-                        <div style="
-                            color: rgba(220,220,235,${textAlpha * 0.85});
-                            font-size: 0.72rem;
-                        ">${ghostText}</div>`;
-                    gs.infoEl.style.display = 'block';
-                    gs.infoEl.style.left = s2.x + 'px';
-                    gs.infoEl.style.top = (s2.y + 65 * cam.scale) + 'px';
-                    gs.infoEl.style.opacity = textAlpha.toFixed(3);
-                } else {
-                    gs.infoEl.style.opacity = '0';
-                    if (gs.infoEl.style.opacity === '0') gs.infoEl.style.display = 'none';
-                }
+                // Text card — hidden (removed 'created by' description by design)
+                gs.infoEl.style.opacity = '0';
+                gs.infoEl.style.display = 'none';
             } else {
                 gs.labelEl.style.display = 'none';
                 gs.infoEl.style.display = 'none';
@@ -3773,26 +3747,17 @@ function renderQ() {
         // Only the button goes in wrap (input is in inputHolder above)
         wrap.appendChild(nextBtn);
 
-        // Back button: fixed top-right corner, always visible (from Q0 onwards = no back on Q0)
-        // Render into the questionnaire screen directly so it's always positioned correctly
+        // Back button: fixed top-right corner, styled like other .btn buttons, shows from Q1 onwards
         const qScreen2 = document.getElementById('screen-questionnaire');
         const existingBack = document.getElementById('q-back-fixed');
         if (existingBack) existingBack.remove();
         if (qIndex > 0 && qScreen2) {
             const backBtn = document.createElement('button');
             backBtn.id = 'q-back-fixed';
-            backBtn.style.cssText = [
-                'position:fixed', 'top:22px', 'right:22px', 'z-index:9999',
-                'background:transparent', 'border:none',
-                'color:rgba(255,255,255,0.55)', 'font-size:1.4rem',
-                'cursor:pointer', 'padding:8px 12px',
-                'transition:color 0.25s ease',
-                'font-family:var(--font-serif,serif)'
-            ].join(';');
-            backBtn.textContent = '\u2190'; // ← arrow
+            backBtn.className = 'btn';
+            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:8px 18px; font-size:1rem;';
+            backBtn.textContent = '\u2192'; // → arrow (RTL: points back = right)
             backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
-            backBtn.onmouseenter = () => backBtn.style.color = 'rgba(255,255,255,0.9)';
-            backBtn.onmouseleave = () => backBtn.style.color = 'rgba(255,255,255,0.55)';
             backBtn.onclick = () => {
                 qIndex--;
                 renderQ();
@@ -6091,11 +6056,17 @@ function initCameraEvents() {
         if (cursor) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; }
         if (!isDragging) return;
         window.dragDist = (window.dragDist || 0) + Math.hypot(e.movementX, e.movementY);
-        window._dwellLastMove = performance.now(); // reset dwell timer
+        window._dwellLastMove = performance.now();
         
-        // Always pan the camera — never rotate on drag (removed: rotation was confusing)
-        targetCam.x -= e.movementX / cam.scale;
-        targetCam.y -= e.movementY / cam.scale;
+        // When zoomed into the prism (scale > 0.8): drag rotates the constellation
+        // When in galaxy view (scale ≤ 0.8): drag pans the camera
+        if (window.skyRevealState === 'revealed' && cam.scale > 0.8) {
+            targetGlobalRotY += e.movementX * 0.008;
+            targetGlobalRotX += e.movementY * 0.008;
+        } else {
+            targetCam.x -= e.movementX / cam.scale;
+            targetCam.y -= e.movementY / cam.scale;
+        }
         
         lastMouse = { x: e.clientX, y: e.clientY };
     });
@@ -6113,11 +6084,15 @@ function initCameraEvents() {
         const t = e.touches[0];
         globalMouse.x = t.clientX;
         globalMouse.y = t.clientY;
-        window._dwellLastMove = performance.now(); // reset dwell timer
+        window._dwellLastMove = performance.now();
         
-        // Always pan — never rotate on touch drag
-        targetCam.x -= (t.clientX - lastMouse.x) / cam.scale;
-        targetCam.y -= (t.clientY - lastMouse.y) / cam.scale;
+        if (window.skyRevealState === 'revealed' && cam.scale > 0.8) {
+            targetGlobalRotY += (t.clientX - lastMouse.x) * 0.008;
+            targetGlobalRotX += (t.clientY - lastMouse.y) * 0.008;
+        } else {
+            targetCam.x -= (t.clientX - lastMouse.x) / cam.scale;
+            targetCam.y -= (t.clientY - lastMouse.y) / cam.scale;
+        }
         lastMouse = { x: t.clientX, y: t.clientY };
     }, { passive: false });
 
