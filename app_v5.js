@@ -2676,8 +2676,29 @@ function showInterpretationPanel(userVision) {
             var sx = (pt.x - cam.x) * cam.scale + CX;
             var sy = (pt.y - cam.y) * cam.scale + CY;
 
-            // Show ALL labels whose zoom threshold is met (progressive reveal as user zooms in)
-            const isActiveLabel = cam.scale >= item.zoomThreshold;
+            // Show labels with BOTH zoom-threshold AND time stagger:
+            // A label is eligible only after its zoom threshold is met AND
+            // enough time has passed since the previous label appeared.
+            const isZoomEligible = cam.scale >= item.zoomThreshold;
+            const revState2 = window._labelRevealStates[idx];
+            if (isZoomEligible && !revState2.timeEligibleAt) {
+                // Mark the time this label first became zoom-eligible
+                revState2.timeEligibleAt = performance.now();
+            }
+            if (!isZoomEligible) {
+                // Reset if user zooms back out below threshold
+                revState2.timeEligibleAt = null;
+                revState2.timeRevealed = false;
+            }
+            // Count how many labels have already time-revealed before this one
+            const precedingRevealed = window._labelRevealStates
+                ? window._labelRevealStates.filter((rs, ri) => ri < idx && rs.timeRevealed).length
+                : 0;
+            const staggerMs = precedingRevealed * 2500; // 2.5s between each label
+            const timeSinceEligible = revState2.timeEligibleAt
+                ? performance.now() - revState2.timeEligibleAt : 0;
+            const isActiveLabel = isZoomEligible && timeSinceEligible >= staggerMs;
+            if (isActiveLabel) revState2.timeRevealed = true;
 
             var isExpanded = item.el.classList.contains('expanded');
             if (isExpanded) window._readingPanelPinned = true;
@@ -2990,12 +3011,13 @@ function initConstellationSystem(userVision) {
         const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
             .filter(g => {
                 const name = (g.nameHe || g.nameEn || '').trim();
-                const blocklist = [
-                    '\u05d7\u05ea\u05d5\u05dc', 'cat',
-                    '\u05d9\u05d4\u05dc\u05d5\u05dd', 'diamond',
-                    '\u05e4\u05e8\u05d4', 'cow',
-                    '\u05e9\u05d5\u05e2\u05dc', '\u05e9\u05d5\u05e2\u05dc \u05e8\u05d0\u05e9\u05d5\u05df', 'fox'
-                ];
+        const blocklist = [
+            'חתול', 'cat',
+            'יהלום', 'diamond',
+            'פרה', 'cow',
+            'שועל', 'שועל ראשון', 'fox',
+            'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
+        ];
                 return !blocklist.some(b => name.toLowerCase() === b.toLowerCase());
             });
         // Persist cleaned list permanently
@@ -6051,7 +6073,9 @@ function updatePoint(pt, dt, isClosest) {
 
         pt.mesh.position.x = sp.x - WW / 2 + parallaxX + shockDisplaceX;
         pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + shockDisplaceY;
-        const finalScale = s * (pt.appearP !== undefined ? pt.appearP : 1.0);
+        // Appear via OPACITY fade-in (not scale-up) so there is no "zoom in then zoom out" illusion
+        // Each star appears at full size immediately and fades in gently
+        const finalScale = s; // always full size from the first frame
         pt.mesh.scale.set(finalScale, finalScale, 1);
         pt.mesh.rotation.z = -(pt.baseAngle + skyIntroTime * 0.015 * (vp.motionSpeed || 1.0) * rpEase);
 
@@ -6137,7 +6161,9 @@ function updatePoint(pt, dt, isClosest) {
             opacity *= 0.15; // Background ambient dust — barely visible
         }
 
-        pt.mesh.material.uniforms.uOpacity.value = opacity;
+        // Stars appear via opacity fade (not scale) — multiply opacity by appearP for smooth fade-in
+        const appearFade = (pt.appearP !== undefined) ? pt.appearP : 1.0;
+        pt.mesh.material.uniforms.uOpacity.value = opacity * appearFade;
         pt.mesh.material.uniforms.uTime.value += dt;
         pt.mesh.material.uniforms.uGlow.value = glowValue;
 
