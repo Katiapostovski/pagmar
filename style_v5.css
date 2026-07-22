@@ -831,6 +831,24 @@ html, body {
     background: rgba(0, 0, 0, 0.06);
 }
 
+/* Secondary back button in questionnaire */
+.btn-back {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    font-family: var(--font-mono, 'Courier New', monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: color 0.3s ease;
+    display: block;
+}
+.btn-back:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 /* ── Deep text modal (fixed — does NOT move with constellation) ── */
 #deep-text-modal {
     position: fixed;

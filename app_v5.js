@@ -753,7 +753,7 @@ function showGhostPopup(ghost) {
     
     const isHeLocal = currentLang === 'he';
     const ghostName = isHeLocal ? ghost.nameHe : ghost.nameEn;
-    const ghostText = ghost.text || (isHeLocal ? 'קונסטלציה שנוצרה על ידי חוקר אחר בחלל הכללי.' : 'A constellation created by another explorer in the space.');
+    const ghostText = ghost.text || (isHeLocal ? 'צורה שנשארה במרחב הזה.' : 'A shape left in this space.');
     
     popup.innerHTML = `
         <h2 style="margin:0 0 15px 0; font-size:1.5rem; letter-spacing:0.1em; color:rgba(255,255,255,0.9);">${ghostName}</h2>
@@ -2017,13 +2017,28 @@ function showInterpretationPanel(userVision) {
         'גשר': firstName + ', הגשר בכוכבים סמל מעבר בין שני מצבים או שני אנשים. יש מעבר שאתה/את צריך/ת ללכת דרךו. הקונסטלציה אומרת: הגשר כבר נבנה, נדרשת רק העברה.',
         'שער': firstName + ', השער בכוכבים סמל מעבר, סיום והתחלה. יש פרק שעומד לפניך. הקונסטלציה שואלת: האם אתה/את מוכן/ת לעבור?',
         'מפתח': firstName + ', המפתח בכוכבים סמל האפשרות שקיימת תמיד אבל שאתה/את לא יצא אליה. הקונסטלציה אומרת: המפתח בידך, הדלת פתוחה.',
-        'ספר': firstName + ', הספר בכוכבים סמל חכמה שממתינה להעברה. יש סיפור שאתה/את צריך/ת לדעת אותו. הקונסטלציה אומרת: אתה/את כבר כותב/ת אותו.',
+            firstName + ', הספר בכוכבים סמל חכמה שממתינה להעברה. יש סיפור שאתה/את צריך/ת לדעת אותו. הקונסטלציה אומרת: אתה/את כבר כותב/ת אותו.',
         'בית': firstName + ', הבית בכוכבים הוא סמל השרשים והשייכות. יש בך צורך עמוק להרגיש בטוחה בתוך עצמך. הקונסטלציה מגלה: הבית מתחיל באותך.',
         'כתר': firstName + ', הכתר בכוכבים אינו רק שלטון אלא אחריות. יש בך יכולת להוביל ולשאת. הקונסטלציה מגלה: הגיעה שלך דרושה, אל תמתין/י.',
         'גלגל': firstName + ', הגלגל בכוכבים סמל המחזוריות, החזרה והתנועה. יש דבר שמתנועע במהלך שמבקש חזרה. הקונסטלציה שואלת: האם אתה/את מוכן/ת לשחרר את הגלגל?',
         'ארבע': firstName + ', ארבע הוא יסוד המרחב והזמן בקוסמולוגיה ובכל מסורת. אתה/את עומד/ת על רגליים יציבות. הקונסטלציה אומרת: היסוד שלך חזק, בנה עליו.',
         'צלב': firstName + ', הצלב בכוכבים סמל נקודת הפגישה של שני מחזורים. יש בחייך/חייך שני כיוונים שמבקשים שילוב. הקונסטלציה מגלה: הנקודה שבה הם נפגשים היא המיקום שבו צמיחה שלמות.'
     };
+    
+    // ── ZOOM-STEP SEQUENTIAL REVEAL ─────────────────────────────────
+    // Sort labels by distance from origin (closest star = revealed first)
+    // Each label gets a zoom threshold; only ONE label is shown at a time
+    window.labelDataSorted = [...labelData].sort((a, b) => {
+        const da = Math.hypot(a.pt.x, a.pt.y);
+        const db = Math.hypot(b.pt.x, b.pt.y);
+        return da - db;
+    });
+    window.labelDataSorted.forEach((item, i) => {
+        item.zoomThreshold = 1.3 + i * 0.5; // 1.3, 1.8, 2.3, 2.8...
+    });
+
+    // ── UPDATE LOOP — Zoom-step reveal ──────────────────────────────
+    window._labelRevealStates = labelData.map(function() { return { revealed: false, alpha: 0, hasPlayedSound: false }; });
     
     let pareidoliaSpecificMsgHe = pareidoliaWordMap[_cleanVision]
         || pareidoliaWordMap[_rawVision]
@@ -2489,13 +2504,12 @@ function showInterpretationPanel(userVision) {
             return;
         }
 
-        // AUTO-CLOSE reading panel when user zooms out (scroll-based UX)
-        if (cam.scale < 1.5) {
-
+        // AUTO-CLOSE reading panel only when VERY far out (not mid-zoom)
+        if (cam.scale < 0.95 && !window._readingPanelPinned) {
             var rp = document.getElementById('sky-reading-panel');
             if (rp && rp.classList.contains('visible')) {
                 rp.style.opacity = '0';
-                setTimeout(function() { if (rp && rp.parentNode) rp.parentNode.removeChild(rp); }, 600);
+                setTimeout(function() { if (rp && rp.parentNode) rp.parentNode.removeChild(rp); window._readingPanelPinned = false; }, 600);
             }
         }
 
@@ -2517,62 +2531,27 @@ function showInterpretationPanel(userVision) {
             var sx = (pt.x - cam.x) * cam.scale + CX;
             var sy = (pt.y - cam.y) * cam.scale + CY;
 
-            // Label only appears when VERY close to the point on screen (proximity discovery)
-            // AND at high enough zoom level — not all at once
-            var dx = sx - CX;
-            var dy = sy - CY;
-            var distFromCenter = Math.hypot(dx, dy);
-            
-            var mdx = sx - globalMouse.x;
-            var mdy = sy - globalMouse.y;
-            var distFromMouse = Math.hypot(mdx, mdy);
-
-            // Labels appear at zoom ≥1.3 (gentle zoom-in), disappear below 0.95 (zoom-out hides)
-            var ZOOM_ON  = 1.3;
-            var ZOOM_OFF = 0.95;
-            var meetsZoom = cam.scale >= ZOOM_ON;
-            var forceHide = cam.scale < ZOOM_OFF;
-
-            // When zoomed in: show nearby labels within viewport; also show on hover at any zoom above ZOOM_OFF
-            var isInViewport = distFromCenter < Math.min(CX, CY) * 0.8;
-            var isHovered = distFromMouse < 60;
-            var isApproaching = distFromMouse < 220 && pt && pt.permanentlyRevealed && !forceHide && window.skyRevealState === 'revealed';
-
-            // Label is visible when: zoomed in + near center, OR hovered at medium zoom
-            var shouldShow = !forceHide && window.skyRevealState === 'revealed' && pt && pt.permanentlyRevealed &&
-                             ((meetsZoom && isInViewport) || (cam.scale > ZOOM_OFF && isHovered));
-            
-            // STAGGERED REVEAL: when eligible, start a global timer; each label waits 1.0s × its order
-            if (shouldShow && !revState.staggerShown) {
-                if (!window._labelStaggerStart) window._labelStaggerStart = performance.now();
-                // Sort eligible labels by distance from center to get reveal order
-                if (!revState.staggerOrder) {
-                    var dx2 = (pt.x - cam.x) * cam.scale;
-                    var dy2 = (pt.y - cam.y) * cam.scale;
-                    revState.staggerOrder = Math.floor(Math.hypot(dx2, dy2) / 50); // closer = lower order
-                }
-                var elapsed = (performance.now() - window._labelStaggerStart) / 1000;
-                var waitTime = revState.staggerOrder * 1.0; // 1s per step
-                if (elapsed < waitTime) {
-                    shouldShow = false; // not yet time for this label
-                } else {
-                    revState.staggerShown = true;
+            // ── ZOOM-THRESHOLD reveal: show ONLY the label whose threshold is highest <= current zoom ──
+            // Determine the active label index
+            let activeIdx = -1;
+            if (window.labelDataSorted && !isDragging) {
+                for (let si = window.labelDataSorted.length - 1; si >= 0; si--) {
+                    if (cam.scale >= window.labelDataSorted[si].zoomThreshold) {
+                        activeIdx = si;
+                        break;
+                    }
                 }
             }
-            // Reset stagger when label hides (so re-zoom reveals it fresh)
-            if (!shouldShow && !isHovered && revState.staggerShown && forceHide) {
-                revState.staggerShown = false;
-                revState.staggerOrder = null;
-                if (window._labelStaggerStart) window._labelStaggerStart = null;
-            }
-            
+            const sortedIdx = window.labelDataSorted ? window.labelDataSorted.indexOf(item) : -1;
+            const isActiveLabel = sortedIdx !== -1 && sortedIdx === activeIdx;
+
             var isExpanded = item.el.classList.contains('expanded');
-            if (isExpanded) {
-                shouldShow = true; // Keep visible while expanded
-            }
+            if (isExpanded) window._readingPanelPinned = true;
 
-            // Hint: show very faint box as mouse approaches (before full reveal)
-            var hintAlpha = isApproaching ? Math.max(0, 0.18 * (1 - distFromMouse / 220)) : 0;
+            var shouldShow = (isActiveLabel || isExpanded) && window.skyRevealState === 'revealed' && pt && pt.permanentlyRevealed;
+
+            // Hint: very faint when close to an active-candidate star
+            var hintAlpha = 0; // no hint dots
             var targetAlpha = shouldShow ? 1.0 : hintAlpha;
 
             // Anchor dot: always show near stars with labels, pulse when approaching
@@ -2586,17 +2565,18 @@ function showInterpretationPanel(userVision) {
                 item.el.classList.remove('hinting');
             }
 
-            // Mark as discovered for sound effect (plays only once)
-            if (shouldShow && !isExpanded && !revState.hasPlayedSound) {
+            // Discovery chime — plays once per label when it first shows
+            if (shouldShow && !revState.hasPlayedSound) {
                 revState.hasPlayedSound = true;
                 if (AudioEngine && AudioEngine.ctx) {
                     AudioEngine.playDiscoveryChime(pt ? (pt.hue || 200) : 200);
                 }
             }
 
-            revState.alpha += (targetAlpha - revState.alpha) * (targetAlpha > 0 ? 0.12 : 0.18);
+            revState.alpha += (targetAlpha - revState.alpha) * (targetAlpha > 0 ? 0.1 : 0.14);
             var a = revState.alpha;
 
+            var meetsZoom = cam.scale >= 1.3;
             var indOpacity = (meetsZoom && window.skyRevealState === 'revealed') ? 1.0 : 0.0;
             
             // Pass the indicator state to the WebGL shader so the star itself visually indicates it has a label
@@ -2692,7 +2672,7 @@ function showGhostInfoPanel(ghost, clickX, clickY) {
             letter-spacing: 0.06em;
             color: rgba(200,210,230,0.75);
             margin-bottom: 28px;
-        ">${text || (isHe ? 'קונסטלציה שנשמרה ע"י מבקר/ת קודמ/ת.' : 'A constellation left by a previous visitor.')}</div>
+        ">${text || (isHe ? 'צורה שנשארה במרחב הזה.' : 'A shape left in this space.')}</div>
         <button id="ghost-panel-close" style="
             background: transparent;
             border: 1px solid ${col}0.3);
@@ -3697,11 +3677,19 @@ function renderQ() {
                 'transition:opacity 0.4s ease', 'min-height:1.6em'
             ].join(';');
 
-            inp.addEventListener('input', () => {
+            inp.addEventListener('input', (e) => {
+                // Auto-insert slashes: 04022001 → 04/02/2001
+                let raw = inp.value.replace(/\D/g, '').slice(0, 8); // digits only, max 8
+                let formatted = raw;
+                if (raw.length > 2) formatted = raw.slice(0,2) + '/' + raw.slice(2);
+                if (raw.length > 4) formatted = formatted.slice(0,5) + '/' + formatted.slice(5);
+                // Only update if changed (avoid cursor jump loop)
+                if (inp.value !== formatted) inp.value = formatted;
+
+                // Live age preview
                 const val = inp.value.trim();
-                // Accept dd/mm/yyyy
                 const parts = val.split('/');
-                if (parts.length === 3) {
+                if (parts.length === 3 && parts[2].length === 4) {
                     const d = parseInt(parts[0], 10);
                     const m = parseInt(parts[1], 10) - 1;
                     const y = parseInt(parts[2], 10);
@@ -3711,7 +3699,7 @@ function renderQ() {
                         let years = now.getFullYear() - y;
                         if (now < new Date(now.getFullYear(), m, d)) years--;
                         if (currentLang === 'he') {
-                            yearPreview.textContent = 'לפני ' + years + ' שנ' + (years === 1 ? 'ה' : 'ים');
+                            yearPreview.textContent = '\u05dc\u05e4\u05e0\u05d9 ' + years + ' \u05e9\u05e0' + (years === 1 ? '\u05d4' : '\u05d9\u05dd');
                         } else {
                             yearPreview.textContent = years + (years === 1 ? ' year ago' : ' years ago');
                         }
@@ -3777,6 +3765,18 @@ function renderQ() {
         
         // Only the button goes in wrap (input is in inputHolder above)
         wrap.appendChild(nextBtn);
+
+        // Back button (secondary, appears only after first question)
+        if (qIndex > 0) {
+            const backBtn = document.createElement('button');
+            backBtn.className = 'btn btn-back';
+            backBtn.innerText = currentLang === 'he' ? '\u05d7\u05d6\u05e8\u05d4' : 'Back';
+            backBtn.onclick = () => {
+                qIndex--;
+                renderQ();
+            };
+            wrap.appendChild(backBtn);
+        }
         
         if (qData.allowUnknown) {
             const unknownBtn = document.createElement('button');
@@ -3785,7 +3785,7 @@ function renderQ() {
             unknownBtn.style.background = 'transparent';
             unknownBtn.style.border = '1px solid rgba(255,255,255,0.3)';
             unknownBtn.style.fontSize = '0.9rem';
-            unknownBtn.innerText = currentLang === 'he' ? 'אני לא יודעת' : 'I don\'t know';
+            unknownBtn.innerText = currentLang === 'he' ? '\u05d0\u05e0\u05d9 \u05dc\u05d0 \u05d9\u05d5\u05d3\u05e2/\u05ea' : 'I don\'t know';
             unknownBtn.onclick = () => {
                 answers[qData.id] = 'UNKNOWN';
                 
@@ -4977,11 +4977,7 @@ async function buildSignalField() {
                         targetCam.x = 0; targetCam.y = 0;
                         targetCam.scale = 0.65; // STAY at default zoom — no jump
                         window._constellationZoomOut = false;
-                        setTimeout(() => {
-                            if (window.skyRevealState === 'revealed') {
-                                window._constellationZoomOut = true; // signal to slowly retreat
-                            }
-                        }, 22000); // hold zoom for 22s while shape builds, then let user pan freely
+                        // No auto-zoom-out: user stays at this zoom and can freely scroll in/out
                         window.updateGlobalBackButton();
                         // *** BLOOM FIX: activate bloom so the initial huge glow fades naturally
                         // to the normal calm baseGlow (0.55). Without this, bloomProgress=0 forever
@@ -5194,10 +5190,7 @@ function skyLoop(ts) {
         
         // Do NOT auto-pull back to center — let the user wander freely in the galaxy.
         // (Removed: targetCam.x lerp to 0, targetCam.y lerp to 0)
-        // After constellation has formed, gently zoom out to exploration scale
-        if (window._constellationZoomOut) {
-            targetCam.scale = lerp(targetCam.scale, 0.55, dt * 0.08);
-        }
+        // No auto-zoom-out — user controls zoom freely.
     } else {
         // Auto camera drift if not dragging (original behavior)
         if (!isDragging && !window.cameraWanderPath) {
@@ -5236,6 +5229,45 @@ function skyLoop(ts) {
                 btnSunrise.classList.add('visible');
             } else {
                 btnSunrise.classList.remove('visible');
+            }
+        }
+
+        // --- Dynamic sky guide hints (update based on zoom + state) ---
+        const skyGuideEl = document.getElementById('ui-skyguide');
+        if (skyGuideEl && window.skyRevealState === 'revealed') {
+            const isHe = (typeof currentLang !== 'undefined') ? currentLang === 'he' : true;
+            let guideText;
+            if (cam.scale < 0.42) {
+                // Far out galaxy view — exploring other constellations
+                guideText = isHe
+                    ? 'גרור/י לשוטט · לחץ/י על צורה להתקרב'
+                    : 'Drag to wander · Click a shape to explore';
+            } else if (cam.scale < 1.25) {
+                // Mid zoom — personal prism visible
+                guideText = isHe
+                    ? 'גלגל/י פנימה לגלות · גרור/י לנוע'
+                    : 'Scroll in to discover · Drag to move';
+            } else {
+                // Zoomed in — inside prism, text labels reveal
+                guideText = isHe
+                    ? 'גלגל/י פנימה — יתגלה טקסט · גלגל/י החוצה לטקסט הבא'
+                    : 'Scroll in to reveal · Scroll out for next';
+            }
+            if (skyGuideEl.textContent !== guideText) skyGuideEl.textContent = guideText;
+        }
+
+        // --- Dwell interaction: 2s stillness → bloom pulse in the prism ---
+        if (window.skyRevealState === 'revealed') {
+            if (!window._dwellLastMove) window._dwellLastMove = performance.now();
+            const dwellMs = performance.now() - window._dwellLastMove;
+            if (dwellMs > 2000 && !window._dwellPulsing && window.bloomProgress >= 0.9) {
+                window._dwellPulsing = true;
+                const savedBloom = window.bloomProgress;
+                window.bloomProgress = Math.min(savedBloom + 0.06, 1.0);
+                setTimeout(() => {
+                    window.bloomProgress = savedBloom;
+                    window._dwellPulsing = false;
+                }, 1400);
             }
         }
     }    // ── Update Zoom Depth Bar ──
@@ -6143,6 +6175,8 @@ function showPareidoliaPrompt() {
     el.addEventListener('wheel', e => {
         e.preventDefault();
         if (window.skyRevealState === 'recognition') return;
+        // Reset dwell timer on any interaction
+        window._dwellLastMove = performance.now();
         const zf = e.deltaY < 0 ? 1.006 : 0.994; // Slower, meditative zoom
         const newScale = clamp(targetCam.scale * zf, 0.25, 10.0);
         const mwx = (e.clientX - W * 0.5) / cam.scale + cam.x;
@@ -6151,6 +6185,11 @@ function showPareidoliaPrompt() {
         targetCam.y = mwy - (e.clientY - H * 0.5) / newScale;
         targetCam.scale = newScale;
     }, { passive: false });
+
+    // Reset dwell timer on pointer/mouse move
+    el.addEventListener('pointermove', () => {
+        window._dwellLastMove = performance.now();
+    }, { passive: true });
 
     const btnZoomIn = document.getElementById('btn-zoom-in');
     const btnZoomOut = document.getElementById('btn-zoom-out');
