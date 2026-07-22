@@ -2864,9 +2864,10 @@ function initConstellationSystem(userVision) {
         const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
             .filter(g => {
                 const name = (g.nameHe || g.nameEn || '').trim();
-                return name !== '\u05d7\u05ea\u05d5\u05dc' && name.toLowerCase() !== 'cat';
+                const blocklist = ['\u05d7\u05ea\u05d5\u05dc', 'cat', '\u05d9\u05d4\u05dc\u05d5\u05dd', 'diamond', '\u05d9\u05d4\u05dc\u05d5\u05dd'];
+                return !blocklist.some(b => name.toLowerCase() === b.toLowerCase());
             });
-        // Persist the cleaned-up list (removes cat permanently from localStorage)
+        // Persist cleaned list permanently
         try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
         saved.forEach((g, i) => {
             const seed = (i + 1) * 137.5;
@@ -3059,14 +3060,15 @@ function initConstellationSystem(userVision) {
 
             // Update WebGL uniforms and position
             if (gs.group) {
-                // Ghost constellations use their own slow independent rotation (ghostRotY)
-                // so they revolve gently in galaxy view but are NOT affected by prism manual rotation
-                const rp = rotate3D(ghost.offset.x, ghost.offset.y, 0, 0, ghostRotY);
+                // Ghost stays at its FIXED world position (no orbital movement)
+                const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
-                // Group internal rotation: always face the viewer (frontal)
-                gs.group.rotation.x = 0;
-                gs.group.rotation.y = 0; 
+                // Each ghost self-rotates around its own Y axis with a unique phase
+                if (gs.selfRotY === undefined) gs.selfRotY = gi * 0.42; // unique starting angle per ghost
+                gs.selfRotY += 0.0004;
+                gs.group.rotation.y = gs.selfRotY;
+                gs.group.rotation.x = 0; 
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
@@ -3081,11 +3083,13 @@ function initConstellationSystem(userVision) {
                     }
                 });
             }
-            const lineBoost = Math.max(0.18, 0.55 - cam.scale * 1.0);
+            // Boost ghost brightness in galaxy view so they're clearly visible
+            const galaxyBoost = cam.scale < 0.5 ? 1.0 + (0.5 - cam.scale) * 4.0 : 1.0;
+            const lineBoost = Math.min(1.0, Math.max(0.22, 0.65 - cam.scale * 0.8) * galaxyBoost);
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = a * lineBoost + hGlow * 0.55;
+            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * lineBoost + hGlow * 0.55);
             gs.pointMats.forEach(mat => {
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 2.2 + hGlow * 1.8); // extra brightness on hover
+                mat.uniforms.uOpacity.value = Math.min(1.0, (a * 2.5 + hGlow * 1.8) * galaxyBoost);
                 mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
                 mat.uniforms.uTime.value += 0.015;
             });
@@ -3154,8 +3158,8 @@ function initConstellationSystem(userVision) {
             }
             
             if (a > 0.04) {
-                // Ghost label: uses ghostRotY for gentle auto-rotation (not prism globalRot)
-                const rp2 = rotate3D(ghost.offset.x, ghost.offset.y, 0, 0, ghostRotY);
+                // Ghost label: fixed world position (not affected by ghostRotY)
+                const rp2 = { x: ghost.offset.x, y: ghost.offset.y };
                 const s2 = w2s(rp2.x, rp2.y);
                 const col2 = ghost.color;
                 
@@ -3761,8 +3765,11 @@ function renderQ() {
             const backBtn = document.createElement('button');
             backBtn.id = 'q-back-fixed';
             backBtn.className = 'btn';
-            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:8px 22px; font-size:1.5rem; line-height:1;';
-            backBtn.textContent = '\u2192'; // → arrow (RTL: points back = right)
+            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:6px 14px; font-size:0.8rem;';
+            const arrowSpan = document.createElement('span');
+            arrowSpan.textContent = '\u2192'; // → RTL back arrow
+            arrowSpan.style.cssText = 'font-size:1.6rem; line-height:0; vertical-align:middle; display:inline-block;';
+            backBtn.appendChild(arrowSpan);
             backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
             backBtn.onclick = () => {
                 qIndex--;
@@ -5569,32 +5576,28 @@ function skyLoop(ts) {
         const phase = window.discoveryPhase || 0;
 
         if (phase === 0) {
-            guide.textContent = (lang === 'he') ? 'גררי כדי לנוע בשמיים' : 'Drag to move through the sky';
-            guide.style.opacity = '0.5';
-            // Accumulate time when moving fast
-            if (camVelocity > 10) {
-                window.discoveryMoveAccum += dt;
-            }
-            if (window.discoveryMoveAccum >= 2) {
-                window.discoveryPhase = 1;
-            }
+            guide.textContent = (lang === 'he')
+                ? '\u05d2\u05e8\u05d5\u05e8/\u05d9 \u05dc\u05e0\u05d5\u05e2 \u00b7 \u05d2\u05dc\u05d2\u05dc/\u05d9 \u05dc\u05d6\u05d5\u05dd'
+                : 'Drag to move \u00b7 Scroll to zoom';
+            guide.style.opacity = '0.55';
+            // Advance after user has moved
+            if (camVelocity > 10) window.discoveryMoveAccum += dt;
+            if (window.discoveryMoveAccum >= 2) window.discoveryPhase = 1;
         } else if (phase === 1) {
-            guide.textContent = (lang === 'he') ? 'התקרבי. יש כאן עוד.' : 'Zoom in. There is more here.';
-            guide.style.opacity = '0.5';
-            if (cam.scale > 0.4) {
-                window.discoveryPhase = 2;
-                window.discoveryPhase2Time = 0;
-            }
+            guide.textContent = (lang === 'he')
+                ? '\u05dc\u05d7\u05e5 \u05d9\u05de\u05d9\u05e0\u05d9 + \u05d2\u05e8\u05d5\u05e8 \u2192 \u05e1\u05d9\u05d1\u05d5\u05d1 \u05d4\u05e4\u05e8\u05d9\u05d6\u05de\u05d4'
+                : 'Right-click + drag \u2192 rotate your constellation';
+            guide.style.opacity = '0.55';
+            // Advance once user zooms in toward prism
+            if (cam.scale > 0.4) { window.discoveryPhase = 2; window.discoveryPhase2Time = 0; }
         } else if (phase === 2) {
-            guide.textContent = (lang === 'he') ? 'מה את/ה רואה?' : 'What do you see?';
+            guide.textContent = (lang === 'he')
+                ? '\u05e2\u05e9\u05d9 \u05d6\u05d5\u05dd \u05d0\u05d0\u05d5\u05d8 \u05dc\u05d7\u05e7\u05d5\u05e8 \u05e7\u05d5\u05e0\u05e1\u05d8\u05dc\u05e6\u05d9\u05d5\u05ea \u05d0\u05d7\u05e8\u05d5\u05ea'
+                : 'Zoom out to explore other constellations';
             window.discoveryPhase2Time += dt;
-            // Fade out over 5 seconds
-            const fadeT = clamp(1 - (window.discoveryPhase2Time - 3) / 2, 0, 0.5);
+            const fadeT = clamp(1 - (window.discoveryPhase2Time - 3) / 2, 0, 0.55);
             guide.style.opacity = String(fadeT);
-            if (window.discoveryPhase2Time >= 5) {
-                guide.style.opacity = '0';
-                window.discoveryPhase = 3; // Done
-            }
+            if (window.discoveryPhase2Time >= 5) { guide.style.opacity = '0'; window.discoveryPhase = 3; }
         } else {
             guide.style.opacity = '0';
         }
