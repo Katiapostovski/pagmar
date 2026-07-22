@@ -3150,16 +3150,19 @@ function initConstellationSystem(userVision) {
                 ].join(';');
                 gs.labelEl.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    // Zoom camera into this ghost constellation
-                    targetCam.x = ghost.offset.x;
-                    targetCam.y = ghost.offset.y;
-                    targetCam.scale = 1.8;
+                    // Center camera on visual centroid of this constellation's stars
+                    const cx = ghost.pts.reduce((s, p) => s + p.x, 0) / ghost.pts.length;
+                    const cy = ghost.pts.reduce((s, p) => s + p.y, 0) / ghost.pts.length;
+                    targetCam.x = ghost.offset.x + cx;  // offset by star centroid in world X
+                    targetCam.y = ghost.offset.y - cy;  // Y inverted in THREE.js vs cam space
+                    targetCam.scale = 1.5;
                 });
                 gs.labelEl.addEventListener('mouseover', () => {
                     gs.isHovered = true;
                     gs.labelEl.style.textDecoration = 'underline';
                     gs.labelEl.style.textUnderlineOffset = '4px';
-                    gs.labelEl.style.textShadow = `0 0 16px ${ghost.color || 'rgba(200,220,255,'}0.95), 0 0 40px ${ghost.color || 'rgba(200,220,255,'}0.4)`;
+                    gs.labelEl.style.textShadow = '0 0 14px rgba(255,255,255,0.7), 0 0 30px rgba(255,255,255,0.3)';
+                    gs.labelEl.style.color = 'rgba(255,255,255,1)';
                     gs.labelEl.style.letterSpacing = '0.26em';
                     gs.labelEl.style.opacity = '1';
                 });
@@ -3204,7 +3207,7 @@ function initConstellationSystem(userVision) {
                 gs.labelEl.style.top = (s2.y - 50 * cam.scale) + 'px';
                 gs.labelEl.style.fontSize = Math.round(8 + a * 5) + 'px';
                 gs.labelEl.style.opacity = (a * 0.9).toFixed(2);
-                gs.labelEl.style.color = `${col2}1)`;
+                gs.labelEl.style.color = 'rgba(255,255,255,0.92)'; // white text for all constellation names
                 gs.labelEl.textContent = (isHeGhost ? ghost.nameHe : ghost.nameEn).toUpperCase();
                 
                 // Text card — hidden (removed 'created by' description by design)
@@ -5002,6 +5005,13 @@ async function buildSignalField() {
                         skyPoints.forEach(pt => {
                             pt.appearP = 0;
                             pt._chimePlayedOnAppear = false;
+                            // Also reset scale and opacity so no ghost image appears on first visible frame
+                            if (pt.mesh) {
+                                pt.mesh.scale.set(0, 0, 1);
+                                if (pt.mesh.material && pt.mesh.material.uniforms) {
+                                    pt.mesh.material.uniforms.uOpacity.value = 0;
+                                }
+                            }
                         });
                         // Constellation zoom-in: pull camera closer to the shape as stars appear
                         // then slowly drift out for free exploration after ~15s
@@ -5645,7 +5655,16 @@ function updatePoint(pt, dt, isClosest) {
             }
         }
         // PERFORMANCE: skip all heavy computation for invisible points
-        if (pt.appearP < 0.01) return;
+        // But first force scale=0 and opacity=0 so no ghost image lingers from previous state
+        if (pt.appearP < 0.01) {
+            if (pt.mesh) {
+                pt.mesh.scale.set(0, 0, 1);
+                if (pt.mesh.material && pt.mesh.material.uniforms) {
+                    pt.mesh.material.uniforms.uOpacity.value = 0;
+                }
+            }
+            return;
+        }
     } else if (pt.appearP === undefined) {
         pt.appearP = 1.0; // safety fallback
     }
