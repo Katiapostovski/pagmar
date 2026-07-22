@@ -756,6 +756,18 @@ html, body {
     color: #2c3540;
 }
 
+.epilogue-punchline {
+    margin-top: 2.2rem;
+    padding-top: 1.8rem;
+    border-top: 1px solid rgba(11, 16, 22, 0.15);
+    font-family: 'Hadassah Friedlaender', serif;
+    font-size: 1.15rem;
+    line-height: 2;
+    color: #0b1016;
+    letter-spacing: 0.02em;
+    font-style: italic;
+}
+
 #epilogue-screen .action-btn {
     border: 1px solid #11151a;
     color: #11151a;
@@ -775,15 +787,18 @@ html, body {
     opacity: 0;
     pointer-events: none;
     transition: opacity 2s ease;
-    padding: 10px 24px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    background: rgba(0, 0, 0, 0.3);
-    color: white;
-    border-radius: 30px;
-    font-family: 'SimplerPro_HLAR_Mono', monospace;
-    font-size: 14px;
+    /* Match exact same style as action-btn and questionnaire buttons */
+    padding: 0.75rem 2.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    border-radius: 0;
+    font-family: 'SimplerPro_HLAR_Mono', 'Courier New', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
     cursor: pointer;
     backdrop-filter: blur(5px);
+    white-space: nowrap;
 }
 
 #btn-sunrise.visible {
@@ -791,7 +806,9 @@ html, body {
     pointer-events: all;
 }
 #btn-sunrise:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.95);
 }
 
 /* ── Consistent action buttons (epilogue / sunrise) ──────── */

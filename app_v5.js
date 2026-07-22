@@ -3090,15 +3090,19 @@ function initConstellationSystem(userVision) {
                     }
                 });
             }
-            // Boost lines more at galaxy view; keep them subtle when close
             const lineBoost = Math.max(0.18, 0.55 - cam.scale * 1.0);
-            if (gs.lineMat) gs.lineMat.opacity = a * lineBoost;
+            const hGlow = gs._hoverGlow || 0;
+            if (gs.lineMat) gs.lineMat.opacity = a * lineBoost + hGlow * 0.55;
             gs.pointMats.forEach(mat => {
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 2.2); // boosted from 1.5
-                mat.uniforms.uZoom.value = Math.max(0.35, cam.scale); // clamp: shader renders poorly near 0
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 2.2 + hGlow * 1.8); // extra brightness on hover
+                mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
                 mat.uniforms.uTime.value += 0.015;
             });
             
+            // Boost stars + lines on hover
+            const hoverBoost = gs.isHovered ? 1.0 : 0;
+            gs._hoverGlow = (gs._hoverGlow || 0) + (hoverBoost - (gs._hoverGlow || 0)) * 0.12;
+
             // ── Ghost HTML overlay (name label + text card) ──────────
             const isHeGhost = (typeof currentLang !== 'undefined') ? currentLang === 'he' : true;
             
@@ -3122,12 +3126,15 @@ function initConstellationSystem(userVision) {
                     showGhostInfoPanel(ghost, e.clientX, e.clientY);
                 });
                 gs.labelEl.addEventListener('mouseover', () => {
+                    gs.isHovered = true;
                     gs.labelEl.style.textDecoration = 'underline';
                     gs.labelEl.style.textUnderlineOffset = '4px';
-                    gs.labelEl.style.textShadow = `0 0 12px ${ghost.color || 'rgba(200,220,255,'}0.8)`;
-                    gs.labelEl.style.letterSpacing = '0.22em';
+                    gs.labelEl.style.textShadow = `0 0 16px ${ghost.color || 'rgba(200,220,255,'}0.95), 0 0 40px ${ghost.color || 'rgba(200,220,255,'}0.4)`;
+                    gs.labelEl.style.letterSpacing = '0.26em';
+                    gs.labelEl.style.opacity = '1';
                 });
                 gs.labelEl.addEventListener('mouseout', () => {
+                    gs.isHovered = false;
                     gs.labelEl.style.textDecoration = 'none';
                     gs.labelEl.style.textShadow = 'none';
                     gs.labelEl.style.letterSpacing = '0.18em';
@@ -5185,9 +5192,8 @@ function skyLoop(ts) {
         globalRotX = lerp(globalRotX, targetGlobalRotX, 0.05);
         globalRotY = lerp(globalRotY, targetGlobalRotY, 0.05);
         
-        // Re-center camera over time since object rotates in place
-        targetCam.x = lerp(targetCam.x, 0, dt * 0.5);
-        targetCam.y = lerp(targetCam.y, 0, dt * 0.5);
+        // Do NOT auto-pull back to center — let the user wander freely in the galaxy.
+        // (Removed: targetCam.x lerp to 0, targetCam.y lerp to 0)
         // After constellation has formed, gently zoom out to exploration scale
         if (window._constellationZoomOut) {
             targetCam.scale = lerp(targetCam.scale, 0.55, dt * 0.08);
