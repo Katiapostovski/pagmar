@@ -2605,7 +2605,8 @@ function showInterpretationPanel(userVision) {
         return Math.hypot(a.pt.x, a.pt.y) - Math.hypot(b.pt.x, b.pt.y);
     });
     window.labelDataSorted.forEach(function(item, i) {
-        item.zoomThreshold = 1.3 + i * 0.5; // 1.3, 1.8, 2.3, 2.8 ...
+        // First label appears at zoom 0.75 (almost default), each next requires slightly more zoom
+        item.zoomThreshold = 0.75 + i * 0.15; // 0.75, 0.90, 1.05, 1.20, 1.35...
     });
 
     // ── UPDATE LOOP — Proximity & Zoom reveal ──────────────
@@ -2613,8 +2614,8 @@ function showInterpretationPanel(userVision) {
 
 
     window.updateDataLabels = function() {
-        // HIDE LABELS DURING INITIAL BUILD-UP (first 8 seconds)
-        if (typeof skyIntroTime !== 'undefined' && skyIntroTime < 8.0) {
+        // HIDE LABELS DURING INITIAL BUILD-UP (first 3 seconds after reveal)
+        if (typeof skyIntroTime !== 'undefined' && skyIntroTime < 3.0) {
             labelData.forEach(function(item) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2631,8 +2632,8 @@ function showInterpretationPanel(userVision) {
             window._labelStaggerStart = null; // reset stagger so re-reveal is fresh after drag
             return;
         }
-        // HIDE ALL LABELS IN GALAXY VIEW — labels only show when zoomed into the prism
-        if (cam.scale < 1.2) {
+        // HIDE ALL LABELS IN GALAXY VIEW — labels only show when at or above default zoom
+        if (cam.scale < 0.65) {
             labelData.forEach(function(item, idx) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2675,19 +2676,8 @@ function showInterpretationPanel(userVision) {
             var sx = (pt.x - cam.x) * cam.scale + CX;
             var sy = (pt.y - cam.y) * cam.scale + CY;
 
-            // ── ZOOM-THRESHOLD reveal: show ONLY the label whose threshold is highest <= current zoom ──
-            // Determine the active label index
-            let activeIdx = -1;
-            if (window.labelDataSorted && !isDragging) {
-                for (let si = window.labelDataSorted.length - 1; si >= 0; si--) {
-                    if (cam.scale >= window.labelDataSorted[si].zoomThreshold) {
-                        activeIdx = si;
-                        break;
-                    }
-                }
-            }
-            const sortedIdx = window.labelDataSorted ? window.labelDataSorted.indexOf(item) : -1;
-            const isActiveLabel = sortedIdx !== -1 && sortedIdx === activeIdx;
+            // Show ALL labels whose zoom threshold is met (progressive reveal as user zooms in)
+            const isActiveLabel = cam.scale >= item.zoomThreshold;
 
             var isExpanded = item.el.classList.contains('expanded');
             if (isExpanded) window._readingPanelPinned = true;
