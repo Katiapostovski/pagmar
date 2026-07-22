@@ -481,7 +481,7 @@ const QUESTIONS = [
         en: { placeholder: '', text: 'What is your name in the map?', sub: '' }
     },
     {
-        id: 'dob', type: 'date',
+        id: 'dob', type: 'year',
         he: { text: 'מתי התחיל הזמן שלך?', sub: '' },
         en: { text: 'When did your time begin?', sub: '' }
     },
@@ -3671,14 +3671,55 @@ function renderQ() {
         
         const inp = document.createElement('input');
         inp.className = 'q-input';
-        inp.type = qData.type === 'date' ? 'date' : 'text';
         inp.dir = currentLang === 'he' ? 'rtl' : 'ltr';
         if (q.placeholder) inp.placeholder = q.placeholder;
 
+        // ── Year-only special input ──────────────────────────────────
+        let yearPreview = null;
+        if (qData.type === 'year') {
+            inp.type = 'number';
+            inp.min = '1900';
+            inp.max = new Date().getFullYear();
+            inp.placeholder = currentLang === 'he' ? 'שנת לידה, לדוגמה 1993' : 'Birth year, e.g. 1993';
+            inp.style.textAlign = 'center';
+            inp.style.letterSpacing = '0.2em';
+            inp.style.fontSize = '1.6rem';
+            // remove spin arrows
+            inp.style.MozAppearance = 'textfield';
+
+            yearPreview = document.createElement('p');
+            yearPreview.style.cssText = [
+                'text-align:center', 'margin-top:1.2rem',
+                'font-family:var(--font-serif)', 'font-size:1.1rem',
+                'letter-spacing:0.1em', 'color:rgba(255,255,255,0.55)',
+                'transition:opacity 0.4s ease', 'min-height:1.6em'
+            ].join(';');
+
+            inp.addEventListener('input', () => {
+                const yr = parseInt(inp.value, 10);
+                const now = new Date().getFullYear();
+                if (!isNaN(yr) && yr > 1900 && yr <= now) {
+                    const diff = now - yr;
+                    if (currentLang === 'he') {
+                        yearPreview.textContent = 'לפני ' + diff + ' שנ' + (diff === 1 ? 'ה' : 'ים');
+                    } else {
+                        yearPreview.textContent = diff + (diff === 1 ? ' year ago' : ' years ago');
+                    }
+                    yearPreview.style.opacity = '1';
+                } else {
+                    yearPreview.textContent = '';
+                    yearPreview.style.opacity = '0';
+                }
+            });
+        } else {
+            inp.type = 'text';
+        }
+
         // Input field: floats between title and button (about 58% from top)
         const inputHolder = document.createElement('div');
-        inputHolder.style.cssText = 'position:absolute; top:57%; left:50%; transform:translateX(-50%); width:85%; max-width:400px; opacity:0; transition:opacity 1.2s ease;';
+        inputHolder.style.cssText = 'position:absolute; top:52%; left:50%; transform:translateX(-50%); width:85%; max-width:400px; opacity:0; transition:opacity 1.2s ease; text-align:center;';
         inputHolder.appendChild(inp);
+        if (yearPreview) inputHolder.appendChild(yearPreview);
         inputArea.appendChild(inputHolder);
         
         // Button wrapper: stays fixed at the very bottom (q-input-wrap handles bottom:8vh)
@@ -3693,12 +3734,19 @@ function renderQ() {
         nextBtn.innerText = UI_TEXTS[currentLang].btnNext;
         nextBtn.onclick = () => { 
             if (inp.value.trim() !== '') {
-                answers[qData.id] = inp.value.trim(); 
-                
+                // For year type, store the human-readable string
+                if (qData.type === 'year') {
+                    const yr = parseInt(inp.value.trim(), 10);
+                    const diff = new Date().getFullYear() - yr;
+                    answers[qData.id] = currentLang === 'he'
+                        ? 'לפני ' + diff + ' שנ' + (diff === 1 ? 'ה' : 'ים')
+                        : diff + (diff === 1 ? ' year ago' : ' years ago');
+                } else {
+                    answers[qData.id] = inp.value.trim();
+                }
                 advanceQ(false);
             } else if (qData.optional) {
                 answers[qData.id] = 'SKIPPED';
-                
                 advanceQ(false);
             }
         };
@@ -6609,94 +6657,4 @@ window.showDeepText = function(text) {
             window.closeDeepText();
             window._autoTextPt = null;
         });
-        modal.appendChild(closeBtn);
-    }
-
-    modal.classList.remove('hidden');
-};
-
-window.closeDeepText = function() {
-    const modal = document.getElementById('deep-text-modal');
-    if (modal) modal.classList.add('hidden');
-};
-
-function toggleSound() {
-    const muted = AudioEngine.toggleMute();
-    const btn = document.getElementById('btn-sound-toggle');
-    if (btn) {
-        btn.textContent = muted ? '—' : '♪';
-        btn.style.opacity = muted ? '0.3' : '0.6';
-        btn.title = muted ? 'Sound off' : 'Sound on';
-    }
-}
-
-function toggleLegend() {
-    const modal = document.getElementById('legend-modal');
-    if (!modal) return;
-    if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.style.opacity = 0;
-        setTimeout(() => modal.style.opacity = 1, 10);
-    } else {
-        modal.style.opacity = 0;
-        setTimeout(() => modal.classList.add('hidden'), 400);
-    }
-}
-
-
-// ======================================================
-// BOOT
-// ======================================================
-window.toggleLegend = toggleLegend; // expose globally for onclick
-buildDOM();
-updateLang('he'); // Initialize text and default to Hebrew
-
-// ── GLOBAL LIGHT-POINT CURSOR (all screens) ──
-(function initGlobalCursor() {
-    document.body.style.cursor = 'none'; // hide native cursor everywhere
-    const gc = document.getElementById('global-cursor');
-    if (!gc) return;
-    document.addEventListener('mousemove', e => {
-        gc.style.left = e.clientX + 'px';
-        gc.style.top  = e.clientY + 'px';
-    }, { passive: true });
-    // Pulse on click
-    document.addEventListener('mousedown', () => {
-        gc.style.transform = 'translate(-50%,-50%) scale(1.8)';
-        gc.style.boxShadow = '0 0 20px 8px rgba(200,180,255,0.7), 0 0 5px 2px rgba(255,255,255,1)';
-    });
-    document.addEventListener('mouseup', () => {
-        gc.style.transform = 'translate(-50%,-50%) scale(1)';
-        gc.style.boxShadow = '0 0 12px 4px rgba(200,180,255,0.5), 0 0 3px 1px rgba(255,255,255,0.9)';
-    });
-})();
-
-// ── DAWN TRANSITION EVENTS ──────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    const btnSunrise = document.getElementById('btn-sunrise');
-    const dawnOverlay = document.getElementById('dawn-overlay');
-    const epilogueScreen = document.getElementById('epilogue-screen');
-    const btnRestart = document.getElementById('btn-restart');
-    
-    if (btnSunrise && dawnOverlay && epilogueScreen) {
-        btnSunrise.addEventListener('click', () => {
-            // Hide button
-            btnSunrise.classList.remove('visible');
-            btnSunrise.style.display = 'none';
-            
-            // Trigger sunrise fade
-            dawnOverlay.classList.add('active');
-            epilogueScreen.classList.add('active');
-            
-            // Optionally fade out the WebGL elements slightly behind the dawn
-            const skyScreen = document.getElementById('sky-screen');
-            if (skyScreen) skyScreen.style.opacity = '0';
-        });
-    }
-
-    if (btnRestart) {
-        btnRestart.addEventListener('click', () => {
-            location.reload(); // Hard refresh to reset the entire experience
-        });
-    }
-});
+        modal.appendChild(closeBtn)

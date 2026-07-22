@@ -862,3 +862,13 @@ html, body {
 .deep-text-close:hover {
     color: rgba(255, 255, 255, 0.9);
 }
+
+/* ── Hide spinner arrows from year number input ── */
+input[type=number].q-input::-webkit-inner-spin-button,
+input[type=number].q-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number].q-input {
+    -moz-appearance: textfield;
+}
