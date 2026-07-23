@@ -555,7 +555,7 @@ const UI_TEXTS = {
         leaveBtn: 'המשך',
         restartBtn: 'מחדש',
         horizonTitle: 'מפת האופק שלך',
-        pareidoliaPrompt: 'מה את/ה רואה/ת?',
+        pareidoliaPrompt: 'מה את/ה רואה?',
         pareidoliaPlaceholder: '...',
         pareidoliaOpts: ['חיה', 'בית', 'צמח', 'כנף', 'מסלול', 'דמות', 'כלי', 'משהו אחר']
     },
@@ -5067,7 +5067,7 @@ async function buildSignalField() {
         if (overlay) {
             overlay.style.display = 'flex';
             if (currentLang === 'he') {
-                qEl.innerText = 'מה את/ה רואה/ת?';
+                qEl.innerText = 'מה את/ה רואה?';
                 iEl.placeholder = '';
                 iEl.dir = 'rtl';
                 bEl.innerText = 'חשפו את המפה';
