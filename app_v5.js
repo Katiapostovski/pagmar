@@ -551,11 +551,11 @@ const UI_TEXTS = {
         startBtn: 'התחלה',
         stepOf: 'מתוך',
         btnNext: 'המשך ←',
-        skyGuide: 'גרור לנוע · הצורה תתגלה · אל תחפשי הסבר',
+        skyGuide: 'גרור לנוע · הצורה תתגלה · אל תחפש/י הסבר',
         leaveBtn: 'המשך',
         restartBtn: 'מחדש',
         horizonTitle: 'מפת האופק שלך',
-        pareidoliaPrompt: 'מה את רואה?',
+        pareidoliaPrompt: 'מה את/ה רואה/ת?',
         pareidoliaPlaceholder: '...',
         pareidoliaOpts: ['חיה', 'בית', 'צמח', 'כנף', 'מסלול', 'דמות', 'כלי', 'משהו אחר']
     },
@@ -5067,7 +5067,7 @@ async function buildSignalField() {
         if (overlay) {
             overlay.style.display = 'flex';
             if (currentLang === 'he') {
-                qEl.innerText = 'מה את רואה?';
+                qEl.innerText = 'מה את/ה רואה/ת?';
                 iEl.placeholder = '';
                 iEl.dir = 'rtl';
                 bEl.innerText = 'חשפו את המפה';
