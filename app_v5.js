@@ -3841,11 +3841,19 @@ function renderQ() {
         if (qData.type === 'year') {
             inp.type = 'text';
             inp.placeholder = 'dd/mm/yyyy';
+            inp.id = 'dob-date-inp';
             inp.dir = 'ltr';
             inp.maxLength = 10;
             inp.style.textAlign = 'center';
             inp.style.letterSpacing = '0.18em';
             inp.style.fontSize = '1.4rem';
+            // Inject ::placeholder style once — low opacity ghost hint
+            if (!document.getElementById('dob-placeholder-style')) {
+                const phStyle = document.createElement('style');
+                phStyle.id = 'dob-placeholder-style';
+                phStyle.textContent = '#dob-date-inp::placeholder { color: rgba(255,255,255,0.22); letter-spacing: 0.18em; font-size: 1.4rem; }';
+                document.head.appendChild(phStyle);
+            }
 
             yearPreview = document.createElement('p');
             yearPreview.style.cssText = [
