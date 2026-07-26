@@ -214,9 +214,9 @@ vec3 spectral(float t) {
     return c * c * 1.5;
 }
 
-// Anamorphic blade (type 0) - long horizontal light streak
+// Anamorphic blade (type 0) - long dramatic light streak
 float bladeFn(vec2 p) {
-    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 1.5);
+    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 0.7);
     float core  = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
     return blade + core * 1.5;
 }
@@ -263,13 +263,13 @@ void main() {
     float iCore = getPrismIntensity(uv, uType);
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Color opens on zoom-in (uZoom > 1.1), full spectral at zoom > 1.8
-    float prismGate = smoothstep(1.1, 1.8, clamp(uZoom, 0.0, 10.0));
+    // Color opens at zoom 0.5, full spectral at zoom 1.0 — vibrant rainbow at normal view
+    float prismGate = smoothstep(0.5, 1.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // White at zoom-out, prismatic at zoom-in
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.6);
-    vec3 col = baseCol * iCore * 2.6 * twinkle;
+    // Vibrant rainbow: strongly mixed with prism colors
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 1.1);
+    vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
     float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
@@ -2311,6 +2311,7 @@ function showInterpretationPanel(userVision) {
         '  position:absolute; width:6px; height:6px;',
         '  border:1px solid rgba(255,255,255,0.55); border-radius:50%;',
         '  transform:translate(-50%,-50%); pointer-events:none;',
+        '  opacity: 0;',
         '}',
         '.sky-dlabel-anchor-dot.hinting {',
         '  animation: dlabel-approach 1.8s ease-in-out infinite;',
@@ -4553,10 +4554,10 @@ async function buildSignalField() {
             // Questionnaire button positions (vertex) can be far from central cluster,
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
-                ? (0.55 + rand() * 0.18)     // 0.55-0.73 — only labeled stars are bigger
+                ? (1.5 + rand() * 0.5)     // 1.5–2.0 — labeled stars: long dramatic beams
                 : (isVertexStar || isQDrivenStar)
-                    ? (0.36 + rand() * 0.14)  // 0.36-0.50 — ALL Q-shape stars: same size
-                    : (0.02 + rand() * 0.02);  // 0.02-0.04 — distractors: nearly invisible
+                    ? (0.95 + rand() * 0.45)  // 0.95–1.40 — Q-shape stars: vivid beams
+                    : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
             
             // Use personal hue but allow slight drift for a sparkling effect
             const cOffset = Math.floor(personalHue / 45);
@@ -4860,7 +4861,7 @@ async function buildSignalField() {
     const planeGeo = new THREE.PlaneGeometry(200, 200);
 
     // Spiderweb line segments
-    const lineMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.25, depthWrite: false });
+    const lineMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.60, depthWrite: false });
     // Set the final state base zoom to be much closer
     targetCam.x = 0; targetCam.y = 0; targetCam.scale = 1.35;
     cam.x = 0; cam.y = 0; cam.scale = 1.35; 
@@ -6130,7 +6131,7 @@ function updatePoint(pt, dt, isClosest) {
         // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
-            const baseGlow = pt.isMajor ? 0.55 : 0.28; // White crystal spikes — subtle prismatic whisper at zoom-in
+            const baseGlow = pt.isMajor ? 2.5 : 1.4; // Vibrant prismatic glow — dramatic beams
             glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 0.5) * lanternSoft;
             
             if (window.skyRevealState === 'revealed') {
