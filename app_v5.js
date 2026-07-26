@@ -267,8 +267,8 @@ void main() {
     float prismGate = smoothstep(1.0, 2.5, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // Predominantly white with very subtle chromatic aberration at beam edges
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.20);
+    // Predominantly white with subtle chromatic color at beam edges when zoomed
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.45);
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
