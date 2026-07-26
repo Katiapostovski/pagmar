@@ -263,12 +263,12 @@ void main() {
     float iCore = getPrismIntensity(uv, uType);
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Color opens at zoom 0.5, full spectral at zoom 1.0 — vibrant rainbow at normal view
-    float prismGate = smoothstep(0.5, 1.0, clamp(uZoom, 0.0, 10.0));
+    // Color opens only at high zoom — beams stay white, spectral only as a whisper at the tips
+    float prismGate = smoothstep(1.0, 2.5, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // Vibrant rainbow: strongly mixed with prism colors
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 1.1);
+    // Predominantly white with very subtle chromatic aberration at beam edges
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.20);
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
@@ -2311,7 +2311,7 @@ function showInterpretationPanel(userVision) {
         '  position:absolute; width:6px; height:6px;',
         '  border:1px solid rgba(255,255,255,0.55); border-radius:50%;',
         '  transform:translate(-50%,-50%); pointer-events:none;',
-        '  opacity: 0;',
+        '  opacity: 0 !important;',
         '}',
         '.sky-dlabel-anchor-dot.hinting {',
         '  animation: dlabel-approach 1.8s ease-in-out infinite;',
