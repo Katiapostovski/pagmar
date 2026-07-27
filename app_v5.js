@@ -265,10 +265,14 @@ void main() {
     // Real prism splits white light: R/G/B travel at slightly different angles.
     // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
     float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
-    // Base aberration (0.004) + hover boost + rotating SHIMMER (light reflection moving across prism)
-    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.006;
+    float isDotType = step(2.5, uType); // 1.0 for starfield dots, 0.0 for beams/shards/blades
+    // Dots should NEVER get prism effects — they are simple background stars
+    float beamPrism = prismGate * (1.0 - isDotType);
+
+    // Base aberration (0.008) + hover boost + rotating SHIMMER
+    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
     float shimmer = 0.5 + 0.5 * sin(uTime * 1.8 + atan(uv.y, uv.x) * 4.0);
-    float aberration = prismGate * (0.004 + hoverBoost + shimmer * 0.003);
+    float aberration = beamPrism * (0.008 + hoverBoost + shimmer * 0.005);
 
     // Slowly rotating split direction → organic prismatic feel
     vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
@@ -280,13 +284,14 @@ void main() {
 
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Unified beams: strong white core (3.5×) + color tint (3.5×) = mostly white with prismatic edges
-    vec3 col = (vec3(iR, iG, iB) * 3.5 + vec3(0.97, 0.97, 1.0) * iG * 3.5) * twinkle;
+    // Beams: strong color (5.0×) + subtle white core (2.0×) = clearly prismatic
+    // Dots: just white (no color split)
+    vec3 beamCol = (vec3(iR, iG, iB) * 5.0 + vec3(0.97, 0.97, 1.0) * iG * 2.0) * twinkle;
+    vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 5.0 * twinkle;
+    vec3 col = mix(beamCol, dotCol, isDotType);
 
     float iCore = max(iR, max(iG, iB));
-    // Starfield dots (type 3): no zoom fade — always visible at all zoom levels
-    // Main constellation beams: fade with zoom for depth
-    float isDotType = step(2.5, uType); // 1.0 for dots, 0.0 for others
+    // Starfield dots: no zoom fade — always visible at all zoom levels
     float zoomFade  = mix(clamp(uZoom * 1.4, 0.25, 1.0), 1.0, isDotType);
     float alpha = iCore * uOpacity * zoomFade;
 
@@ -300,16 +305,15 @@ void main() {
         alpha += coreGlow * 0.5 * discoveryFactor;
     }
 
-    // ── LIGHT REFLECTIONS: sweeping highlight across prism surface ──
-    // A bright band rotates slowly, simulating light catching crystal edges
+    // ── LIGHT REFLECTIONS (beams only, NOT dots) ──
     float sweepAngle = uTime * 0.25;
     float sweepDir = dot(uv, vec2(cos(sweepAngle), sin(sweepAngle)));
-    float sweep = exp(-pow(sweepDir * 18.0, 2.0)) * 0.6; // narrow bright band
-    float sweepGate = smoothstep(0.5, 2.5, clamp(uZoom, 0.0, 10.0));
-    col += vec3(1.0, 0.98, 0.95) * sweep * sweepGate * prismGate;
-    alpha += sweep * 0.2 * sweepGate * prismGate;
+    float sweep = exp(-pow(sweepDir * 18.0, 2.0)) * 0.6;
+    float sweepGate = smoothstep(0.5, 2.5, clamp(uZoom, 0.0, 10.0)) * (1.0 - isDotType);
+    col += vec3(1.0, 0.98, 0.95) * sweep * sweepGate * beamPrism;
+    alpha += sweep * 0.2 * sweepGate * beamPrism;
 
-    // Secondary rainbow reflection — complementary angle
+    // Secondary rainbow reflection (beams only)
     float sweep2Angle = uTime * -0.18 + 1.57;
     float sweep2Dir = dot(uv, vec2(cos(sweep2Angle), sin(sweep2Angle)));
     float sweep2 = exp(-pow(sweep2Dir * 25.0, 2.0)) * 0.3;
@@ -318,7 +322,7 @@ void main() {
         0.5 + 0.5 * sin(sweep2Dir * 12.0 + 2.09),
         0.5 + 0.5 * sin(sweep2Dir * 12.0 + 4.19)
     );
-    col += rainbow2 * sweep2 * sweepGate * prismGate * 0.5;
+    col += rainbow2 * sweep2 * sweepGate * beamPrism * 0.5;
 
     gl_FragColor = vec4(col, alpha);
 }
@@ -3066,7 +3070,7 @@ function initConstellationSystem(userVision) {
     ];
 
     try {
-        const currentVision = (window.userConstellationName || '').trim().replace(/^ה/, '');
+        const currentVision = (userVision || '').trim().replace(/^ה/, '');
         const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
             .filter(g => {
                 const name = (g.nameHe || g.nameEn || '').trim();
@@ -3126,24 +3130,27 @@ function initConstellationSystem(userVision) {
         lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
         
         gs.lineMat = ghostLineMat.clone();
-        gs.lineMat.color = new THREE.Color(1, 1, 1); // white lines — same as user's constellation
+        gs.lineMat.color = new THREE.Color(1, 1, 1);
         const lineMesh = new THREE.LineSegments(lineGeo, gs.lineMat);
-        gs.lineMesh = lineMesh; // store reference for dynamic updates
-        gs.group.add(lineMesh);
+        gs.lineMesh = lineMesh; // store reference but don't add to scene
+        // Ghost constellations are purely prismatic — no wireframe lines
+        // gs.group.add(lineMesh);  // REMOVED: user wants prismatic-only style
 
         // Create Points — store mesh references for animation
         gs.starMeshes = [];
-        ghost.pts.forEach(pt => {
+        const beamTypes = [0.0, 1.0, 2.0]; // flare, shard, blade — mixed for prismatic variety
+        ghost.pts.forEach((pt, pi) => {
             const gAngle = Math.random() * Math.PI; // unique beam direction per ghost star
+            const beamType = beamTypes[pi % beamTypes.length]; // cycle through types
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
                 uniforms: {
                     uTime: { value: Math.random() * 100 },
                     uColor: { value: c },
-                    uType: { value: 0.0 },
+                    uType: { value: beamType },
                     uOpacity: { value: 0.0 },
-                    uGlow: { value: 0.45 },
+                    uGlow: { value: 0.55 },
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 },
                     uDepth: { value: 0.6 },
@@ -3156,7 +3163,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            mesh.scale.set(1.4, 1.4, 1);
+            mesh.scale.set(2.0, 2.0, 1); // bigger for prismatic visibility
             mesh.position.set(pt.x, pt.y, 0);
             gs.starMeshes.push(mesh);
             gs.group.add(mesh);
@@ -3322,17 +3329,17 @@ function initConstellationSystem(userVision) {
                 const MIN_STAR_PX  = 72;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
                 gs.group.children.forEach(child => {
-                    if (child.isMesh) child.scale.set(1.4 * compensation, 1.4 * compensation, 1);
+                    if (child.isMesh) child.scale.set(2.0 * compensation, 2.0 * compensation, 1);
                 });
             }
             // Boost ghost brightness in galaxy view so they're clearly visible
             const galaxyBoost = cam.scale < 0.5 ? 1.0 + (0.5 - cam.scale) * 4.0 : 1.0;
-            const lineBoost = Math.min(1.0, Math.max(0.22, 0.65 - cam.scale * 0.8) * galaxyBoost);
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * lineBoost + hGlow * 0.55);
+            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.15 + hGlow * 0.25); // very faint lines if somehow visible
             gs.pointMats.forEach(mat => {
                 mat.uniforms.uOpacity.value = Math.min(1.0, (a * 2.5 + hGlow * 1.8) * galaxyBoost);
                 mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
+                mat.uniforms.uGlow.value = cam.scale > 1.0 ? 0.75 : 0.55; // boost glow when zoomed in
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -3371,6 +3378,21 @@ function initConstellationSystem(userVision) {
                     if (gs.group) {
                         gs.group.rotation.y = 0;
                         gs.group.rotation.x = 0;
+                    }
+                    // Hide wireframe lines — show only prismatic star beams
+                    if (gs.lineMesh) gs.lineMesh.visible = false;
+                    // Mark as focused ghost
+                    window._focusedGhostIndex = gi;
+                    // Update the top title to show this constellation's name
+                    const titleEl = document.getElementById('user-constellation-title');
+                    if (titleEl) {
+                        const ghostName = (currentLang === 'he') ? ghost.nameHe : ghost.nameEn;
+                        titleEl.textContent = '— ' + ghostName + ' —';
+                        titleEl.style.opacity = '1';
+                        // Store original user name for when they return
+                        if (!window._originalConstellationTitle) {
+                            window._originalConstellationTitle = window.userConstellationName || userVision || '';
+                        }
                     }
                 });
                 gs.labelEl.addEventListener('mouseover', () => {
@@ -4834,9 +4856,9 @@ async function buildSignalField() {
     // dot-type (3.0) = soft point light, not 6-ray star or beam line
     // Spread across huge radius so they appear everywhere during exploration
     {
-        const STAR_COUNT    = 600;
-        const FIELD_RADIUS  = 4000;  // fills entire explorable space
-        const CENTER_CLEAR  = 100;   // keep user constellation zone clear
+        const STAR_COUNT    = 1200;   // more stars across much larger area
+        const FIELD_RADIUS  = 20000;  // covers entire sky including ghost constellation zone (5000-16000)
+        const CENTER_CLEAR  = 100;    // keep user constellation zone clear
 
         for (let si = 0; si < STAR_COUNT; si++) {
             const sfAngle = rand() * Math.PI * 2;
@@ -5555,6 +5577,16 @@ function skyLoop(ts) {
             // Only override if not in the initial 0-opacity state (before it was revealed)
             if (parseFloat(userTitleEl.style.opacity) > 0.01 || userAlpha > 0.01) {
                 userTitleEl.style.opacity = userAlpha.toFixed(3);
+            }
+            // Restore original user title when zooming out away from ghost
+            if (cam.scale < 0.48 && window._focusedGhostIndex !== undefined) {
+                window._focusedGhostIndex = undefined;
+                if (window._originalConstellationTitle) {
+                    const origName = window._originalConstellationTitle;
+                    let fmtTitle = origName.trim();
+                    if (currentLang === 'he' && !fmtTitle.startsWith('ה')) fmtTitle = 'ה' + fmtTitle;
+                    userTitleEl.textContent = '— ' + fmtTitle + ' —';
+                }
             }
         }
         if (interpPanel) {
