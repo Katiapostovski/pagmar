@@ -3256,9 +3256,9 @@ function initConstellationSystem(userVision) {
             let zoomTimeAlpha = 1.0;
             if (gs.zoomRevealStart !== undefined) {
                 const elapsed = nowSec - gs.zoomRevealStart;
-                // Stagger appearance based on ghost index: wait between 0s and 4.2s
-                const delay = (gi % 7) * 0.8; 
-                zoomTimeAlpha = clamp((elapsed - delay) / 1.5, 0, 1); // fade in over 1.5 seconds
+                // Very fast stagger: wait between 0s and 1.2s
+                const delay = (gi % 7) * 0.2; 
+                zoomTimeAlpha = clamp((elapsed - delay) / 0.8, 0, 1); // fade in over 0.8 seconds
             } else {
                 zoomTimeAlpha = 0;
             }
