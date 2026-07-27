@@ -1575,7 +1575,7 @@ function showInterpretationPanel(userVision) {
                         // Dynamically create a new ghost in the current session
                         const seed = saved.length * 137.5;
                         const angle = seed * (Math.PI / 180);
-                        const dist = 1500 + (seed % 4000);
+                        const dist = 3500 + (seed % 5000); // Spread them out further
                         const newGhost = saved[saved.length - 1];
                         newGhost.offset = { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist };
                         // Only add if not already present (prevent runtime duplicates)
@@ -2961,7 +2961,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -3500, y: -2500 },
+            offset: { x: -5500, y: -4500 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -2971,7 +2971,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -6200, y: 3500 },
+            offset: { x: -8200, y: 5500 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -2981,7 +2981,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 5500, y: 2800 },
+            offset: { x: 7500, y: 4800 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -2992,7 +2992,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,255,',
             textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
             textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -2800, y: 3800 },
+            offset: { x: -4800, y: 5800 },
             pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
                    {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
             lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
@@ -3002,7 +3002,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 3800, y: -3000 },
+            offset: { x: 5800, y: -5000 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3012,7 +3012,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: 6500, y: -1500 },
+            offset: { x: 8500, y: -3500 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3023,7 +3023,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: 1500, y: 4200 },
+            offset: { x: 3500, y: 6200 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
@@ -3129,7 +3129,7 @@ function initConstellationSystem(userVision) {
         gs.starMeshes = [];
         ghost.pts.forEach((pt, pi) => {
             const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
-            const beamType = 1.0; // 'crystal' (1.0) matches the user's main prismatic constellation 'halo' look
+            const beamType = 0.0; // 'blade' (0.0) matches the user's signature prismatic language (long glowing crossing lines)
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
@@ -3318,9 +3318,9 @@ function initConstellationSystem(userVision) {
                 const BASE_STAR_PX = 200 * 1.4;
                 const MIN_STAR_PX  = 80;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 1.0 * compensation; // Crystals are smaller than blades, so they need a decent scale
+                let targetScale = 0.5 * compensation; // Blades are long, so 0.5 is subtle but visibly prismatic
                 // CLAMP: Ensure ghost beams NEVER exceed the max screen scale (2.0) of the user constellation
-                const maxAllowedChildScale = 1.5 / Math.max(0.01, cam.scale);
+                const maxAllowedChildScale = 1.0 / Math.max(0.01, cam.scale);
                 targetScale = Math.min(targetScale, maxAllowedChildScale);
                 
                 gs.group.children.forEach(child => {
@@ -3332,9 +3332,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = 0.0; // Force line wireframes invisible permanently
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.45 + hGlow * 0.4); // Bright enough to be seen clearly
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.25 + hGlow * 0.4); // Visible enough, not overwhelming
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.5 + hGlow * 1.2; // Glowing crystals
+                mat.uniforms.uGlow.value = 0.35 + hGlow * 1.0; 
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -4785,9 +4785,9 @@ async function buildSignalField() {
             // Questionnaire button positions (vertex) can be far from central cluster,
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
-                ? (2.0 + rand() * 0.8)     // 2.0-2.8 - larger to be clearly visible without wireframes
+                ? (2.2 + rand() * 0.8)     // Restored to thick blades so they are clearly visible
                 : (isVertexStar || isQDrivenStar)
-                    ? (1.2 + rand() * 0.6)   // 1.2-1.8 - visible path
+                    ? (1.2 + rand() * 0.8)   // 1.2-2.0 - visible path
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
             
             // Use personal hue but allow slight drift for a sparkling effect
@@ -6383,7 +6383,7 @@ function updatePoint(pt, dt, isClosest) {
 
         // Constellation beams: reasonable cap for clean single prisms
         if (!isStarfield) {
-            const maxBeamScale = 1.5; // Enough to be seen, not huge
+            const maxBeamScale = 2.0; // Allow main constellation to have its signature long blades
             s = Math.min(s, maxBeamScale);
         }
 
