@@ -3318,9 +3318,9 @@ function initConstellationSystem(userVision) {
                 const BASE_STAR_PX = 200 * 1.4;
                 const MIN_STAR_PX  = 80;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 0.5 * compensation; // Blades are long, so 0.5 is subtle but visibly prismatic
+                let targetScale = 2.5 * compensation; // Very large scale, blades drop off quickly so they need size
                 // CLAMP: Ensure ghost beams NEVER exceed the max screen scale (2.0) of the user constellation
-                const maxAllowedChildScale = 1.0 / Math.max(0.01, cam.scale);
+                const maxAllowedChildScale = 4.0 / Math.max(0.01, cam.scale);
                 targetScale = Math.min(targetScale, maxAllowedChildScale);
                 
                 gs.group.children.forEach(child => {
@@ -3332,9 +3332,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = 0.0; // Force line wireframes invisible permanently
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.25 + hGlow * 0.4); // Visible enough, not overwhelming
+                mat.uniforms.uOpacity.value = Math.min(2.5, a * 1.2 + hGlow * 0.8); // Cranked up opacity to match main constellation
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.35 + hGlow * 1.0; 
+                mat.uniforms.uGlow.value = 1.2 + hGlow * 1.5; // High base glow
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -6418,13 +6418,13 @@ function updatePoint(pt, dt, isClosest) {
         // ── OPACITY ──
         let opacity;
         if (pt.isSeed) {
-            opacity = lerp(0.35, 0.90, lanternSoft);
-            if (pt.isMajor) opacity = Math.max(opacity, 0.45);
+            opacity = lerp(0.5, 1.2, lanternSoft);
+            if (pt.isMajor) opacity = Math.max(opacity, 0.8);
         } else if (pt.permanentlyRevealed) {
-            const baseOp = pt.isMajor ? 0.75 : 0.60;
-            const litOp  = pt.isMajor ? 1.00 : 0.85;
+            const baseOp = pt.isMajor ? 1.8 : 1.2;
+            const litOp  = pt.isMajor ? 2.5 : 1.8;
             opacity = lerp(baseOp, litOp, lanternSoft);
-            opacity += pt.hoverPulse * 0.25 * pulseDampen;
+            opacity += pt.hoverPulse * 0.4 * pulseDampen;
             // Breathing glow in revealed state
             if (window.skyRevealState === 'revealed') {
                 opacity += (globalBreath - 1.0) * 1.2;
