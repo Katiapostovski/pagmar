@@ -3223,6 +3223,8 @@ function initConstellationSystem(userVision) {
     window.updateConstellations = function() {
         if (!window.ghostDefs || !window.ghostState) return;
         
+        const nowSec = performance.now() / 1000;
+        
         // 10-second delay requirement
         const timeMet = (typeof skyIntroTime !== 'undefined' && skyIntroTime > 10.0);
         
