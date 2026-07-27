@@ -3305,14 +3305,6 @@ function initConstellationSystem(userVision) {
                         posAttr.needsUpdate = true;
                     }
                 }
-
-                // ── STAR SIZE COMPENSATION ────────────────────────────────
-                const BASE_STAR_PX = 200 * 1.4;
-                const MIN_STAR_PX  = 72;
-                const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                gs.group.children.forEach(child => {
-                    if (child.isMesh) child.scale.set(3.5 * compensation, 3.5 * compensation, 1);
-                });
             }
             // Boost ghost brightness in galaxy view so they're clearly visible
             const galaxyBoost = cam.scale < 0.5 ? 1.0 + (0.5 - cam.scale) * 4.0 : 1.0;
@@ -3321,7 +3313,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.forEach(mat => {
                 mat.uniforms.uOpacity.value = Math.min(1.0, (a * 2.5 + hGlow * 1.8) * galaxyBoost);
                 mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
-                mat.uniforms.uGlow.value = cam.scale > 1.0 ? 2.2 : 1.8; // strong prismatic glow like user constellation
+                mat.uniforms.uGlow.value = hGlow; // Match user constellation behavior (only glow on hover)
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -5690,8 +5682,8 @@ function skyLoop(ts) {
     {
         const userTitleEl = document.getElementById('user-constellation-title');
         const interpPanel = document.getElementById('sky-interpretation-panel');
-        // At cam.scale < 0.48 → fade out; above 0.58 → fade in
-        const userAlpha = smoothstep(0.42, 0.60, cam.scale);
+        // At cam.scale < 0.25 → fade out; above 0.45 → fade in (so it appears immediately upon reveal)
+        const userAlpha = smoothstep(0.25, 0.45, cam.scale);
         if (userTitleEl && userTitleEl.style.opacity !== undefined) {
             // Only override if not in the initial 0-opacity state (before it was revealed)
             if (parseFloat(userTitleEl.style.opacity) > 0.01 || userAlpha > 0.01) {
