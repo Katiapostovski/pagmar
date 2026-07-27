@@ -3285,9 +3285,6 @@ function initConstellationSystem(userVision) {
                         const phase = si * 1.618 + gi * 2.3;
                         mesh.position.x = origPt.x + Math.sin(t * 0.45 + phase) * 7;
                         mesh.position.y = origPt.y + Math.cos(t * 0.33 + phase) * 7;
-                        // Inverse scale so the ghost beams don't shrink when zooming out
-                        const invScale = 3.5 / Math.max(0.1, cam.scale);
-                        mesh.scale.set(invScale, invScale, 1);
                     });
                     // Update line geometry to follow animated star positions
                     if (gs.lineMesh) {
@@ -3305,13 +3302,22 @@ function initConstellationSystem(userVision) {
                         posAttr.needsUpdate = true;
                     }
                 }
+
+                // ── STAR SIZE COMPENSATION ────────────────────────────────
+                // Ghosts shrink slightly when zoomed out so they look like distant constellations
+                const BASE_STAR_PX = 200 * 1.4;
+                const MIN_STAR_PX  = 80;
+                const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
+                gs.group.children.forEach(child => {
+                    if (child.isMesh) child.scale.set(3.5 * compensation, 3.5 * compensation, 1);
+                });
             }
-            // Boost ghost brightness in galaxy view so they're clearly visible
-            const galaxyBoost = cam.scale < 0.5 ? 1.0 + (0.5 - cam.scale) * 4.0 : 1.0;
+            // Match ghost brightness exactly to user constellation
             const hGlow = gs._hoverGlow || 0;
             if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.15 + hGlow * 0.25); // very faint lines if somehow visible
             gs.pointMats.forEach(mat => {
-                mat.uniforms.uOpacity.value = Math.min(1.0, (a * 2.5 + hGlow * 1.8) * galaxyBoost);
+                // Base opacity 0.75 matches pt.permanentlyRevealed baseOp
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.75 + hGlow * 0.5);
                 mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
                 mat.uniforms.uGlow.value = hGlow; // Match user constellation behavior (only glow on hover)
                 mat.uniforms.uTime.value += 0.015;
@@ -6344,6 +6350,14 @@ function updatePoint(pt, dt, isClosest) {
         }
         const pointScale = lerp(skeletonScale, fullScale, sizeFactor);
         let s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
+
+        // Ensure user constellation and ghosts match perfectly when zoomed out (scattered constellations)
+        if (window.skyRevealState === 'revealed' && pt.theme !== 'Starfield') {
+            const BASE_STAR_PX = 450 * pointScale;
+            const MIN_STAR_PX  = 80;
+            const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
+            s *= compensation;
+        }
 
         // Starfield: maintain visible size at any zoom level
         if (pt.theme === 'Starfield') {
