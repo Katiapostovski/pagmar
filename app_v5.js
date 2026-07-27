@@ -2477,7 +2477,7 @@ function showInterpretationPanel(userVision) {
         if (idx === 0 && answers.pareidolia) {
             // Skip the first label entirely — the constellation name is shown in the top title bar
             // The interpretation modal is accessible by clicking the title
-            continue;
+            return;
         } else {
             // Compact annotation-box: just the keyword label
             var catEl = document.createElement('span');
