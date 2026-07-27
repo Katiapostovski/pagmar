@@ -3247,8 +3247,23 @@ function initConstellationSystem(userVision) {
             const halfH = window.innerHeight * 0.55;
             const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
             // Ghost reveal: start as title disappears (cam.scale≈0.42), fully visible at cam.scale=0.20
-            const screenAlpha = onScreen ? Math.max(0, 1.2 - cam.scale * 3.0) : 0;
+            if (cam.scale < 0.42) {
+                if (gs.zoomRevealStart === undefined) gs.zoomRevealStart = nowSec;
+            } else {
+                gs.zoomRevealStart = undefined;
+            }
             
+            let zoomTimeAlpha = 1.0;
+            if (gs.zoomRevealStart !== undefined) {
+                const elapsed = nowSec - gs.zoomRevealStart;
+                // Stagger appearance based on ghost index: wait between 0s and 4.2s
+                const delay = (gi % 7) * 0.8; 
+                zoomTimeAlpha = clamp((elapsed - delay) / 1.5, 0, 1); // fade in over 1.5 seconds
+            } else {
+                zoomTimeAlpha = 0;
+            }
+            
+            const screenAlpha = onScreen ? Math.max(0, 1.2 - cam.scale * 3.0) * zoomTimeAlpha : 0;
             // Check if user has wandered far enough from the starting center (0,0) to start revealing ghosts
             if (!window.hasWandered && Math.hypot(cam.x, cam.y) > 800) {
                 window.hasWandered = true;
