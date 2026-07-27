@@ -3285,7 +3285,7 @@ function initConstellationSystem(userVision) {
                 gs.group.rotation.y = 0;
                 gs.group.rotation.x = 0;
                 // Constant 360 degree rotation around themselves
-                gs.group.rotation.z = now * 0.0003; 
+                gs.group.rotation.z = performance.now() * 0.0003; 
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
                 // ── Animate star positions within the constellation ────────
