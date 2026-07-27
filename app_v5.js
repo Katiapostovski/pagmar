@@ -3317,18 +3317,23 @@ function initConstellationSystem(userVision) {
                 const BASE_STAR_PX = 200 * 1.4;
                 const MIN_STAR_PX  = 100;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
+                let targetScale = 3.5 * compensation;
+                // CLAMP: Ensure ghost beams NEVER exceed the max screen scale (2.0) of the user constellation
+                const maxAllowedChildScale = 2.0 / Math.max(0.01, cam.scale);
+                targetScale = Math.min(targetScale, maxAllowedChildScale);
+                
                 gs.group.children.forEach(child => {
-                    if (child.isMesh) child.scale.set(1.2 * compensation, 1.2 * compensation, 1);
+                    if (child.isMesh) child.scale.set(targetScale, targetScale, 1);
                 });
             }
             // Match ghost brightness exactly to user constellation
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.12 + hGlow * 0.25); // Extremely delicate lines
+            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.45 + hGlow * 0.25); // Restored unified line strength
             gs.pointMats.forEach(mat => {
-                // Background ghosts should be very faint unless hovered
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.45 + hGlow * 0.5);
+                // Unified opacity and glow to exactly match the active constellation
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.85 + hGlow * 0.5);
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.2 + hGlow * 1.5; // Very low base glow
+                mat.uniforms.uGlow.value = 1.0 + hGlow * 1.5; // Unified base glow
                 mat.uniforms.uTime.value += 0.015;
             });
             
