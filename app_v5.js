@@ -265,9 +265,10 @@ void main() {
     // Real prism splits white light: R/G/B travel at slightly different angles.
     // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
     float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
-    // Base thin fringes (0.005) + sparkle boost on hover/glow (uGlow > 1.0 = hover)
+    // Base aberration (0.008) + hover boost + rotating SHIMMER (light reflection moving across prism)
     float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
-    float aberration = prismGate * (0.005 + hoverBoost);
+    float shimmer = 0.5 + 0.5 * sin(uTime * 1.8 + atan(uv.y, uv.x) * 4.0);
+    float aberration = prismGate * (0.008 + hoverBoost + shimmer * 0.006);
 
     // Slowly rotating split direction → organic prismatic feel
     vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
@@ -279,8 +280,8 @@ void main() {
 
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // White-dominant: strong white core (4.5×) + subtle colored fringes (3.0×)
-    vec3 col = (vec3(iR, iG, iB) * 3.0 + vec3(0.97, 0.97, 1.0) * iG * 4.5) * twinkle;
+    // More color (3.0) vs less white core (2.8) → visible prismatic tint
+    vec3 col = (vec3(iR, iG, iB) * 3.0 + vec3(0.97, 0.97, 1.0) * iG * 2.8) * twinkle;
 
     float iCore = max(iR, max(iG, iB));
     float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
@@ -3836,18 +3837,6 @@ function renderQ() {
                         lastAnswerPos = { x: safeX, y: safeY };
                         advanceQ(false); // just fade
                     }
-                    // ── ANSWER FEEDBACK: flash the selected button ──
-                    b.style.transition = 'all 0.15s ease';
-                    b.style.borderColor = 'rgba(255,255,255,0.9)';
-                    b.style.boxShadow = '0 0 20px rgba(255,255,255,0.35), inset 0 0 12px rgba(255,255,255,0.1)';
-                    b.style.background = 'rgba(255,255,255,0.12)';
-                    b.style.transform = 'translate(-50%, -50%) scale(1.04)';
-                    // Brief pulse then settle
-                    setTimeout(() => {
-                        b.style.transition = 'all 0.6s ease';
-                        b.style.transform = 'translate(-50%, -50%) scale(0.96)';
-                        b.style.opacity = '0.6';
-                    }, 200);
                 }
             };
             optsContainer.appendChild(b);
@@ -4899,8 +4888,14 @@ async function buildSignalField() {
     // Minor ambient background stars: very last, barely visible
     let nextMinorDelay = Math.max(40.0, nextMajorDelay + 3.0);
     nonMajorPts.forEach(pt => {
-        pt.revealDelay = nextMinorDelay;
-        nextMinorDelay += 0.05 + rand() * 0.08;
+        if (pt.theme === 'Starfield') {
+            // Starfield stars appear IMMEDIATELY — no staggered delay
+            pt.revealDelay = 0;
+            pt.appearP = 1.0;
+        } else {
+            pt.revealDelay = nextMinorDelay;
+            nextMinorDelay += 0.05 + rand() * 0.08;
+        }
     });
 
         // Proximity-based connections — form structured web within the core
@@ -6302,7 +6297,7 @@ function updatePoint(pt, dt, isClosest) {
             pt.mesh.visible = false;
         } else if (pt.appearP !== undefined && pt.appearP < 0.01) {
             pt.mesh.visible = false;
-        } else if (!pt.permanentlyRevealed && !pt.isSeed && lanternSoft < 0.01) {
+        } else if (!pt.permanentlyRevealed && !pt.isSeed && pt.theme !== 'Starfield' && lanternSoft < 0.01) {
             pt.mesh.visible = false;
         } else {
             pt.mesh.visible = true;
