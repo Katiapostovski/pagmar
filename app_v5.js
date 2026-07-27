@@ -2961,7 +2961,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -5500, y: -13500 },
+            offset: { x: -3500, y: -2500 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -2971,7 +2971,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -6200, y: 4500 },
+            offset: { x: -6200, y: 3500 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -2981,7 +2981,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 14000, y: 11500 },
+            offset: { x: 5500, y: 2800 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -2992,7 +2992,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,255,',
             textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
             textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -16000, y: 8500 },
+            offset: { x: -2800, y: 3800 },
             pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
                    {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
             lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
@@ -3002,7 +3002,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 10500, y: -9000 },
+            offset: { x: 3800, y: -3000 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3012,7 +3012,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: -12500, y: -11000 },
+            offset: { x: 6500, y: -1500 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3023,7 +3023,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: -15000, y: 15000 },
+            offset: { x: 1500, y: 4200 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
@@ -3306,7 +3306,7 @@ function initConstellationSystem(userVision) {
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
                 // Ghosts shrink slightly when zoomed out so they look like distant constellations
                 const BASE_STAR_PX = 200 * 1.4;
-                const MIN_STAR_PX  = 80;
+                const MIN_STAR_PX  = 100;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
                 gs.group.children.forEach(child => {
                     if (child.isMesh) child.scale.set(3.5 * compensation, 3.5 * compensation, 1);
@@ -3316,8 +3316,8 @@ function initConstellationSystem(userVision) {
             const hGlow = gs._hoverGlow || 0;
             if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.15 + hGlow * 0.25); // very faint lines if somehow visible
             gs.pointMats.forEach(mat => {
-                // Base opacity 0.75 matches pt.permanentlyRevealed baseOp
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.75 + hGlow * 0.5);
+                // Slightly boosted base opacity for ghosts so they stand out
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.9 + hGlow * 0.5);
                 mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
                 mat.uniforms.uGlow.value = hGlow; // Match user constellation behavior (only glow on hover)
                 mat.uniforms.uTime.value += 0.015;
@@ -6354,7 +6354,7 @@ function updatePoint(pt, dt, isClosest) {
         // Ensure user constellation and ghosts match perfectly when zoomed out (scattered constellations)
         if (window.skyRevealState === 'revealed' && pt.theme !== 'Starfield') {
             const BASE_STAR_PX = 450 * pointScale;
-            const MIN_STAR_PX  = 80;
+            const MIN_STAR_PX  = 100;
             const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
             s *= compensation;
         }
