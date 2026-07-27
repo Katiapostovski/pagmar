@@ -3111,16 +3111,25 @@ function initConstellationSystem(userVision) {
         gs.lineMat = ghostLineMat.clone();
         gs.lineMat.color = new THREE.Color(1, 1, 1);
         const lineMesh = new THREE.LineSegments(lineGeo, gs.lineMat);
-        gs.lineMesh = lineMesh; // store reference but don't add to scene
-        // Ghost constellations are purely prismatic — no wireframe lines
-        // gs.group.add(lineMesh);  // REMOVED: user wants prismatic-only style
+        gs.lineMesh = lineMesh; // store reference
+        gs.group.add(lineMesh); // Restore wireframe lines to match user constellation style
+
+        // Calculate angles for ghost points based on their lines so beams align structurally
+        const ptAngles = new Array(ghost.pts.length).fill(null);
+        ghost.lines.forEach(([a, b]) => {
+            if (!ghost.pts[a] || !ghost.pts[b]) return;
+            const dx = ghost.pts[b].x - ghost.pts[a].x;
+            const dy = ghost.pts[b].y - ghost.pts[a].y;
+            const ang = Math.atan2(dy, dx);
+            ptAngles[a] = ang;
+            ptAngles[b] = ang;
+        });
 
         // Create Points — store mesh references for animation
         gs.starMeshes = [];
-        const beamTypes = [0.0, 1.0, 2.0]; // flare, shard, blade — mixed for prismatic variety
         ghost.pts.forEach((pt, pi) => {
-            const gAngle = Math.random() * Math.PI; // unique beam direction per ghost star
-            const beamType = beamTypes[pi % beamTypes.length]; // cycle through types
+            const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
+            const beamType = 0.0; // Force to 'blade' (0.0) to match user's prismatic language
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
