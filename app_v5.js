@@ -267,8 +267,8 @@ void main() {
     float prismGate = smoothstep(1.6, 3.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // Predominantly white from far, colorful on zoom-in (strong mix at high zoom)
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.85);
+    // Subtle chromatic aberration: ~30% color at zoom 2.0, vivid at deep zoom
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.38);
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
@@ -4768,6 +4768,48 @@ async function buildSignalField() {
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
     } // end else (bilateral shape fallback)
 
+    // ── STARFIELD — tiny prismatic background stars across the whole sky ──
+    // Creates the effect of a real night sky with embedded constellations
+    {
+        const STAR_FIELD_COUNT = 185;
+        const FIELD_RADIUS     = 1500;
+        const CENTER_CLEAR     = 130; // keep user constellation zone free
+        for (let si = 0; si < STAR_FIELD_COUNT; si++) {
+            const sfAngle = rand() * Math.PI * 2;
+            const sfR     = CENTER_CLEAR + Math.pow(rand(), 0.6) * FIELD_RADIUS; // denser near middle-field
+            const sfX = Math.cos(sfAngle) * sfR;
+            const sfY = Math.sin(sfAngle) * sfR * 0.78; // slightly compressed vertically
+            const sfZ = (rand() - 0.5) * 500;
+            const sfScale    = 0.07 + rand() * 0.26;          // tiny stars
+            const sfOpacity  = 0.20 + rand() * 0.38;          // varied brightness
+            const sfGlow     = 0.28 + rand() * 0.55;          // subtle glow
+            const sfHue      = rand() * 360;
+            skyPoints.push({
+                x: sfX, y: sfY, z: sfZ,
+                originalX: sfX, originalY: sfY, originalZ: sfZ,
+                targetX: sfX, targetY: sfY, targetZ: sfZ,
+                starX: sfX, starY: sfY,
+                isMajor: false, elementType: 'blade',
+                theme: 'Starfield',
+                text: null, isBlurred: false,
+                baseAngle: rand() * Math.PI * 2,
+                scale: sfScale, hue: sfHue,
+                isSeed: false, depthLayer: 1.8 + rand() * 1.2,
+                fogRevealed: 0.8, hoverPulse: 0, permanentlyRevealed: false,
+                pulseClock: Math.random() * Math.PI * 2,
+                state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
+                revealProgress: 0, hasBeenRevealed: false,
+                assemblyProgress: 0, isAssembling: false,
+                totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0,
+                maxRevealProgress: 0, neighborPts: [],
+                isVertexStar: false, isQPathStar: false,
+                // Custom starfield values stored at creation (stable across frames)
+                starfieldOpacity: sfOpacity,
+                starfieldGlow: sfGlow
+            });
+        }
+    }
+
     // Add text labels to one major point per theme
     for (let t = 0; t < 8; t++) {
         const themePoints = skyPoints.filter(p => p.isMajor && p.anchorIdx === t % 8);
@@ -6124,6 +6166,8 @@ function updatePoint(pt, dt, isClosest) {
             // In prism view, give background lobes ambient visibility
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
+            } else if (window.skyRevealState === 'revealed' && pt.theme === 'Starfield') {
+                opacity = pt.starfieldOpacity || 0.28; // use pre-stored value
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
@@ -6174,6 +6218,8 @@ function updatePoint(pt, dt, isClosest) {
             // Background constellations (Rorschach/Pareidolia): glow in prism state
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 glowValue = pt.isMajor ? 1.5 : 0.8;
+            } else if (window.skyRevealState === 'revealed' && pt.theme === 'Starfield') {
+                glowValue = pt.starfieldGlow || 0.38; // tiny prismatic twinkle
             } else {
                 glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
             }
@@ -6185,8 +6231,8 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.isQPathStar) {
             opacity = Math.max(opacity, 0.58); // Path outline — clearly visible
         } else if (!pt.isMajor && !pt.isVertexStar && !pt.isQPathStar) {
-            if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia') {
-                opacity = Math.max(opacity, 0.14); // Background lobe minors — faintly visible
+            if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia' || pt.theme === 'Starfield') {
+                opacity = Math.max(opacity, 0.12); // Background & starfield — preserve their set opacity
             } else {
                 opacity *= 0.15; // Pure ambient dust — barely visible
             }
