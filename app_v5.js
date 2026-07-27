@@ -204,14 +204,17 @@ uniform float uDepth;
 uniform float uHasLabel;
 varying vec2 vUv;
 
-// Vibrant rainbow spectrum
+// RGB-primary spectrum: sharp peaks of pure red, green, blue (not CMYK cyan/magenta/yellow)
 vec3 spectral(float t) {
+    // max(0, sin) clips negative half → each channel only contributes in its own 180° window
     vec3 c = vec3(
-        sin(t * 6.28318 + 0.0),
-        sin(t * 6.28318 + 2.094),
-        sin(t * 6.28318 + 4.189)
-    ) * 0.5 + 0.5;
-    return c * c * 1.5;
+        max(0.0, sin(t * 6.28318 + 0.0)),
+        max(0.0, sin(t * 6.28318 + 2.094)),
+        max(0.0, sin(t * 6.28318 + 4.189))
+    );
+    // Cubic sharpening: reduces CMY transitions, emphasises pure R, G, B primaries
+    c = c * c * c;
+    return c * 3.8;
 }
 
 // Anamorphic blade (type 0) - long dramatic light streak
@@ -268,8 +271,8 @@ void main() {
     float prismGate = smoothstep(0.5, 2.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // mix 0.55: tip = vivid rainbow, center stays white (4x brightness overpowers it)
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, clamp(prismGate * uGlow * 0.55, 0.0, 1.0));
+    // mix 0.62: vivid RGB spectrum at tips, white cores dominate (iCore*4.0 overpowers)
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, clamp(prismGate * uGlow * 0.62, 0.0, 1.0));
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
@@ -6172,7 +6175,7 @@ function updatePoint(pt, dt, isClosest) {
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
             } else if (window.skyRevealState === 'revealed' && pt.theme === 'Starfield') {
-                opacity = pt.starfieldOpacity || 0.28; // use pre-stored value
+                opacity = (pt.starfieldOpacity || 0.28) * 0.45; // dimmed — background hint only
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
