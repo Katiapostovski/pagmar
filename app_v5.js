@@ -269,10 +269,14 @@ void main() {
     // Dots should NEVER get prism effects — they are simple background stars
     float beamPrism = prismGate * (1.0 - isDotType);
 
-    // Base aberration (0.008) + hover boost + rotating SHIMMER
+    // Zoom-dependent color: MORE colorful at zoom-in, whiter at zoom-out
+    float zoomColor = smoothstep(0.6, 2.0, clamp(uZoom, 0.0, 10.0));
+
+    // Base aberration INCREASES with zoom for vivid rainbow at close range
     float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
     float shimmer = 0.5 + 0.5 * sin(uTime * 1.8 + atan(uv.y, uv.x) * 4.0);
-    float aberration = beamPrism * (0.008 + hoverBoost + shimmer * 0.005);
+    float baseAberr = mix(0.006, 0.018, zoomColor); // wider color split at zoom-in
+    float aberration = beamPrism * (baseAberr + hoverBoost + shimmer * 0.008);
 
     // Slowly rotating split direction → organic prismatic feel
     vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
@@ -284,9 +288,12 @@ void main() {
 
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Beams: vivid color (7.0×) + subtle white core (2.0×) = intensely prismatic
-    // Dots: just white (no color split)
-    vec3 beamCol = (vec3(iR, iG, iB) * 7.0 + vec3(0.97, 0.97, 1.0) * iG * 2.0) * twinkle;
+    // Beams: colored channels scale with zoom — more vivid color close up, whiter far away
+    // At zoom-in: strong color (8.0×), minimal white (0.5×) → prismatic rainbow
+    // At zoom-out: moderate color (5.0×), more white (3.0×) → bright white glow
+    float colorMul = mix(5.0, 8.0, zoomColor);
+    float whiteMul = mix(3.0, 0.5, zoomColor);
+    vec3 beamCol = (vec3(iR, iG, iB) * colorMul + vec3(0.97, 0.97, 1.0) * iG * whiteMul) * twinkle;
     vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 5.0 * twinkle;
     vec3 col = mix(beamCol, dotCol, isDotType);
 
@@ -2468,73 +2475,9 @@ function showInterpretationPanel(userVision) {
 
         var isConstellation = false;
         if (idx === 0 && answers.pareidolia) {
-            isConstellation = true;
-            el.className += ' constellation-label';
-            var rawVal = answers.pareidolia.trim();
-            var displayVal = rawVal;
-            if (isHe && !rawVal.startsWith('ה')) displayVal = 'ה' + rawVal;
-            else if (!isHe && !rawVal.toLowerCase().startsWith('the ')) displayVal = 'The ' + rawVal;
-            el.innerHTML = '<span class="dlabel-category">זיהוי</span><span class="dlabel-snippet">' + displayVal + '</span>';
-            el.style.pointerEvents = 'auto';
-            el.style.cursor = 'pointer';
-            (function(dv) {
-                el.addEventListener('pointerdown', function(e) {
-                    e.stopPropagation();
-                    var title = isHe ? ('קונסטלציית ' + dv) : (dv + ' Constellation');
-                    var desc;
-                    if (isHe) {
-                        // ── Word+color+change personalised constellation text ──────────
-                        var wClean2 = dv.replace(/^\u05d4/, ''); // strip He definite article
-                        var fn2 = firstName || '';
-
-                        // Openers — keyed by bare word, then change/focus, else default
-                        var WORD_OPENERS = {
-                            '\u05e2\u05d8\u05dc\u05e3': {
-                                '\u05d0\u05d4\u05d1\u05d4': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05d0\u05d4\u05d1\u05d4 — \u05de\u05d9 \u05e9\u05e8\u05d5\u05d0\u05d4 \u05d1\u05d7\u05e9\u05db\u05d4 \u05d9\u05d5\u05d3\u05e2 \u05d2\u05dd \u05dc\u05d0\u05d4\u05d5\u05d1 \u05d1\u05dc\u05d9 \u05e9\u05d4\u05d0\u05d7\u05e8 \u05d9\u05d3\u05dc\u05d9\u05e7 \u05d0\u05d5\u05e8.',
-                                '\u05d7\u05d5\u05e4\u05e9': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05d7\u05d5\u05e4\u05e9 — \u05d4\u05d9\u05db\u05d5\u05dc\u05ea \u05dc\u05e0\u05d5\u05d5\u05d8 \u05dc\u05d1\u05d3 \u05d1\u05d7\u05e9\u05db\u05d4 \u05d1\u05dc\u05d9 \u05de\u05e4\u05d4. \u05d6\u05d4 \u05dc\u05d0 \u05d1\u05d3\u05d9\u05d3\u05d5\u05ea; \u05d6\u05d5 \u05e2\u05e6\u05de\u05d0\u05d9\u05d5\u05ea.',
-                                'default': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05d7\u05e9\u05db\u05ea \u05d4\u05db\u05d5\u05db\u05d1\u05d9\u05dd — \u05d4\u05d5\u05d0 \u05e0\u05d5\u05d5\u05d8 \u05dc\u05d0 \u05d1\u05e2\u05d9\u05e0\u05d9\u05d9\u05dd \u05d0\u05dc\u05d0 \u05d1\u05e7\u05d5\u05dc \u05d4\u05e4\u05e0\u05d9\u05de\u05d9. \u05d4\u05d7\u05e9\u05db\u05d4 \u05e9\u05de\u05e1\u05d1\u05d9\u05d1 \u05d0\u05d9\u05e0\u05d4 \u05d1\u05e2\u05d9\u05d4 \u05d0\u05dc\u05d0 \u05de\u05d2\u05e8\u05e9 \u05d4\u05de\u05e9\u05d7\u05e7\u05d9\u05dd \u05e9\u05dc\u05da.'
-                            },
-                            '\u05d7\u05ea\u05d5\u05dc': {
-                                'default': fn2 + ', \u05d7\u05ea\u05d5\u05dc \u05d7\u05d9 \u05d1\u05e9\u05e0\u05d9 \u05e2\u05d5\u05dc\u05de\u05d5\u05ea — \u05e0\u05d5\u05db\u05d7 \u05dc\u05d7\u05dc\u05d5\u05d8\u05d9\u05df \u05d5\u05d1\u05e8\u05d2\u05e2 \u05d4\u05d1\u05d0 \u05e7\u05d5\u05e4\u05e5 \u05dc\u05ea\u05d5\u05da \u05e2\u05e6\u05de\u05d0\u05d9\u05d5\u05ea\u05d5. \u05d9\u05e9 \u05d1\u05da \u05d0\u05d5\u05ea\u05d4 \u05d2\u05de\u05d9\u05e9\u05d5\u05ea \u05e9\u05d4\u05d5\u05dc\u05db\u05ea \u05d1\u05d4.'
-                            },
-                            '\u05db\u05dc\u05d1': {
-                                'default': fn2 + ', \u05db\u05dc\u05d1 \u05d1\u05d7\u05e8 \u05d1\u05d1\u05e0\u05d9 \u05d0\u05d3\u05dd \u05e1\u05e4\u05d5\u05e0\u05d8\u05e0\u05d9\u05ea — \u05dc\u05d0 \u05d4\u05d5\u05d0 \u05d0\u05e9\u05e8 \u05de\u05d2\u05dc\u05d4 \u05db\u05dc\u05d5\u05dd \u05d1\u05e2\u05d6\u05d9\u05d1\u05ea\u05d5. \u05d9\u05e9 \u05d1\u05da \u05d0\u05d5\u05ea\u05d4 \u05e0\u05d0\u05de\u05e0\u05d5\u05ea \u05e9\u05d4\u05d5\u05dc\u05db\u05ea \u05d1\u05d4.'
-                            },
-                            '\u05e6\u05d9\u05e4\u05d5\u05e8': {
-                                '\u05d7\u05d5\u05e4\u05e9': fn2 + ', \u05e6\u05d9\u05e4\u05d5\u05e8 \u05d5\u05d7\u05d5\u05e4\u05e9 — \u05d4\u05db\u05e0\u05e4\u05d9\u05d9\u05dd \u05db\u05d1\u05e8 \u05e9\u05dc\u05da, \u05e8\u05e7 \u05e6\u05e8\u05d9\u05da \u05dc\u05e7\u05e4\u05d5\u05e5.',
-                                'default': fn2 + ', \u05e6\u05d9\u05e4\u05d5\u05e8 \u05e9\u05e8\u05d4 \u05de\u05d4\u05de\u05e7\u05d5\u05dd \u05e9\u05d1\u05d5 \u05d4\u05d9\u05d0 \u05e0\u05de\u05e6\u05d0\u05ea — \u05d0\u05d9\u05df \u05d6\u05d4 \u05d2\u05d1\u05d5\u05dc. \u05d9\u05e9 \u05de\u05e7\u05d5\u05dd \u05e9\u05d0\u05ea \u05e9\u05d9\u05d9\u05da \u05dc\u05d4\u05d2\u05d9\u05e2 \u05d0\u05dc\u05d9\u05d5.'
-                            },
-                            '\u05e4\u05e8\u05e4\u05e8': { 'default': fn2 + ', \u05e4\u05e8\u05e4\u05e8 \u05d0\u05d9\u05e0\u05d5 \u05d1\u05d5\u05e8\u05d7 \u05de\u05d4\u05d6\u05d7\u05dc \u05d0\u05dc\u05d0 \u05e0\u05d5\u05dc\u05d3 \u05de\u05d7\u05d3\u05e9 \u05de\u05ea\u05d5\u05db\u05d5. \u05d4\u05db\u05e0\u05e4\u05d9\u05d9\u05dd \u05db\u05d1\u05e8 \u05e9\u05dc\u05da.' },
-                            '\u05d0\u05e8\u05d9\u05d4': { 'default': fn2 + ', \u05d0\u05e8\u05d9\u05d4 \u05dc\u05d0 \u05de\u05d5\u05db\u05d9\u05d7 \u05d0\u05ea \u05e2\u05e6\u05de\u05d5 — \u05d4\u05d5\u05d0 \u05e4\u05e9\u05d5\u05d8 \u05d4\u05d5\u05dc\u05da. \u05d9\u05e9 \u05d1\u05da \u05db\u05d5\u05d7 \u05e9\u05dc\u05d0 \u05d3\u05d5\u05e8\u05e9 \u05d0\u05d9\u05e9\u05d5\u05e8.' },
-                            '\u05e0\u05d7\u05e9': { 'default': fn2 + ', \u05e0\u05d7\u05e9 \u05d1\u05d5\u05d7\u05e8 \u05ea\u05de\u05d9\u05d3 \u05dc\u05d4\u05ea\u05d7\u05d3\u05e9. \u05e9\u05dc\u05d1 \u05d4\u05e9\u05d9\u05dc\u05d5\u05dc \u05db\u05d1\u05e8 \u05e7\u05e8\u05d4 — \u05d0\u05dc \u05ea\u05e4\u05d7\u05d3/\u05d9 \u05de\u05d4\u05e9\u05d9\u05e0\u05d5\u05d9.' },
-                            '\u05e1\u05d5\u05e1': { 'default': fn2 + ', \u05e1\u05d5\u05e1 \u05e8\u05e5 \u05dc\u05dc\u05d0 \u05e9\u05d4\u05d5\u05db\u05d9\u05d7 \u05e9\u05d4\u05d5\u05d0 \u05e8\u05e5 — \u05d4\u05ea\u05e0\u05d5\u05e2\u05d4 \u05d4\u05d9\u05d0 \u05d7\u05d9\u05d5\u05ea\u05d5. \u05d4\u05e8\u05d2\u05e2 \u05db\u05d1\u05e8 \u05db\u05d0\u05df.' }
-                        };
-
-                        // Closers — keyed by bare word + color
-                        var WORD_CLOSERS = {
-                            '\u05e2\u05d8\u05dc\u05e3': {
-                                '\u05e9\u05d7\u05d5\u05e8': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d5\u05e9\u05d7\u05d5\u05e8 — \u05e9\u05e0\u05d9\u05d4\u05dd \u05d1\u05d5\u05d7\u05e8\u05d9\u05dd \u05d0\u05ea \u05d4\u05d7\u05e9\u05db\u05d4. \u05de\u05d4 \u05e9\u05e8\u05d5\u05d0\u05d9\u05dd \u05e9\u05dd \u05d4\u05d5\u05d0 \u05dc\u05d0 \u05e4\u05d7\u05d5\u05ea \u05d0\u05de\u05d9\u05ea\u05d9 \u05de\u05de\u05d4 \u05e9\u05e8\u05d5\u05d0\u05d9\u05dd \u05d1\u05d0\u05d5\u05e8.',
-                                '\u05db\u05d7\u05d5\u05dc': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05db\u05d7\u05d5\u05dc — \u05e0\u05d9\u05d5\u05d5\u05d8 \u05d5\u05e2\u05d5\u05de\u05e7 \u05e8\u05d2\u05e9\u05d9. \u05d4\u05e7\u05e9\u05d1 \u05e9\u05dc\u05da \u05dc\u05d0\u05d7\u05e8\u05d9\u05dd \u05d4\u05d5\u05d0 \u05db\u05d5\u05d7, \u05dc\u05d0 \u05d7\u05d5\u05dc\u05e9\u05d4.',
-                                'default': fn2 + ', \u05d4' + wClean2 + ' \u05de\u05de\u05e9\u05d9\u05da/\u05ea \u05dc\u05d3\u05d1\u05e8 \u05d0\u05dc\u05d9\u05da. \u05e9\u05de\u05e2/\u05d9.'
-                            },
-                            'default': {
-                                'default': fn2 + ', \u05d4' + wClean2 + ' \u05d5\u05d4' + (aColor||'\u05d2\u05d5\u05d5\u05df') + ' \u05e9\u05d1\u05d7\u05e8\u05ea/\u05ea \u05de\u05e6\u05d1\u05d9\u05e2\u05d9\u05dd \u05d9\u05d7\u05d3 \u05d0\u05ea \u05d0\u05d5\u05ea\u05d5 \u05db\u05d9\u05d5\u05d5\u05df — \u05d9\u05e9 \u05d1\u05da \u05de\u05e9\u05d4\u05d5 \u05e9\u05de\u05d1\u05e7\u05e9 \u05dc\u05d4\u05ea\u05d2\u05dc\u05d5\u05ea.'
-                            }
-                        };
-
-                        var openerMap = WORD_OPENERS[wClean2] || {};
-                        var opener = openerMap[aChange] || openerMap['default'] || (fn2 + ', ' + dv + ' \u05d4\u05d5\u05e4\u05d9\u05e2/\u05d4 \u05d1\u05db\u05d5\u05db\u05d1\u05d9\u05dd \u05e9\u05dc\u05da \u05dc\u05d0 \u05d1\u05de\u05e7\u05e8\u05d4.');
-                        var closerMap = WORD_CLOSERS[wClean2] || WORD_CLOSERS['default'] || {};
-                        var closer = closerMap[aColor] || closerMap['default'] || (fn2 + ', \u05d4' + wClean2 + ' \u05de\u05de\u05e9\u05d9\u05da/\u05ea \u05dc\u05d3\u05d1\u05e8 \u05d0\u05dc\u05d9\u05da. \u05e9\u05de\u05e2/\u05d9.');
-
-                        desc = opener + '\n\n' + colorMsgHe + '\n\n' + closer;
-                    } else {
-                        desc = dv + '\n\n' + colorMsgEn;
-                    }
-                    window.openConstellationModal(title, desc);
-
-                });
-            })(displayVal);
+            // Skip the first label entirely — the constellation name is shown in the top title bar
+            // The interpretation modal is accessible by clicking the title
+            continue;
         } else {
             // Compact annotation-box: just the keyword label
             var catEl = document.createElement('span');
@@ -4732,7 +4675,7 @@ async function buildSignalField() {
             const minorR = {
                 x: mrX, y: mrY, z: minZ, originalX: mrX, originalY: mrY, originalZ: minZ, targetX: mrX, targetY: mrY, targetZ: minZ,
                 starX: mrX, starY: mrY,
-                anchorIdx: Math.floor(rand()*8), isMajor: false, elementType: 'flare', theme: 'Pareidolia',
+                anchorIdx: Math.floor(rand()*8), isMajor: false, elementType: 'dot', theme: 'Pareidolia',
                 text: null, isBlurred: true, baseAngle: rand() * Math.PI * 2, scale: rand() * 1.5,
                 hue: personalHue, isSeed: false, depthLayer: 1.0 + rand() * 0.5,
                 fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: false,
@@ -4804,7 +4747,7 @@ async function buildSignalField() {
             const mrX = clusterX + Math.cos(minA) * minR2;
             const mrY = clusterY + Math.sin(minA) * minR2;
             
-            const minorType = rand() > 0.4 ? elType : 'flare';
+            const minorType = 'dot'; // Minor background stars = simple dots, NOT beams/blades
             const minScale = scaleBase * (0.3 + rand() * 0.5);
             const minBaseA = rand() * Math.PI * 2;
             
@@ -4852,7 +4795,7 @@ async function buildSignalField() {
                 originalX: mcX, originalY: mcY, originalZ: mcZ,
                 targetX: mcX, targetY: mcY, targetZ: mcZ,
                 starX: mcX, starY: mcY,
-                anchorIdx: lobe % 8, isMajor: false, elementType: 'flare', theme: 'Micro',
+                anchorIdx: lobe % 8, isMajor: false, elementType: 'dot', theme: 'Micro',
                 text: null, isBlurred: false, baseAngle: rand() * Math.PI * 2, scale: scaleBase * 0.15,
                 // Lower zoom threshold so they start appearing earlier (from scale 0.8 up to 2.5)
                 hue: lobeHue, isSeed: false, depthLayer: 1.0, isMicro: true, zoomThreshold: 0.8 + rand() * 1.7,
