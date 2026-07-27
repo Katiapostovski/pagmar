@@ -216,11 +216,11 @@ vec3 spectral(float t) {
     return c * c * 1.2; // gentle — stays subordinate to white core
 }
 
-// Prismatic blade (type 0) - shorter, thinner light streak like real prism dispersion
+// Prismatic blade (type 0) - long dramatic light streak like Mr. Crab reference
 float bladeFn(vec2 p) {
-    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * 2.5);
+    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * 1.2);
     float core  = smoothstep(0.03, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 1.8;
+    return blade + core * 2.0;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -284,7 +284,10 @@ void main() {
     vec3 col = (vec3(iR, iG, iB) * 3.0 + vec3(0.97, 0.97, 1.0) * iG * 2.8) * twinkle;
 
     float iCore = max(iR, max(iG, iB));
-    float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
+    // Starfield dots (type 3): no zoom fade — always visible at all zoom levels
+    // Main constellation beams: fade with zoom for depth
+    float isDotType = step(2.5, uType); // 1.0 for dots, 0.0 for others
+    float zoomFade  = mix(clamp(uZoom * 1.4, 0.25, 1.0), 1.0, isDotType);
     float alpha = iCore * uOpacity * zoomFade;
 
     // Major star: subtle warm core pulse
@@ -3322,9 +3325,15 @@ function initConstellationSystem(userVision) {
                     // Center camera on visual centroid of this constellation's stars
                     const cx = ghost.pts.reduce((s, p) => s + p.x, 0) / ghost.pts.length;
                     const cy = ghost.pts.reduce((s, p) => s + p.y, 0) / ghost.pts.length;
-                    targetCam.x = ghost.offset.x + cx;  // offset by star centroid in world X
-                    targetCam.y = ghost.offset.y - cy;  // Y inverted in THREE.js vs cam space
+                    targetCam.x = ghost.offset.x + cx;
+                    targetCam.y = ghost.offset.y - cy;
                     targetCam.scale = 1.5;
+                    // Reset rotation so constellation faces the viewer
+                    if (gs.selfRotY !== undefined) gs.selfRotY = 0;
+                    if (gs.group) {
+                        gs.group.rotation.y = 0;
+                        gs.group.rotation.x = 0;
+                    }
                 });
                 gs.labelEl.addEventListener('mouseover', () => {
                     gs.isHovered = true;
@@ -3837,6 +3846,8 @@ function renderQ() {
                         lastAnswerPos = { x: safeX, y: safeY };
                         advanceQ(false); // just fade
                     }
+                    // ── ANSWER FEEDBACK: CSS pulse animation ──
+                    b.classList.add('q-opt-selected');
                 }
             };
             optsContainer.appendChild(b);
@@ -6141,7 +6152,14 @@ function updatePoint(pt, dt, isClosest) {
             sizeFactor = lerp(0.2, 1.0, lanternSoft);
         }
         const pointScale = lerp(skeletonScale, fullScale, sizeFactor);
-        const s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
+        let s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
+
+        // Starfield: maintain minimum visible size at any zoom level
+        if (pt.theme === 'Starfield') {
+            // Zoom compensation: at extreme zoom-out, boost scale so dots stay visible
+            const minScreenSize = 0.025; // minimum visible scale
+            s = Math.max(s, minScreenSize * globalBreath);
+        }
 
         // POSITION
         const WW = window.innerWidth;
@@ -6190,8 +6208,13 @@ function updatePoint(pt, dt, isClosest) {
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
             } else if (pt.theme === 'Starfield') {
-                // Starfield always visible — in prism view AND during exploration
-                opacity = pt.starfieldOpacity || 0.18;
+                // Starfield always visible — dim at zoom-in, bright at zoom-out
+                let sfOp = pt.starfieldOpacity || 0.18;
+                // Dim when zoomed into main shape to not distract
+                if (cam.scale > 1.0) {
+                    sfOp *= clamp(1.0 - (cam.scale - 1.0) * 0.5, 0.15, 1.0);
+                }
+                opacity = sfOp;
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
