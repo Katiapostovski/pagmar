@@ -299,8 +299,9 @@ void main() {
     // Rich prismatic beam color: smooth RGB split + spectral rainbow glow + minimal white core
     vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
     vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
-    vec3 whiteCore = vec3(0.98, 0.98, 1.0) * (iG * iG) * 0.3; // Much weaker white blowout
-
+    // Add back the central dot, keeping it small as requested previously
+    float r = length(uv);
+    vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.025, 0.0, r) * 1.5;
     vec3 beamCol = (rgbSplit + spectralGlow + whiteCore) * twinkle;
     vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle;
     vec3 col = mix(beamCol, dotCol, isDotType);
