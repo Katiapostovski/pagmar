@@ -284,15 +284,16 @@ void main() {
 
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Beams: strong color (5.0×) + subtle white core (2.0×) = clearly prismatic
+    // Beams: vivid color (7.0×) + subtle white core (2.0×) = intensely prismatic
     // Dots: just white (no color split)
-    vec3 beamCol = (vec3(iR, iG, iB) * 5.0 + vec3(0.97, 0.97, 1.0) * iG * 2.0) * twinkle;
+    vec3 beamCol = (vec3(iR, iG, iB) * 7.0 + vec3(0.97, 0.97, 1.0) * iG * 2.0) * twinkle;
     vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 5.0 * twinkle;
     vec3 col = mix(beamCol, dotCol, isDotType);
 
     float iCore = max(iR, max(iG, iB));
     // Starfield dots: no zoom fade — always visible at all zoom levels
-    float zoomFade  = mix(clamp(uZoom * 1.4, 0.25, 1.0), 1.0, isDotType);
+    // Beams: minimum 0.5 at zoom-out for strong glow even from far away
+    float zoomFade  = mix(clamp(uZoom * 1.4, 0.5, 1.0), 1.0, isDotType);
     float alpha = iCore * uOpacity * zoomFade;
 
     // Major star: subtle warm core pulse
@@ -308,21 +309,21 @@ void main() {
     // ── LIGHT REFLECTIONS (beams only, NOT dots) ──
     float sweepAngle = uTime * 0.25;
     float sweepDir = dot(uv, vec2(cos(sweepAngle), sin(sweepAngle)));
-    float sweep = exp(-pow(sweepDir * 18.0, 2.0)) * 0.6;
+    float sweep = exp(-pow(sweepDir * 18.0, 2.0)) * 0.9;
     float sweepGate = smoothstep(0.5, 2.5, clamp(uZoom, 0.0, 10.0)) * (1.0 - isDotType);
     col += vec3(1.0, 0.98, 0.95) * sweep * sweepGate * beamPrism;
-    alpha += sweep * 0.2 * sweepGate * beamPrism;
+    alpha += sweep * 0.25 * sweepGate * beamPrism;
 
-    // Secondary rainbow reflection (beams only)
+    // Secondary rainbow reflection (beams only) — vivid spectral colors
     float sweep2Angle = uTime * -0.18 + 1.57;
     float sweep2Dir = dot(uv, vec2(cos(sweep2Angle), sin(sweep2Angle)));
-    float sweep2 = exp(-pow(sweep2Dir * 25.0, 2.0)) * 0.3;
+    float sweep2 = exp(-pow(sweep2Dir * 25.0, 2.0)) * 0.5;
     vec3 rainbow2 = vec3(
         0.5 + 0.5 * sin(sweep2Dir * 12.0),
         0.5 + 0.5 * sin(sweep2Dir * 12.0 + 2.09),
         0.5 + 0.5 * sin(sweep2Dir * 12.0 + 4.19)
     );
-    col += rainbow2 * sweep2 * sweepGate * beamPrism * 0.5;
+    col += rainbow2 * sweep2 * sweepGate * beamPrism * 0.7;
 
     gl_FragColor = vec4(col, alpha);
 }
@@ -1520,7 +1521,13 @@ function showInterpretationPanel(userVision) {
                         const dist = 1500 + (seed % 4000);
                         const newGhost = saved[saved.length - 1];
                         newGhost.offset = { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist };
-                        window.ghostDefs.push(newGhost);
+                        // Only add if not already present (prevent runtime duplicates)
+                        const newClean = (newGhost.nameHe || newGhost.nameEn || '').trim().replace(/^ה/, '').toLowerCase();
+                        const alreadyExists = window.ghostDefs.some(g => {
+                            const gClean = (g.nameHe || g.nameEn || '').trim().replace(/^ה/, '').toLowerCase();
+                            return gClean === newClean;
+                        });
+                        if (!alreadyExists) window.ghostDefs.push(newGhost);
                         
                         // We would need to init its ghostState here, but a page reload works too.
                     } catch(e) {
@@ -3069,12 +3076,28 @@ function initConstellationSystem(userVision) {
         }
     ];
 
+    // Filter hardcoded ghosts: remove any that match the user's own constellation name
+    const currentVision = (userVision || '').trim().replace(/^ה/, '');
+    if (currentVision) {
+        for (let i = ghostDefs.length - 1; i >= 0; i--) {
+            const gName = (ghostDefs[i].nameHe || ghostDefs[i].nameEn || '').trim().replace(/^ה/, '');
+            if (gName.toLowerCase() === currentVision.toLowerCase()) {
+                ghostDefs.splice(i, 1);
+            }
+        }
+    }
+
     try {
-        const currentVision = (userVision || '').trim().replace(/^ה/, '');
+        // Collect names already in hardcoded ghostDefs to prevent duplicates
+        const existingNames = new Set(ghostDefs.map(g => 
+            (g.nameHe || g.nameEn || '').trim().replace(/^ה/, '').toLowerCase()
+        ));
+        const seenNames = new Set(); // Track names we've already added from saved
         const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
             .filter(g => {
                 const name = (g.nameHe || g.nameEn || '').trim();
                 const cleanName = name.replace(/^ה/, '');
+                const lowerName = cleanName.toLowerCase();
         const blocklist = [
             'חתול', 'cat',
             'יהלום', 'diamond',
@@ -3082,18 +3105,20 @@ function initConstellationSystem(userVision) {
             'שועל', 'שועל ראשון', 'fox',
             'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
         ];
-                // Also skip if same as current user's constellation
-                if (currentVision && cleanName.toLowerCase() === currentVision.toLowerCase()) return false;
-                return !blocklist.some(b => name.toLowerCase() === b.toLowerCase());
+                // Skip if same as current user's constellation
+                if (currentVision && lowerName === currentVision.toLowerCase()) return false;
+                // Skip if already exists in hardcoded ghostDefs
+                if (existingNames.has(lowerName)) return false;
+                // Skip if we already saw this name (deduplicate)
+                if (seenNames.has(lowerName)) return false;
+                seenNames.add(lowerName);
+                return !blocklist.some(b => cleanName.toLowerCase() === b.toLowerCase() || name.toLowerCase() === b.toLowerCase());
             });
-        // Persist cleaned list permanently
+        // Persist cleaned (deduplicated) list permanently
         try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
         saved.forEach((g, i) => {
             const seed = (i + 1) * 137.5;
             const angle = seed * (Math.PI / 180);
-            // Position user-saved constellations CLOSE: 1200-4000 units.
-            // They become visible when the user zooms out past cam.scale≈0.42
-            // (the same moment the personal title fades away).
             const dist = 1200 + (seed % 2800);
             g.offset = {
                 x: Math.cos(angle) * dist,
@@ -4921,10 +4946,9 @@ async function buildSignalField() {
         pt.starY = pt.originalY;
         pt.x = pt.starX;
         pt.y = pt.starY;
-        const breatheDist = pt.isMajor ? 5 : 20;
-        const breatheAngle = rand() * Math.PI * 2;
-        pt.targetX = pt.originalX + Math.cos(breatheAngle) * breatheDist;
-        pt.targetY = pt.originalY + Math.sin(breatheAngle) * breatheDist;
+        // No breathing movement — stars stay perfectly still at their positions
+        pt.targetX = pt.originalX;
+        pt.targetY = pt.originalY;
         // Staggered reveal: point starts invisible and fades in after its delay
         pt.appearP = 0;
     });
@@ -5505,11 +5529,13 @@ function skyLoop(ts) {
         }
         window.bloomProgress = Math.min(1.0, window.bloomProgress + dt * bloomSpeed);
         
-        // Shockwave ripple during bloom
-        if (!window.bloomShockwave) window.bloomShockwave = { radius: 0, strength: 2.5 };
-        if (window.bloomShockwave.radius < 3000) {
-            window.bloomShockwave.radius += dt * 400;
-            window.bloomShockwave.strength = Math.max(0, 1.0 - window.bloomShockwave.radius / 3000);
+        // Shockwave ripple during bloom — only in recognition mode, NOT on direct reveal
+        if (window.skyRevealState !== 'revealed') {
+            if (!window.bloomShockwave) window.bloomShockwave = { radius: 0, strength: 2.5 };
+            if (window.bloomShockwave.radius < 3000) {
+                window.bloomShockwave.radius += dt * 400;
+                window.bloomShockwave.strength = Math.max(0, 1.0 - window.bloomShockwave.radius / 3000);
+            }
         }
         
         // When bloom finishes, reveal the title and zoom out!
@@ -6048,34 +6074,44 @@ function updatePoint(pt, dt, isClosest) {
     // Physical Movement: stars drift from scattered positions -> Rorschach formation
     const ease = pt.assemblyProgress * pt.assemblyProgress * (3 - 2 * pt.assemblyProgress);
     
-    // Alive / Pulsing effect: blend between original position and target position
-    const breathe = Math.sin(pt.pulseClock * 0.5) * 0.5 + 0.5; 
-    const curDestX = lerp(pt.originalX, pt.targetX, breathe);
-    const curDestY = lerp(pt.originalY, pt.targetY, breathe);
-
-    let finalX = lerp(pt.starX, curDestX, ease);
-    let finalY = lerp(pt.starY, curDestY, ease);
-
-    // Wait, let's make sure pt has starZ. If not, use originalZ.
-    let finalZ = lerp(pt.starZ || pt.originalZ || 0, pt.targetZ || pt.originalZ || 0, ease);
-
-    // ── ORGANIC 3D ROTATION ──
-    const cosY = Math.cos(globalRotY);
-    const sinY = Math.sin(globalRotY);
-    const cosX = Math.cos(globalRotX);
-    const sinX = Math.sin(globalRotX);
-
-    // Rotate around Y axis
-    let rx = finalX * cosY - finalZ * sinY;
-    let rz = finalX * sinY + finalZ * cosY;
-
-    // Rotate around X axis
-    let ry = finalY * cosX - rz * sinX;
-    rz = finalY * sinX + rz * cosX;
+    // Starfield stars are FIXED background — no movement, no rotation
+    const isStarfield = (pt.theme === 'Starfield');
     
-    pt.x = rx;
-    pt.y = ry;
-    pt.renderZ = rz; // For depth sorting or scale 
+    if (isStarfield) {
+        // Starfield dots stay at their original position — no assembly, no breathing, no rotation
+        pt.x = pt.originalX;
+        pt.y = pt.originalY;
+        pt.renderZ = pt.originalZ || 0;
+    } else {
+        // Alive / Pulsing effect: blend between original position and target position
+        const breathe = Math.sin(pt.pulseClock * 0.5) * 0.5 + 0.5; 
+        const curDestX = lerp(pt.originalX, pt.targetX, breathe);
+        const curDestY = lerp(pt.originalY, pt.targetY, breathe);
+
+        let finalX = lerp(pt.starX, curDestX, ease);
+        let finalY = lerp(pt.starY, curDestY, ease);
+
+        // Wait, let's make sure pt has starZ. If not, use originalZ.
+        let finalZ = lerp(pt.starZ || pt.originalZ || 0, pt.targetZ || pt.originalZ || 0, ease);
+
+        // ── ORGANIC 3D ROTATION ──
+        const cosY = Math.cos(globalRotY);
+        const sinY = Math.sin(globalRotY);
+        const cosX = Math.cos(globalRotX);
+        const sinX = Math.sin(globalRotX);
+
+        // Rotate around Y axis
+        let rx = finalX * cosY - finalZ * sinY;
+        let rz = finalX * sinY + finalZ * cosY;
+
+        // Rotate around X axis
+        let ry = finalY * cosX - rz * sinX;
+        rz = finalY * sinX + rz * cosX;
+        
+        pt.x = rx;
+        pt.y = ry;
+        pt.renderZ = rz; // For depth sorting or scale
+    }
 
     // Calculate screen position after physics
     const sp = w2s(pt.x, pt.y);
@@ -6241,8 +6277,11 @@ function updatePoint(pt, dt, isClosest) {
         const parallaxX = (sp.x - WW / 2) * depthOffset;
         const parallaxY = (sp.y - HH / 2) * depthOffset;
 
-        pt.mesh.position.x = sp.x - WW / 2 + parallaxX + shockDisplaceX;
-        pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + shockDisplaceY;
+        // Starfield stars: no shockwave displacement — fixed background
+        const sDisX = isStarfield ? 0 : shockDisplaceX;
+        const sDisY = isStarfield ? 0 : shockDisplaceY;
+        pt.mesh.position.x = sp.x - WW / 2 + parallaxX + sDisX;
+        pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + sDisY;
         // Appear via OPACITY fade-in (not scale-up) so there is no "zoom in then zoom out" illusion
         // Each star appears at full size immediately and fades in gently
         const finalScale = s; // always full size from the first frame
