@@ -216,11 +216,11 @@ vec3 spectral(float t) {
     return c * c * 1.2; // gentle — stays subordinate to white core
 }
 
-// Anamorphic blade (type 0) - long dramatic light streak
+// Prismatic blade (type 0) - shorter, thinner light streak like real prism dispersion
 float bladeFn(vec2 p) {
-    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 0.7);
-    float core  = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 1.5;
+    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * 2.5);
+    float core  = smoothstep(0.03, 0.0, abs(p.x) + abs(p.y));
+    return blade + core * 1.8;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -265,7 +265,7 @@ void main() {
     // Real prism splits white light: R/G/B travel at slightly different angles.
     // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
     float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
-    float aberration = prismGate * uGlow * 0.015; // offset amount (keeps fringes thin)
+    float aberration = prismGate * uGlow * 0.005; // very thin fringes — not split beams
 
     // Slowly rotating split direction → organic prismatic feel
     vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
@@ -277,8 +277,8 @@ void main() {
 
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Colored fringes (4×) + bright white core (2.5×) = center white, edges spectral
-    vec3 col = (vec3(iR, iG, iB) * 4.0 + vec3(0.97, 0.97, 1.0) * iG * 2.5) * twinkle;
+    // White-dominant: strong white core (4.5×) + subtle colored fringes (3.0×)
+    vec3 col = (vec3(iR, iG, iB) * 3.0 + vec3(0.97, 0.97, 1.0) * iG * 4.5) * twinkle;
 
     float iCore = max(iR, max(iG, iB));
     float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
@@ -6179,8 +6179,9 @@ function updatePoint(pt, dt, isClosest) {
             // In prism view, give background lobes ambient visibility
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
-            } else if (window.skyRevealState === 'revealed' && pt.theme === 'Starfield') {
-                opacity = (pt.starfieldOpacity || 0.28) * 0.45; // dimmed — background hint only
+            } else if (pt.theme === 'Starfield') {
+                // Starfield always visible — in prism view AND during exploration
+                opacity = pt.starfieldOpacity || 0.18;
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
@@ -6231,8 +6232,9 @@ function updatePoint(pt, dt, isClosest) {
             // Background constellations (Rorschach/Pareidolia): glow in prism state
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 glowValue = pt.isMajor ? 1.5 : 0.8;
-            } else if (window.skyRevealState === 'revealed' && pt.theme === 'Starfield') {
-                glowValue = pt.starfieldGlow || 0.38; // tiny prismatic twinkle
+            } else if (pt.theme === 'Starfield') {
+                // Starfield glow always active — visible during exploration too
+                glowValue = pt.starfieldGlow || 0.25;
             } else {
                 glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
             }
