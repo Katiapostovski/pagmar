@@ -1575,7 +1575,7 @@ function showInterpretationPanel(userVision) {
                         // Dynamically create a new ghost in the current session
                         const seed = saved.length * 137.5;
                         const angle = seed * (Math.PI / 180);
-                        const dist = 3500 + (seed % 5000); // Spread them out further
+                        const dist = 6000 + (seed % 8000); // Massive spread
                         const newGhost = saved[saved.length - 1];
                         newGhost.offset = { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist };
                         // Only add if not already present (prevent runtime duplicates)
@@ -3284,6 +3284,8 @@ function initConstellationSystem(userVision) {
                 // Removed gs.group.rotation.y and .x so they don't turn edge-on and vanish!
                 gs.group.rotation.y = 0;
                 gs.group.rotation.x = 0;
+                // Constant 360 degree rotation around themselves
+                gs.group.rotation.z = now * 0.0003; 
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
                 // ── Animate star positions within the constellation ────────
@@ -6440,7 +6442,9 @@ function updatePoint(pt, dt, isClosest) {
                 if (cam.scale > 0.8) {
                     sfOp *= clamp(1.0 - (cam.scale - 0.8) * 1.2, 0.08, 1.0);
                 }
-                opacity = sfOp;
+                // Gentle Twinkling
+                const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
+                opacity = sfOp * (0.4 + twinkle * 0.6);
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
@@ -6500,6 +6504,9 @@ function updatePoint(pt, dt, isClosest) {
             } else if (pt.theme === 'Starfield') {
                 // Starfield glow always active — visible during exploration too
                 glowValue = pt.starfieldGlow || 0.5;
+                // Gentle Twinkling Glow
+                const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
+                glowValue += twinkle * 0.6;
             } else {
                 glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
             }
