@@ -3284,19 +3284,34 @@ function initConstellationSystem(userVision) {
                 // Removed gs.group.rotation.y and .x so they don't turn edge-on and vanish!
                 gs.group.rotation.y = 0;
                 gs.group.rotation.x = 0;
-                // Constant 360 degree rotation around themselves
-                gs.group.rotation.z = performance.now() * 0.0003; 
+                gs.group.rotation.z = 0; 
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
                 // ── Animate star positions within the constellation ────────
                 if (gs.starMeshes && gs.starMeshes.length > 0) {
+                    const rotY = gs.selfRotY;
+                    const rotX = Math.sin(gs.selfRotY * 0.31 + gi * 0.7) * 0.4;
                     const t = gs.selfRotY;
                     gs.starMeshes.forEach((mesh, si) => {
                         const origPt = ghost.pts[si];
                         if (!origPt) return;
+                        
+                        // Apply 3D rotation to the points so the constellation rotates in 3D
+                        // but the planes themselves always face the camera (billboarding)
+                        // Rotate around Y axis
+                        let x = origPt.x * Math.cos(rotY);
+                        let z = origPt.x * Math.sin(rotY);
+                        
+                        // Rotate around X axis
+                        let y = origPt.y * Math.cos(rotX) - z * Math.sin(rotX);
+                        z = origPt.y * Math.sin(rotX) + z * Math.cos(rotX);
+                        
+                        // Add organic wobble
                         const phase = si * 1.618 + gi * 2.3;
-                        mesh.position.x = origPt.x + Math.sin(t * 0.45 + phase) * 7;
-                        mesh.position.y = origPt.y + Math.cos(t * 0.33 + phase) * 7;
+                        x += Math.sin(t * 0.45 + phase) * 7;
+                        y += Math.cos(t * 0.33 + phase) * 7;
+                        
+                        mesh.position.set(x, y, z);
                     });
                     // Update line geometry to follow animated star positions
                     if (gs.lineMesh) {
