@@ -3318,17 +3318,17 @@ function initConstellationSystem(userVision) {
                 const MIN_STAR_PX  = 100;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
                 gs.group.children.forEach(child => {
-                    if (child.isMesh) child.scale.set(7.5 * compensation, 7.5 * compensation, 1);
+                    if (child.isMesh) child.scale.set(2.5 * compensation, 2.5 * compensation, 1);
                 });
             }
             // Match ghost brightness exactly to user constellation
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.45 + hGlow * 0.25); // Stronger lines to match user's prismatic language
+            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.22 + hGlow * 0.25); // Delicate lines
             gs.pointMats.forEach(mat => {
-                // Significantly boosted base opacity and glow for ghosts so they stand out in deep space
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 1.5 + hGlow * 0.5);
-                mat.uniforms.uZoom.value = Math.max(0.1, cam.scale); // Allow full zoom boost from shader
-                mat.uniforms.uGlow.value = 1.2 + hGlow * 1.5; // Base glow 1.2 to match user constellation
+                // Delicate opacity and glow to make them feel distant and more prismatic
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.65 + hGlow * 0.5);
+                mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
+                mat.uniforms.uGlow.value = 0.5 + hGlow * 1.5; // Soft glow to reveal prismatic colors
                 mat.uniforms.uTime.value += 0.015;
             });
             
