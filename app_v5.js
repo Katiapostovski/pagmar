@@ -5044,7 +5044,7 @@ async function buildSignalField() {
                  const axis = document.createElementNS("http://www.w3.org/2000/svg", "line");
                  axis.setAttribute('x1', cx2); axis.setAttribute('y1', cy2 - H2 * 0.35);
                  axis.setAttribute('x2', cx2); axis.setAttribute('y2', cy2 + H2 * 0.35);
-                 axis.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+                 axis.setAttribute('stroke', 'rgba(255,255,255,0.00)');
                  axis.setAttribute('stroke-width', '0.5');
                  axis.setAttribute('stroke-dasharray', '4 8');
                  dstSvg.appendChild(axis);
@@ -6171,7 +6171,12 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.isSeed) {
             glowValue = 0.05 + pt.hoverPulse * 0.1 * lanternSoft;
         } else {
-            glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
+            // Background constellations (Rorschach/Pareidolia): glow in prism state
+            if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
+                glowValue = pt.isMajor ? 1.5 : 0.8;
+            } else {
+                glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
+            }
         }
 
         // ── VISUAL HIERARCHY: Q-shape stars dominate, distractors fade back ──
@@ -6395,10 +6400,8 @@ function showPareidoliaPrompt() {
         if (window.skyRevealState === 'recognition') return;
         // Reset dwell timer on any interaction
         window._dwellLastMove = performance.now();
-        const scrollMag = Math.min(Math.abs(e.deltaY), 120); // cap at 120px
-        const zoomStep  = 0.008 + (scrollMag / 120) * 0.072; // 0.8%–8% per tick
-        const zf = e.deltaY < 0 ? 1 + zoomStep : 1 - zoomStep;
-        const newScale = clamp(targetCam.scale * zf, 0.25, 10.0);
+        const zf = e.deltaY < 0 ? 1.022 : 0.978; // Smooth, controllable zoom
+        const newScale = clamp(targetCam.scale * zf, 0.18, 12.0);
         const mwx = (e.clientX - W * 0.5) / cam.scale + cam.x;
         const mwy = (e.clientY - H * 0.5) / cam.scale + cam.y;
         targetCam.x = mwx - (e.clientX - W * 0.5) / newScale;
