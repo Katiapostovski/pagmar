@@ -207,6 +207,7 @@ uniform float uState;
 uniform float uZoom;
 uniform float uDepth;
 uniform float uHasLabel;
+uniform float uSeed;
 varying vec2 vUv;
 
 // Prismatic spectrum — smooth warm rainbow like light through real glass/prism
@@ -225,7 +226,8 @@ vec3 spectral(float t) {
 float bladeFn(vec2 p) {
     // Hover elongation: glow stretches the blade horizontally
     float hoverStretch = smoothstep(0.3, 2.5, uGlow) * 2.0;
-    float xDecay = 3.0 - hoverStretch; // 3.0 normal → 1.0 on full hover (longer)
+    float lenVariation = mix(0.5, 1.6, fract(uSeed * 17.3)); // random length
+    float xDecay = (3.0 - hoverStretch) * lenVariation; 
     float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * xDecay);
     float core  = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
     return blade + core * 0.4;
@@ -234,9 +236,10 @@ float bladeFn(vec2 p) {
 // Crystal star (type 1) - 6-pointed sharp facets
 float crystalFn(vec2 p) {
     float r  = length(p);
-    float f1 = exp(-abs(p.x) * 60.0);
-    float f2 = exp(-abs(p.x * 0.5 + p.y * 0.866) * 60.0);
-    float f3 = exp(-abs(p.x * 0.5 - p.y * 0.866) * 60.0);
+    float lVar = mix(30.0, 90.0, fract(uSeed * 23.1));
+    float f1 = exp(-abs(p.x) * lVar);
+    float f2 = exp(-abs(p.x * 0.5 + p.y * 0.866) * lVar);
+    float f3 = exp(-abs(p.x * 0.5 - p.y * 0.866) * lVar);
     vec2  ap = abs(p);
     float hex = max(ap.x * 0.866 + ap.y * 0.5, ap.y);
     return (f1 + f2 + f3) * exp(-r * 8.0) + smoothstep(0.015, 0.0, hex) * 0.5; // very small visible ray core
@@ -245,8 +248,10 @@ float crystalFn(vec2 p) {
 // Diagonal shard (type 2) - sharp X cut
 float shardFn(vec2 p) {
     float r   = length(p);
-    float d1  = exp(-abs(p.x + p.y) * 80.0) * exp(-r * 2.5);
-    float d2  = exp(-abs(p.x - p.y) * 150.0) * exp(-r * 5.0);
+    float lVar1 = mix(40.0, 120.0, fract(uSeed * 11.7));
+    float lVar2 = mix(80.0, 200.0, fract(uSeed * 31.4));
+    float d1  = exp(-abs(p.x + p.y) * lVar1) * exp(-r * 2.5);
+    float d2  = exp(-abs(p.x - p.y) * lVar2) * exp(-r * 5.0);
     float core = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
     return d1 + d2 * 0.6 + core * 0.4;
 }
@@ -273,8 +278,8 @@ void main() {
     float isDotType = step(2.5, uType); // 1.0 for starfield dots, 0.0 for beams/shards/blades
     float beamPrism = 1.0 - isDotType;
 
-    // Retain 50% color even when zoomed out, so it always looks prismatic
-    float zoomColor = mix(0.5, 1.0, smoothstep(0.2, 1.0, uZoom));
+    // Prismatic brightness increases as you zoom out (per user request)
+    float zoomColor = mix(2.2, 0.8, smoothstep(0.2, 1.2, uZoom));
 
     // Prismatic color active based on zoom
     float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.005;
@@ -299,9 +304,9 @@ void main() {
     // Rich prismatic beam color: smooth RGB split + spectral rainbow glow + minimal white core
     vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
     vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
-    // Add back the central dot, keeping it small as requested previously
+    // Add back the central dot, keeping it small but visible
     float r = length(uv);
-    vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.025, 0.0, r) * 1.5;
+    vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.04, 0.0, r) * 2.2;
     vec3 beamCol = (rgbSplit + spectralGlow + whiteCore) * twinkle;
     vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle;
     vec3 col = mix(beamCol, dotCol, isDotType);
@@ -3123,7 +3128,8 @@ function initConstellationSystem(userVision) {
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 },
                     uDepth: { value: 0.6 },
-                    uHasLabel: { value: 0.0 }
+                    uHasLabel: { value: 0.0 },
+                    uSeed: { value: Math.random() }
                 },
                 transparent: true,
                 blending: THREE.AdditiveBlending,
@@ -5153,7 +5159,8 @@ async function buildSignalField() {
                 uState: { value: 1.0 },
                 uZoom: { value: 0.65 },
                 uDepth: { value: pt.isMajor ? 1.0 : (pt.isMicro ? 0.0 : 0.4) },
-                uHasLabel: { value: 0.0 }
+                uHasLabel: { value: 0.0 },
+                uSeed: { value: Math.random() }
             },
             transparent: true,
             blending: THREE.AdditiveBlending,
@@ -6357,14 +6364,9 @@ function updatePoint(pt, dt, isClosest) {
         // POSITION
         const WW = window.innerWidth;
         const HH = window.innerHeight;
-        // Depth opens gradually: starts flat (z=0), deepens over 10s for a "rising from flat" feel
-        const depthOpenFactor = (window.skyRevealState === 'revealed') ? Math.min(skyIntroTime / 10.0, 1.0) : 0.0;
-        let parallaxFade = 1.0;
-        if (cam.scale < 0.8) parallaxFade = Math.max(0.0, (cam.scale - 0.3) / 0.5); // fade parallax on zoom out
-        const parallaxStrength = 0.15 * rpEase * depthOpenFactor * parallaxFade;
-        const depthOffset = (pt.depthLayer - 1.0) * parallaxStrength;
-        const parallaxX = (sp.x - WW / 2) * depthOffset;
-        const parallaxY = (sp.y - HH / 2) * depthOffset;
+        // The user explicitly requested to remove the "weird parallax when scrolling"
+        const parallaxX = 0;
+        const parallaxY = 0;
 
         // Starfield stars: no shockwave displacement — fixed background
         const sDisX = isStarfield ? 0 : shockDisplaceX;
