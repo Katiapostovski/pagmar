@@ -278,8 +278,11 @@ void main() {
     float isDotType = step(2.5, uType); // 1.0 for starfield dots, 0.0 for beams/shards/blades
     float beamPrism = 1.0 - isDotType;
 
-    // Prismatic brightness increases as you zoom out (per user request)
-    float zoomColor = mix(2.2, 0.8, smoothstep(0.2, 1.2, uZoom));
+    // Color intensity (rainbow & RGB split) fades when zooming out (less colorful at a distance)
+    float zoomColor = mix(0.4, 1.0, smoothstep(0.2, 1.0, uZoom));
+    
+    // Overall brightness increases when zooming out (more glowing/bright at a distance)
+    float zoomBright = mix(2.0, 1.0, smoothstep(0.2, 1.2, uZoom));
 
     // Prismatic color active based on zoom
     float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.005;
@@ -304,11 +307,13 @@ void main() {
     // Rich prismatic beam color: smooth RGB split + spectral rainbow glow + minimal white core
     vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
     vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
+    
     // Add back the central dot, keeping it small but visible
     float r = length(uv);
     vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.04, 0.0, r) * 2.2;
-    vec3 beamCol = (rgbSplit + spectralGlow + whiteCore) * twinkle;
-    vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle;
+    
+    vec3 beamCol = (rgbSplit + spectralGlow + whiteCore) * twinkle * zoomBright;
+    vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle * zoomBright;
     vec3 col = mix(beamCol, dotCol, isDotType);
 
     float iCore = max(iR, max(iG, iB));
