@@ -204,17 +204,16 @@ uniform float uDepth;
 uniform float uHasLabel;
 varying vec2 vUv;
 
-// RGB-primary spectrum: sharp peaks of pure red, green, blue (not CMYK cyan/magenta/yellow)
+// Prismatic spectrum — smooth warm rainbow like light through real glass/prism
 vec3 spectral(float t) {
-    // max(0, sin) clips negative half → each channel only contributes in its own 180° window
     vec3 c = vec3(
-        max(0.0, sin(t * 6.28318 + 0.0)),
-        max(0.0, sin(t * 6.28318 + 2.094)),
-        max(0.0, sin(t * 6.28318 + 4.189))
-    );
-    // Cubic sharpening: reduces CMY transitions, emphasises pure R, G, B primaries
-    c = c * c * c;
-    return c * 3.8;
+        sin(t * 6.28318 + 0.0),
+        sin(t * 6.28318 + 2.094),
+        sin(t * 6.28318 + 4.189)
+    ) * 0.5 + 0.5;
+    // Warm tint: prism light is slightly amber/gold, not clinical white
+    c *= vec3(1.0, 0.95, 0.88);
+    return c * c * 1.2; // gentle — stays subordinate to white core
 }
 
 // Anamorphic blade (type 0) - long dramatic light streak
@@ -266,13 +265,13 @@ void main() {
     float iCore = getPrismIntensity(uv, uType);
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Vivid spectral visible from default zoom — white CORE (high iCore*4.0 overwhelms color)
-    // tips are fully spectral. Matches reference: white star centers, rainbow beam edges.
-    float prismGate = smoothstep(0.5, 2.0, clamp(uZoom, 0.0, 10.0));
+    // Prism coloring: beam TIPS show rainbow, CENTER stays white (iCore*4.0 overpowers tint)
+    // smoothstep(0.8, 3.0): at zoom 1.35 → gate~0.25, at zoom 2.0 → gate~0.55
+    float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // mix 0.62: vivid RGB spectrum at tips, white cores dominate (iCore*4.0 overpowers)
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, clamp(prismGate * uGlow * 0.62, 0.0, 1.0));
+    // mix 0.42: tips get warm spectral tint, centers stay white via brightness saturation
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, clamp(prismGate * uGlow * 0.42, 0.0, 1.0));
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
@@ -4772,37 +4771,37 @@ async function buildSignalField() {
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
     } // end else (bilateral shape fallback)
 
-    // ── STARFIELD — crystal-sparkle background stars filling the whole sky ──
-    // Crystal type (1.0) creates 6-ray star pattern — looks like real night sky stars
+    // ── STARFIELD — tiny prismatic points filling the ENTIRE sky ──
+    // dot-type (3.0) = soft point light, not 6-ray star or beam line
+    // Spread across huge radius so they appear everywhere during exploration
     {
-        const STAR_POSITIONS  = 420;    // many stars so the whole sky feels full
-        const FIELD_RADIUS    = 2200;   // large enough to fill any pan area
-        const CENTER_CLEAR    = 120;    // keep user constellation zone uncluttered
+        const STAR_COUNT    = 600;
+        const FIELD_RADIUS  = 4000;  // fills entire explorable space
+        const CENTER_CLEAR  = 100;   // keep user constellation zone clear
 
-        for (let si = 0; si < STAR_POSITIONS; si++) {
+        for (let si = 0; si < STAR_COUNT; si++) {
             const sfAngle = rand() * Math.PI * 2;
-            // Uniform distribution (not power-weighted) for even sky coverage
             const sfR  = CENTER_CLEAR + rand() * FIELD_RADIUS;
             const sfX  = Math.cos(sfAngle) * sfR;
-            const sfY  = Math.sin(sfAngle) * sfR * 0.75; // slightly compressed vertically
-            const sfZ  = (rand() - 0.5) * 600;
-            // Varied brightness: some bright, most faint — like real sky
-            const bright         = rand() < 0.12; // 12% are brighter "named" stars
-            const sfScale        = bright ? (0.18 + rand() * 0.22) : (0.06 + rand() * 0.11);
-            const sfOpacity      = bright ? (0.55 + rand() * 0.35) : (0.20 + rand() * 0.30);
-            const sfGlow         = bright ? (0.65 + rand() * 0.55) : (0.18 + rand() * 0.35);
+            const sfY  = Math.sin(sfAngle) * sfR * 0.72;
+            const sfZ  = (rand() - 0.5) * 800;
+            // Most stars are very faint tiny dots; ~8% are slightly brighter
+            const bright      = rand() < 0.08;
+            const sfScale     = bright ? (0.08 + rand() * 0.10) : (0.03 + rand() * 0.06);
+            const sfOpacity   = bright ? (0.22 + rand() * 0.18) : (0.06 + rand() * 0.12);
+            const sfGlow      = bright ? (0.35 + rand() * 0.30) : (0.08 + rand() * 0.18);
             skyPoints.push({
                 x: sfX, y: sfY, z: sfZ,
                 originalX: sfX, originalY: sfY, originalZ: sfZ,
                 targetX: sfX, targetY: sfY, targetZ: sfZ,
                 starX: sfX, starY: sfY,
                 isMajor: false,
-                elementType: 'crystal', // 6-ray sparkle — not a single line beam
+                elementType: 'dot',   // soft point — not crystal or blade
                 theme: 'Starfield',
                 text: null, isBlurred: false,
                 baseAngle: rand() * Math.PI * 2,
                 scale: sfScale, hue: rand() * 360,
-                isSeed: false, depthLayer: 1.8 + rand() * 1.2,
+                isSeed: false, depthLayer: 2.0 + rand() * 1.5,
                 fogRevealed: 0.8, hoverPulse: 0, permanentlyRevealed: false,
                 pulseClock: Math.random() * Math.PI * 2,
                 state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
