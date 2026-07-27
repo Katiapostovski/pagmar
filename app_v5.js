@@ -3285,6 +3285,9 @@ function initConstellationSystem(userVision) {
                         const phase = si * 1.618 + gi * 2.3;
                         mesh.position.x = origPt.x + Math.sin(t * 0.45 + phase) * 7;
                         mesh.position.y = origPt.y + Math.cos(t * 0.33 + phase) * 7;
+                        // Inverse scale so the ghost beams don't shrink when zooming out
+                        const invScale = 3.5 / Math.max(0.1, cam.scale);
+                        mesh.scale.set(invScale, invScale, 1);
                     });
                     // Update line geometry to follow animated star positions
                     if (gs.lineMesh) {
@@ -5659,10 +5662,7 @@ function skyLoop(ts) {
     }
 
     if (window.skyRevealState === 'revealed') {
-        // Auto drift the 3D object rotation instead of panning the camera
-        if (!isDragging) {
-            targetGlobalRotY += 0.0005; // Very slow continuous auto-rotation for user prism
-        }
+        // Do not auto-rotate the user prism (keep it perfectly flat/2D)
         ghostRotY += 0.00035; // Ghost constellations rotate independently at their own pace
         
         // Smoothly interpolate rotation
