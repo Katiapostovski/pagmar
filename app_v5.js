@@ -263,8 +263,8 @@ void main() {
     float iCore = getPrismIntensity(uv, uType);
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Color opens only at high zoom — beams stay white, spectral only as a whisper at the tips
-    float prismGate = smoothstep(1.0, 2.5, clamp(uZoom, 0.0, 10.0));
+    // White at default zoom (1.35). Colors only emerge when zooming deeper (>1.6)
+    float prismGate = smoothstep(1.6, 3.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
     // Predominantly white from far, colorful on zoom-in (strong mix at high zoom)
@@ -6121,7 +6121,12 @@ function updatePoint(pt, dt, isClosest) {
                 opacity += (globalBreath - 1.0) * 1.2;
             }
         } else {
-            opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
+            // In prism view, give background lobes ambient visibility
+            if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
+                opacity = pt.isMajor ? 0.38 : 0.20;
+            } else {
+                opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
+            }
         }
 
         // Color: show vivid lobe color much sooner (from 30% illum)
@@ -6175,7 +6180,11 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.isQPathStar) {
             opacity = Math.max(opacity, 0.58); // Path outline — clearly visible
         } else if (!pt.isMajor && !pt.isVertexStar && !pt.isQPathStar) {
-            opacity *= 0.15; // Background ambient dust — barely visible
+            if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia') {
+                opacity = Math.max(opacity, 0.14); // Background lobe minors — faintly visible
+            } else {
+                opacity *= 0.15; // Pure ambient dust — barely visible
+            }
         }
 
         // Stars appear via opacity fade (not scale) — multiply opacity by appearP for smooth fade-in
