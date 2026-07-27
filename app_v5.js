@@ -3112,7 +3112,7 @@ function initConstellationSystem(userVision) {
         gs.lineMat.color = new THREE.Color(1, 1, 1);
         const lineMesh = new THREE.LineSegments(lineGeo, gs.lineMat);
         gs.lineMesh = lineMesh; // store reference
-        gs.group.add(lineMesh); // Restore wireframe lines to match user constellation style
+        // gs.group.add(lineMesh); // REMOVED wireframe lines to avoid the "linear image" the user dislikes
 
         // Calculate angles for ghost points based on their lines so beams align structurally
         const ptAngles = new Array(ghost.pts.length).fill(null);
@@ -3129,7 +3129,7 @@ function initConstellationSystem(userVision) {
         gs.starMeshes = [];
         ghost.pts.forEach((pt, pi) => {
             const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
-            const beamType = 0.0; // Force to 'blade' (0.0) to match user's prismatic language
+            const beamType = 1.0; // 'crystal' (1.0) matches the user's main prismatic constellation 'halo' look
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
@@ -3152,7 +3152,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            mesh.scale.set(3.5, 3.5, 1); // big prismatic beams like user constellation
+            mesh.scale.set(1.0, 1.0, 1); // smaller base size
             mesh.position.set(pt.x, pt.y, 0);
             gs.starMeshes.push(mesh);
             gs.group.add(mesh);
@@ -3316,11 +3316,11 @@ function initConstellationSystem(userVision) {
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
                 // Ghosts shrink slightly when zoomed out so they look like distant constellations
                 const BASE_STAR_PX = 200 * 1.4;
-                const MIN_STAR_PX  = 100;
+                const MIN_STAR_PX  = 80;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 1.5 * compensation;
+                let targetScale = 0.35 * compensation; // Much smaller and more delicate, as requested
                 // CLAMP: Ensure ghost beams NEVER exceed the max screen scale (2.0) of the user constellation
-                const maxAllowedChildScale = 2.0 / Math.max(0.01, cam.scale);
+                const maxAllowedChildScale = 0.8 / Math.max(0.01, cam.scale);
                 targetScale = Math.min(targetScale, maxAllowedChildScale);
                 
                 gs.group.children.forEach(child => {
@@ -3329,12 +3329,12 @@ function initConstellationSystem(userVision) {
             }
             // Match ghost brightness exactly to user constellation
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * 0.25 + hGlow * 0.25); // Restored unified line strength
+            if (gs.lineMat) gs.lineMat.opacity = 0.0; // Force line wireframes invisible permanently
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.35 + hGlow * 0.5);
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.12 + hGlow * 0.4); // extremely subtle in background
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.5 + hGlow * 1.5; // Unified base glow
+                mat.uniforms.uGlow.value = 0.15 + hGlow * 1.2; // Delicate base glow
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -4785,9 +4785,9 @@ async function buildSignalField() {
             // Questionnaire button positions (vertex) can be far from central cluster,
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
-                ? (2.5 + rand() * 1.0)     // 2.5–3.5 — labeled stars: big dramatic prism beams
+                ? (1.2 + rand() * 0.5)     // 1.2-1.7 - much smaller
                 : (isVertexStar || isQDrivenStar)
-                    ? (1.4 + rand() * 0.8)   // 1.4–2.2 — Q-shape stars: strong prisms
+                    ? (0.7 + rand() * 0.4)   // 0.7-1.1 - smaller
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
             
             // Use personal hue but allow slight drift for a sparkling effect
@@ -5473,7 +5473,7 @@ async function buildSignalField() {
                         }
                         
                         // Restore ALL mesh visibility (recognition mode hid them)
-                        if (webglLines) webglLines.visible = true;
+                        if (webglLines) webglLines.visible = false; // User explicitly requested no linear image
                         skyPoints.forEach(pt => { if (pt.mesh) pt.mesh.visible = true; });
 
                         // The camera will not move or zoom here per user request, 
@@ -6383,7 +6383,7 @@ function updatePoint(pt, dt, isClosest) {
 
         // Constellation beams: reasonable cap for clean single prisms
         if (!isStarfield) {
-            const maxBeamScale = 2.0;
+            const maxBeamScale = 1.0;
             s = Math.min(s, maxBeamScale);
         }
 
