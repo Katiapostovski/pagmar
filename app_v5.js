@@ -265,10 +265,10 @@ void main() {
     // Real prism splits white light: R/G/B travel at slightly different angles.
     // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
     float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
-    // Base aberration (0.008) + hover boost + rotating SHIMMER (light reflection moving across prism)
-    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
+    // Base aberration (0.004) + hover boost + rotating SHIMMER (light reflection moving across prism)
+    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.006;
     float shimmer = 0.5 + 0.5 * sin(uTime * 1.8 + atan(uv.y, uv.x) * 4.0);
-    float aberration = prismGate * (0.008 + hoverBoost + shimmer * 0.006);
+    float aberration = prismGate * (0.004 + hoverBoost + shimmer * 0.003);
 
     // Slowly rotating split direction → organic prismatic feel
     vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
@@ -280,8 +280,8 @@ void main() {
 
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // More color (3.0) vs less white core (2.8) → visible prismatic tint
-    vec3 col = (vec3(iR, iG, iB) * 3.0 + vec3(0.97, 0.97, 1.0) * iG * 2.8) * twinkle;
+    // Unified beams: strong white core (3.5×) + color tint (3.5×) = mostly white with prismatic edges
+    vec3 col = (vec3(iR, iG, iB) * 3.5 + vec3(0.97, 0.97, 1.0) * iG * 3.5) * twinkle;
 
     float iCore = max(iR, max(iG, iB));
     // Starfield dots (type 3): no zoom fade — always visible at all zoom levels
@@ -299,6 +299,26 @@ void main() {
         col += vec3(1.0, 0.95, 0.8) * coreGlow * 2.0 * discoveryFactor;
         alpha += coreGlow * 0.5 * discoveryFactor;
     }
+
+    // ── LIGHT REFLECTIONS: sweeping highlight across prism surface ──
+    // A bright band rotates slowly, simulating light catching crystal edges
+    float sweepAngle = uTime * 0.25;
+    float sweepDir = dot(uv, vec2(cos(sweepAngle), sin(sweepAngle)));
+    float sweep = exp(-pow(sweepDir * 18.0, 2.0)) * 0.6; // narrow bright band
+    float sweepGate = smoothstep(0.5, 2.5, clamp(uZoom, 0.0, 10.0));
+    col += vec3(1.0, 0.98, 0.95) * sweep * sweepGate * prismGate;
+    alpha += sweep * 0.2 * sweepGate * prismGate;
+
+    // Secondary rainbow reflection — complementary angle
+    float sweep2Angle = uTime * -0.18 + 1.57;
+    float sweep2Dir = dot(uv, vec2(cos(sweep2Angle), sin(sweep2Angle)));
+    float sweep2 = exp(-pow(sweep2Dir * 25.0, 2.0)) * 0.3;
+    vec3 rainbow2 = vec3(
+        0.5 + 0.5 * sin(sweep2Dir * 12.0),
+        0.5 + 0.5 * sin(sweep2Dir * 12.0 + 2.09),
+        0.5 + 0.5 * sin(sweep2Dir * 12.0 + 4.19)
+    );
+    col += rainbow2 * sweep2 * sweepGate * prismGate * 0.5;
 
     gl_FragColor = vec4(col, alpha);
 }
@@ -1362,7 +1382,21 @@ window.showConstellationInfo = function(title) {
         'כתר': `<strong>הכתר</strong> בכוכבים אינו רק שלטון אלא אחריות. ${fn ? fn + ', ' : ''}יש בך יכולת להוביל ולשאת. הקונסטלציה מגלה: הגיעה שלך דרושה.`,
         'בית': `<strong>הבית</strong> בכוכבים הוא סמל השרשים והשייכות. ${fn ? fn + ', ' : ''}הבית מתחיל בתוכך. הקונסטלציה מגלה: את/ה יודע/ת מהיכן את/ה בא/ה.`,
         'ספר': `<strong>הספר</strong> בכוכבים סמל חכמה שממתינה להעברה. ${fn ? fn + ', ' : ''}יש סיפור שאת/ה צריך/ת לדעת. הקונסטלציה אומרת: את/ה כבר כותב/ת אותו.`,
-        'אדם': `<strong>האדם</strong> בכוכבים — ראית/ת את עצמך מבחוץ. ${fn ? fn + ', ' : ''}היכולת ליצור, לאהוב, לבנות, ולעבור היא הכוח הגדול שיש בתוכך. הקונסטלציה אומרת: ראית/ת את האדם שאת/ה אמור/ה להיות.`
+        'אדם': `<strong>האדם</strong> בכוכבים — ראית/ת את עצמך מבחוץ. ${fn ? fn + ', ' : ''}היכולת ליצור, לאהוב, לבנות, ולעבור היא הכוח הגדול שיש בתוכך. הקונסטלציה אומרת: ראית/ת את האדם שאת/ה אמור/ה להיות.`,
+        // ── MORE CREATURES ─────────────────────────────────────────────
+        'חיפושית': `<strong>החיפושית</strong> נושאת על גבה כנפיים חבויות — עד שהיא בוחרת לפרוש אותן. ${fn ? fn + ', ' : ''}מי שרואה/ת חיפושית בכוכבים יודע/ת שיש בו/בה משהו שממתין להתגלות. במצרים העתיקה היא סימלה תחייה ושחר חדש. הקונסטלציה מגלה: אתה/את בדיוק ברגע שלפני הפריחה.`,
+        'עכביש': `<strong>העכביש</strong> אורג את עולמו מתוך עצמו — כל חוט הוא החלטה, כל צומת היא בחירה. ${fn ? fn + ', ' : ''}מי שרואה/ת עכביש בכוכבים הוא/היא יוצר/ת של קשרים. הקונסטלציה שואלת: מה הרשת שאת/ה אורג/ת כרגע?`,
+        'מדוזה': `<strong>המדוזה</strong> צפה בין העולמות — שקופה, עדינה, ובלתי ניתנת לתפיסה. ${fn ? fn + ', ' : ''}מי שרואה/ת מדוזה יודע/ת לנוע בחן גם כשהזרם חזק. הקונסטלציה מגלה: העדינות שלך היא הכוח.`,
+        'נשר': `<strong>הנשר</strong> עולה גבוה מכולם — לא כדי להוכיח, אלא כדי לראות. ${fn ? fn + ', ' : ''}מי שרואה/ת נשר בכוכבים נושא/ת ראייה רחבה שאחרים חסרים. הקונסטלציה אומרת: הגובה שלך אינו בדידות, הוא פרספקטיבה.`,
+        'יונה': `<strong>היונה</strong> נושאת שלום בלי מילים — בנוכחותה בלבד. ${fn ? fn + ', ' : ''}יש בך יכולת להרגיע, לחבר, לרפא. הקונסטלציה רומזת: השקט שלך הוא מסר.`,
+        'ארנב': `<strong>הארנב</strong> נע בין פחד לאומץ בקפיצה אחת. ${fn ? fn + ', ' : ''}הזריזות שלך אינה בריחה — היא אינטואיציה. הקונסטלציה מגלה: סמוך/י על התגובה הראשונה.`,
+        'פיל': `<strong>הפיל</strong> זוכר הכל ומוחל בשקט. ${fn ? fn + ', ' : ''}הזיכרון שלך הוא מתנה, גם כשהוא כבד. הקונסטלציה אומרת: הגודל שלך הוא פנימי.`,
+        'דרקון': `<strong>הדרקון</strong> הוא הכוח שמתעורר כשמפסיקים לפחד ממנו. ${fn ? fn + ', ' : ''}יש בך אש שלא צריכה להיות מאולפת — רק מכוונת. הקונסטלציה מגלה: האש שלך היא יצירתית.`,
+        'לביאה': `<strong>הלביאה</strong> ציידת, אם, ומנהיגה — הכל בו זמנית. ${fn ? fn + ', ' : ''}הכוח שלך הוא בשילוב, לא בבחירה בין תפקידים. הקונסטלציה אומרת: את/ה לא צריך/ת לבחור — את/ה הכל.`,
+        'עקרב': `<strong>העקרב</strong> מגן על עצמו בשקט ובדיוק. ${fn ? fn + ', ' : ''}יש בך גבולות שלא צריכים הסבר. הקונסטלציה מגלה: ההגנה שלך היא חכמה.`,
+        'תנין': `<strong>התנין</strong> ממתין בסבלנות אינסופית לרגע הנכון. ${fn ? fn + ', ' : ''}הסבלנות שלך אינה חולשה — היא אסטרטגיה. הקונסטלציה אומרת: הרגע שלך מתקרב.`,
+        'חד-קרן': `<strong>החד-קרן</strong> קיים רק למי שמאמין בו. ${fn ? fn + ', ' : ''}הדמיון שלך הוא לא בריחה — הוא ראייה. הקונסטלציה מגלה: מה שאת/ה רואה/ת, אחרים פשוט עדיין לא.`,
+        'עגור': `<strong>העגור</strong> עובר מרחקים שאין להם שם — ותמיד חוזר. ${fn ? fn + ', ' : ''}הנדידה שלך אינה אובדן כיוון, היא חיפוש. הקונסטלציה אומרת: הבית ממתין, אבל הדרך היא הבית.`
     };
 
     // If word not in map — build a dynamic fallback that still feels personal
@@ -3032,9 +3066,11 @@ function initConstellationSystem(userVision) {
     ];
 
     try {
+        const currentVision = (window.userConstellationName || '').trim().replace(/^ה/, '');
         const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
             .filter(g => {
                 const name = (g.nameHe || g.nameEn || '').trim();
+                const cleanName = name.replace(/^ה/, '');
         const blocklist = [
             'חתול', 'cat',
             'יהלום', 'diamond',
@@ -3042,6 +3078,8 @@ function initConstellationSystem(userVision) {
             'שועל', 'שועל ראשון', 'fox',
             'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
         ];
+                // Also skip if same as current user's constellation
+                if (currentVision && cleanName.toLowerCase() === currentVision.toLowerCase()) return false;
                 return !blocklist.some(b => name.toLowerCase() === b.toLowerCase());
             });
         // Persist cleaned list permanently
@@ -4878,22 +4916,21 @@ async function buildSignalField() {
     const otherMajors = skyPoints.filter(p => p.isMajor && !p.isVertexStar && !p.isQPathStar);
     const nonMajorPts = skyPoints.filter(p => !p.isMajor && !p.isVertexStar && !p.isQPathStar);
 
-    // All Q-shape stars: sequential drawing order — ONE unified reveal
-    // ~5s total: each star pops in one after another, building the prism shape gradually
-    let qDelay = 0.4; // brief pause before first star
+    // All Q-shape stars: appear together quickly — no star-by-star stagger
+    let qDelay = 0.3;
     allQPts.forEach((pt) => {
         pt.revealDelay = qDelay;
-        if (pt.isVertexStar) pt.isFirstWave = true; // vertex stars chime
-        qDelay += 0.12 + rand() * 0.06; // 0.12–0.18s per star → ~5s for 35 stars
+        if (pt.isVertexStar) pt.isFirstWave = true;
+        qDelay += 0.02; // nearly simultaneous
     });
     const qTotal = qDelay;
 
-    // Other major labeled stars: appear after constellation is ~complete
-    let nextMajorDelay = qTotal + 2.0;
+    // Other major labeled stars: appear right after
+    let nextMajorDelay = qTotal + 0.5;
     otherMajors.forEach((pt, i) => {
         pt.revealDelay = nextMajorDelay;
         if (i < 3) { pt.isFirstWave = true; }
-        nextMajorDelay += 1.0 + rand() * 1.0;
+        nextMajorDelay += 0.3 + rand() * 0.3;
     });
 
     // Minor ambient background stars: very last, barely visible
@@ -5244,12 +5281,13 @@ async function buildSignalField() {
                         skyIntroTime = 0;
                         // CRITICAL: Reset all appearP values so the staggered reveal starts fresh
                         skyPoints.forEach(pt => {
+                            // Starfield stars stay visible — don't reset them
+                            if (pt.theme === 'Starfield') return;
                             pt.appearP = 0;
                             pt._chimePlayedOnAppear = false;
-                            // Also reset scale and opacity so no ghost image appears on first visible frame
                             if (pt.mesh) {
                                 pt.mesh.scale.set(0, 0, 1);
-                                if (pt.mesh.material && pt.mesh.material.uniforms) {
+                                if (pt.mesh && pt.mesh.material && pt.mesh.material.uniforms) {
                                     pt.mesh.material.uniforms.uOpacity.value = 0;
                                 }
                             }
@@ -6208,11 +6246,11 @@ function updatePoint(pt, dt, isClosest) {
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
             } else if (pt.theme === 'Starfield') {
-                // Starfield always visible — dim at zoom-in, bright at zoom-out
+                // Starfield always visible — very dim at zoom-in, bright at zoom-out
                 let sfOp = pt.starfieldOpacity || 0.18;
-                // Dim when zoomed into main shape to not distract
-                if (cam.scale > 1.0) {
-                    sfOp *= clamp(1.0 - (cam.scale - 1.0) * 0.5, 0.15, 1.0);
+                // Aggressively dim when zoomed into main shape
+                if (cam.scale > 0.8) {
+                    sfOp *= clamp(1.0 - (cam.scale - 0.8) * 1.2, 0.08, 1.0);
                 }
                 opacity = sfOp;
             } else {
