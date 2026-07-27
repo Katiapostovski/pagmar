@@ -3318,9 +3318,9 @@ function initConstellationSystem(userVision) {
                 const BASE_STAR_PX = 200 * 1.4;
                 const MIN_STAR_PX  = 80;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 0.35 * compensation; // Much smaller and more delicate, as requested
+                let targetScale = 1.0 * compensation; // Crystals are smaller than blades, so they need a decent scale
                 // CLAMP: Ensure ghost beams NEVER exceed the max screen scale (2.0) of the user constellation
-                const maxAllowedChildScale = 0.8 / Math.max(0.01, cam.scale);
+                const maxAllowedChildScale = 1.5 / Math.max(0.01, cam.scale);
                 targetScale = Math.min(targetScale, maxAllowedChildScale);
                 
                 gs.group.children.forEach(child => {
@@ -3332,9 +3332,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = 0.0; // Force line wireframes invisible permanently
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.12 + hGlow * 0.4); // extremely subtle in background
+                mat.uniforms.uOpacity.value = Math.min(1.0, a * 0.45 + hGlow * 0.4); // Bright enough to be seen clearly
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.15 + hGlow * 1.2; // Delicate base glow
+                mat.uniforms.uGlow.value = 0.5 + hGlow * 1.2; // Glowing crystals
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -4785,9 +4785,9 @@ async function buildSignalField() {
             // Questionnaire button positions (vertex) can be far from central cluster,
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
-                ? (1.2 + rand() * 0.5)     // 1.2-1.7 - much smaller
+                ? (2.0 + rand() * 0.8)     // 2.0-2.8 - larger to be clearly visible without wireframes
                 : (isVertexStar || isQDrivenStar)
-                    ? (0.7 + rand() * 0.4)   // 0.7-1.1 - smaller
+                    ? (1.2 + rand() * 0.6)   // 1.2-1.8 - visible path
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
             
             // Use personal hue but allow slight drift for a sparkling effect
@@ -6383,7 +6383,7 @@ function updatePoint(pt, dt, isClosest) {
 
         // Constellation beams: reasonable cap for clean single prisms
         if (!isStarfield) {
-            const maxBeamScale = 1.0;
+            const maxBeamScale = 1.5; // Enough to be seen, not huge
             s = Math.min(s, maxBeamScale);
         }
 
