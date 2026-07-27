@@ -105,9 +105,14 @@ async function generateAllInterpretations(answers) {
     const vision = (answers.pareidolia || '').trim().replace(/^ה/, '');
     const nameMeaning = HEBREW_NAME_MEANINGS[answers.name] || HEBREW_NAME_MEANINGS[firstName] || null;
 
+    const genderLabel = answers.gender === 'female' ? 'נקבה (פני אליה בלשון נקבה)' 
+                       : answers.gender === 'male' ? 'זכר (פנה אליו בלשון זכר)' 
+                       : 'ניטרלי (השתמש בצורת "את/ה", "מרגיש/ה" וכו׳)';
+
     const ctx = [
         `שם מלא: ${answers.name || '—'}`,
         `שם פרטי: ${firstName}`,
+        `לשון פנייה: ${genderLabel}`,
         nameMeaning ? `משמעות השם "${firstName}" (להשתמש בה): ${nameMeaning}` : null,
         answers.dob     ? `תאריך לידה: ${answers.dob}` : null,
         answers.color   ? `הצבע שמשך: ${answers.color}` : null,
@@ -213,14 +218,17 @@ vec3 spectral(float t) {
     ) * 0.5 + 0.5;
     // Warm tint: prism light is slightly amber/gold, not clinical white
     c *= vec3(1.0, 0.95, 0.88);
-    return c * c * 1.2; // gentle — stays subordinate to white core
+    return c * c * 1.8; // boosted — more vivid prismatic colors
 }
 
-// Prismatic blade (type 0) - long dramatic light streak like Mr. Crab reference
+// Prismatic blade (type 0) - compact prism beam, elongates on hover
 float bladeFn(vec2 p) {
-    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * 1.2);
-    float core  = smoothstep(0.03, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 2.0;
+    // Hover elongation: glow stretches the blade horizontally
+    float hoverStretch = smoothstep(0.3, 2.5, uGlow) * 2.0;
+    float xDecay = 3.0 - hoverStretch; // 3.0 normal → 1.0 on full hover (longer)
+    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * xDecay);
+    float core  = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
+    return blade + core * 0.4;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -231,7 +239,7 @@ float crystalFn(vec2 p) {
     float f3 = exp(-abs(p.x * 0.5 - p.y * 0.866) * 60.0);
     vec2  ap = abs(p);
     float hex = max(ap.x * 0.866 + ap.y * 0.5, ap.y);
-    return (f1 + f2 + f3) * exp(-r * 8.0) + smoothstep(0.07, 0.0, hex) * 1.2; // balanced — short visible rays
+    return (f1 + f2 + f3) * exp(-r * 8.0) + smoothstep(0.015, 0.0, hex) * 0.5; // very small visible ray core
 }
 
 // Diagonal shard (type 2) - sharp X cut
@@ -239,14 +247,14 @@ float shardFn(vec2 p) {
     float r   = length(p);
     float d1  = exp(-abs(p.x + p.y) * 80.0) * exp(-r * 2.5);
     float d2  = exp(-abs(p.x - p.y) * 150.0) * exp(-r * 5.0);
-    float core = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
-    return d1 + d2 * 0.6 + core * 1.5;
+    float core = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
+    return d1 + d2 * 0.6 + core * 0.4;
 }
 
 // Pointillism dot (type 3) - soft small dot with no rays
 float dotFn(vec2 p) {
     float r = length(p);
-    return exp(-r * 18.0) + smoothstep(0.05, 0.0, r) * 1.2; // visible glow dot
+    return exp(-r * 18.0) + smoothstep(0.03, 0.0, r) * 0.8; // visible glow dot
 }
 
 float getPrismIntensity(vec2 p, float type) {
@@ -261,40 +269,40 @@ float getPrismIntensity(vec2 p, float type) {
 void main() {
     vec2 uv = vUv * 2.0 - 1.0;
 
-    // ── CHROMATIC ABERRATION ──
-    // Real prism splits white light: R/G/B travel at slightly different angles.
-    // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
-    float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
+    // ── CHROMATIC & SPECTRAL PRISM ──
     float isDotType = step(2.5, uType); // 1.0 for starfield dots, 0.0 for beams/shards/blades
-    // Dots should NEVER get prism effects — they are simple background stars
-    float beamPrism = prismGate * (1.0 - isDotType);
+    float beamPrism = 1.0 - isDotType;
 
-    // Zoom-dependent color: MORE colorful at zoom-in, whiter at zoom-out
-    float zoomColor = smoothstep(0.6, 2.0, clamp(uZoom, 0.0, 10.0));
+    // Retain 50% color even when zoomed out, so it always looks prismatic
+    float zoomColor = mix(0.5, 1.0, smoothstep(0.2, 1.0, uZoom));
 
-    // Base aberration INCREASES with zoom for vivid rainbow at close range
-    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
-    float shimmer = 0.5 + 0.5 * sin(uTime * 1.8 + atan(uv.y, uv.x) * 4.0);
-    float baseAberr = mix(0.006, 0.018, zoomColor); // wider color split at zoom-in
-    float aberration = beamPrism * (baseAberr + hoverBoost + shimmer * 0.008);
+    // Prismatic color active based on zoom
+    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.005;
+    float shimmer = 0.5 + 0.5 * sin(uTime * 1.5 + atan(uv.y, uv.x) * 3.0);
+    float baseAberr = 0.008 * zoomColor;
+    float aberration = beamPrism * (baseAberr + hoverBoost + shimmer * 0.003);
 
     // Slowly rotating split direction → organic prismatic feel
-    vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
+    vec2 abDir = vec2(cos(uTime * 0.12), sin(uTime * 0.12));
 
-    // Three offset samples: R shifted one way, B the other, G at center
+    // Three offset samples: R/G/B channel dispersion
     float iR = getPrismIntensity(uv + abDir * aberration, uType);
     float iG = getPrismIntensity(uv, uType);
     float iB = getPrismIntensity(uv - abDir * aberration, uType);
 
-    float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
+    // Continuous spectral rainbow gradient along beam length & crystal facets
+    float tSpec = (uv.x * 0.7 + uv.y * 0.35) + uTime * 0.1;
+    vec3 specRainbow = spectral(tSpec);
 
-    // Beams: colored channels scale with zoom — more vivid color close up, whiter far away
-    // At zoom-in: strong color (8.0×), minimal white (0.5×) → prismatic rainbow
-    // At zoom-out: moderate color (5.0×), more white (3.0×) → bright white glow
-    float colorMul = mix(5.0, 8.0, zoomColor);
-    float whiteMul = mix(3.0, 0.5, zoomColor);
-    vec3 beamCol = (vec3(iR, iG, iB) * colorMul + vec3(0.97, 0.97, 1.0) * iG * whiteMul) * twinkle;
-    vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 5.0 * twinkle;
+    float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.15;
+
+    // Rich prismatic beam color: smooth RGB split + spectral rainbow glow + minimal white core
+    vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
+    vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
+    vec3 whiteCore = vec3(0.98, 0.98, 1.0) * (iG * iG) * 0.3; // Much weaker white blowout
+
+    vec3 beamCol = (rgbSplit + spectralGlow + whiteCore) * twinkle;
+    vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle;
     vec3 col = mix(beamCol, dotCol, isDotType);
 
     float iCore = max(iR, max(iG, iB));
@@ -308,29 +316,13 @@ void main() {
         float discoveryFactor = smoothstep(1.3, 2.0, clamp(uZoom, 0.0, 10.0));
         float r = length(uv);
         float pulse = sin(uTime * 2.5) * 0.5 + 0.5;
-        float coreGlow = exp(-r * 60.0) * pulse;
-        col += vec3(1.0, 0.95, 0.8) * coreGlow * 2.0 * discoveryFactor;
+        // Make the pulse core extremely tiny so it doesn't blow out the center
+        float coreGlow = exp(-r * 180.0) * pulse; 
+        col += vec3(1.0, 0.95, 0.8) * coreGlow * 1.5 * discoveryFactor;
         alpha += coreGlow * 0.5 * discoveryFactor;
     }
 
-    // ── LIGHT REFLECTIONS (beams only, NOT dots) ──
-    float sweepAngle = uTime * 0.25;
-    float sweepDir = dot(uv, vec2(cos(sweepAngle), sin(sweepAngle)));
-    float sweep = exp(-pow(sweepDir * 18.0, 2.0)) * 0.9;
-    float sweepGate = smoothstep(0.5, 2.5, clamp(uZoom, 0.0, 10.0)) * (1.0 - isDotType);
-    col += vec3(1.0, 0.98, 0.95) * sweep * sweepGate * beamPrism;
-    alpha += sweep * 0.25 * sweepGate * beamPrism;
-
-    // Secondary rainbow reflection (beams only) — vivid spectral colors
-    float sweep2Angle = uTime * -0.18 + 1.57;
-    float sweep2Dir = dot(uv, vec2(cos(sweep2Angle), sin(sweep2Angle)));
-    float sweep2 = exp(-pow(sweep2Dir * 25.0, 2.0)) * 0.5;
-    vec3 rainbow2 = vec3(
-        0.5 + 0.5 * sin(sweep2Dir * 12.0),
-        0.5 + 0.5 * sin(sweep2Dir * 12.0 + 2.09),
-        0.5 + 0.5 * sin(sweep2Dir * 12.0 + 4.19)
-    );
-    col += rainbow2 * sweep2 * sweepGate * beamPrism * 0.7;
+    // (sweep effects removed — clean single prism only)
 
     gl_FragColor = vec4(col, alpha);
 }
@@ -622,6 +614,45 @@ const UI_TEXTS = {
         pareidoliaOpts: ['Animal', 'Home', 'Plant', 'Wing', 'Path', 'Figure', 'Vessel', 'Something else']
     }
 };
+
+// ── GENDERED HEBREW TEXT HELPER ──
+// Hebrew slash-notation: word/suffix (e.g. מרגיש/ה, יודע/ת, הולך/ת, שואפ/ת)
+// Convention: base = masculine form, base+suffix = feminine form
+// For pronouns (את/ה): base=את (fem), base+ה=אתה (masc) — exception handled below
+// Special: אתה/את and את/ה patterns handled with specific lookup
+function genderize(text) {
+    const g = (typeof answers !== 'undefined' && answers.gender) || 'other';
+    if (g === 'other') return text; // keep neutral slash form
+
+    // Handle specific full-word replacements first
+    const WORD_MAP = {
+        'את/ה':      { male: 'אתה', female: 'את' },
+        'אתה/את':    { male: 'אתה', female: 'את' },
+        'הוא/היא':   { male: 'הוא', female: 'היא' },
+        'לו/לה':     { male: 'לו', female: 'לה' },
+        'שלו/שלה':   { male: 'שלו', female: 'שלה' },
+        'בו/בה':     { male: 'בו', female: 'בה' },
+        'עצמו/ה':    { male: 'עצמו', female: 'עצמה' },
+        'אותו/ה':    { male: 'אותו', female: 'אותה' },
+    };
+
+    // First pass: replace known full-word patterns
+    let result = text;
+    Object.keys(WORD_MAP).forEach(pattern => {
+        if (result.includes(pattern)) {
+            result = result.split(pattern).join(WORD_MAP[pattern][g] || pattern);
+        }
+    });
+
+    // Second pass: generic verb/adjective slash patterns (מרגיש/ה → male: מרגיש, female: מרגישה)
+    result = result.replace(/(\S+)\/(\S+)/g, function(match, base, suffix) {
+        if (g === 'male') return base;            // masculine = base only
+        if (g === 'female') return base + suffix;  // feminine = base + suffix
+        return match;
+    });
+
+    return result;
+}
 
 const QUESTIONS = [
     {
@@ -934,7 +965,7 @@ function buildDOM() {
     appDiv.innerHTML = `
     <!-- GLOBAL UI -->
     <button id="lang-toggle" class="btn" onclick="toggleLang()" style="position: absolute; top: 1.6rem; left: 1.6rem; z-index: 100; padding: 0.4rem 0.9rem; font-size: 0.72rem; letter-spacing: 0.18em; opacity: 0.6; transition: opacity 0.3s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">EN</button>
-    <button id="btn-global-back" class="btn" onclick="goBack()" style="position: absolute; top: 2rem; right: 2rem; z-index: 100; padding: 0.5rem 1rem; border: none; font-size: 0.75rem; letter-spacing: 0.12em; opacity: 0; display: none; pointer-events: none;"></button>
+    <button id="btn-global-back" class="btn" onclick="goBack()" style="position: absolute; bottom: 2rem; right: 2rem; z-index: 100; padding: 0.5rem 1rem; border: none; font-size: 0.75rem; letter-spacing: 0.12em; opacity: 0; display: none; pointer-events: none;"></button>
     <div id="screen-opening" class="screen active">
         <h1 id="ui-title" style="min-height:1.5em;"></h1>
         <button class="btn" id="btn-start" style="opacity: 0; pointer-events: none;">התחלה</button>
@@ -980,6 +1011,7 @@ function buildDOM() {
         <!-- Sky UI (hint text at the bottom) -->
         <div class="sky-ui">
             <p id="ui-skyguide"></p>
+            <div id="btn-global-back-wrapper" style="pointer-events: auto;"></div>
             <div class="zoom-controls">
                 <button class="btn btn-icon" id="btn-zoom-in">+</button>
                 <button class="btn btn-icon" id="btn-zoom-out">-</button>
@@ -1252,7 +1284,7 @@ window.updateLang = function(lang) {
     if (horTitle) horTitle.innerText = t.horizonTitle;
     const recogOverlay = document.getElementById('recognition-overlay');
     if (recogOverlay) recogOverlay.style.display = 'flex';
-    document.getElementById('recog-question').innerText = currentLang === 'he' ? 'מה את/ה רואה?' : 'What do you see?';
+    document.getElementById('recog-question').innerText = genderize(currentLang === 'he' ? 'מה את/ה רואה?' : 'What do you see?');
 
 
     const toggleBtn = document.getElementById('lang-toggle');
@@ -1273,8 +1305,8 @@ window.goBack = function() {
     // If on the sky screen
     if (skyScreen && skyScreen.classList.contains('active')) {
         if (window.skyRevealState === 'revealed') {
-            // Act as Restart
-            location.reload();
+            // Navigate to end/horizon screen
+            showHorizon();
             return;
         } else if (window.skyRevealState === 'recognition') {
             // Go back to the last question
@@ -1302,41 +1334,48 @@ window.goBack = function() {
 };
 
 window.updateGlobalBackButton = function() {
-    // Navigation is scroll/swipe-based only — no visible shortcut buttons
-    // Only reveal a subtle restart option at the end of the journey
     const btn = document.getElementById('btn-global-back');
     if (!btn) return;
+    const wrapper = document.getElementById('btn-global-back-wrapper');
     const skyScreen = document.getElementById('screen-sky');
     if (skyScreen && skyScreen.classList.contains('active') && window.skyRevealState === 'revealed') {
+        // Move button into sky-ui wrapper (below instructions text)
+        if (wrapper && btn.parentElement !== wrapper) {
+            wrapper.appendChild(btn);
+        }
+        const endLabel = currentLang === 'he' ? 'סיום' : 'End';
         const restartLabel = currentLang === 'he' ? 'להתחיל מחדש' : 'Restart';
-        btn.innerHTML = '↺';
+        btn.innerHTML = endLabel;
         btn.title = restartLabel;
         btn.setAttribute('aria-label', restartLabel);
-        btn.style.display = 'flex';
+        btn.style.position = 'static';
+        btn.style.display = 'inline-flex';
         btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
         btn.style.gap = '6px';
-        btn.style.opacity = '0.70';
-        btn.style.fontSize = '0.85rem';
-        btn.style.letterSpacing = '0.12em';
+        btn.style.opacity = '0.55';
+        btn.style.fontSize = '0.72rem';
+        btn.style.letterSpacing = '0.18em';
         btn.style.pointerEvents = 'auto';
-        btn.style.padding = '6px 14px';
+        btn.style.padding = '5px 18px';
         btn.style.borderRadius = '2px';
-        btn.style.border = '1px solid rgba(255,255,255,0.35)';
-        btn.style.color = 'rgba(255,255,255,0.8)';
+        btn.style.border = '1px solid rgba(255,255,255,0.25)';
+        btn.style.color = 'rgba(255,255,255,0.6)';
         btn.style.background = 'transparent';
         btn.style.cursor = 'pointer';
         btn.style.width = 'auto';
         btn.style.height = 'auto';
+        btn.style.marginTop = '4px';
         btn.style.transition = 'opacity 0.3s ease, color 0.3s ease';
         btn.onmouseenter = () => {
-            btn.style.opacity = '1';
+            btn.style.opacity = '0.9';
             btn.innerHTML = '↺ ' + restartLabel;
-            btn.style.color = 'rgba(255,255,255,1)';
+            btn.style.color = 'rgba(255,255,255,0.95)';
         };
         btn.onmouseleave = () => {
-            btn.style.opacity = '0.70';
-            btn.innerHTML = '↺';
-            btn.style.color = 'rgba(255,255,255,0.8)';
+            btn.style.opacity = '0.55';
+            btn.innerHTML = endLabel;
+            btn.style.color = 'rgba(255,255,255,0.6)';
         };
     } else {
         btn.style.display = 'none';
@@ -1421,7 +1460,7 @@ window.showConstellationInfo = function(title) {
     const specificText = WORD_LORE[cleanWord] || WORD_LORE[rawWord] || buildFallback(cleanWord || rawWord);
 
     if (currentLang === 'he') {
-        textEl.innerHTML = specificText || `<strong>${title}</strong> נבחרה כקונסטלציה שלך. הקונסטלציה רומזת: יש בעניין הזה משהו שמבקש להיראות.`;
+        textEl.innerHTML = genderize(specificText || `<strong>${title}</strong> נבחרה כקונסטלציה שלך. הקונסטלציה רומזת: יש בעניין הזה משהו שמבקש להיראות.`);
     } else {
         textEl.innerHTML = `The constellation <strong>${title}</strong> emerged from your vision. It holds a meaning that is uniquely yours. The constellation asks: what does it reveal about the next chapter of your life?`;
     }
@@ -2462,7 +2501,7 @@ function showInterpretationPanel(userVision) {
     usedMajors.forEach(function(pt, idx) {
         // Labels point TOWARD constellation center — they appear inside the shape
         var angleToCenter = Math.atan2(-pt.originalY, -pt.originalX) + (idx % 2 === 0 ? 0.25 : -0.25);
-        var dist = 70 + (idx % 3) * 28;
+        var dist = 40 + (idx % 3) * 16;
         var offsetX = Math.cos(angleToCenter) * dist;
         var offsetY = Math.sin(angleToCenter) * dist;
 
@@ -2475,18 +2514,27 @@ function showInterpretationPanel(userVision) {
 
         var isConstellation = false;
         if (idx === 0 && answers.pareidolia) {
-            // Skip the first label entirely — the constellation name is shown in the top title bar
-            // The interpretation modal is accessible by clicking the title
-            return;
-        } else {
-            // Compact annotation-box: just the keyword label
-            var catEl = document.createElement('span');
-            catEl.className = 'dlabel-category';
-            catEl.innerText = category;
-            var dotEl = document.createElement('span');
-            dotEl.className = 'dlabel-dot';
-            el.appendChild(catEl);
-            el.appendChild(dotEl);
+            isConstellation = true;
+            var userConstName = answers.pareidolia.trim();
+            if (currentLang === 'he' && !userConstName.startsWith('ה')) {
+                userConstName = 'ה' + userConstName;
+            } else if (currentLang !== 'he' && !userConstName.toLowerCase().startsWith('the ')) {
+                userConstName = 'The ' + userConstName;
+            }
+            category = userConstName;
+        }
+
+        // Compact annotation-box: keyword / constellation label
+        var catEl = document.createElement('span');
+        catEl.className = 'dlabel-category';
+        catEl.innerText = category;
+        var dotEl = document.createElement('span');
+        dotEl.className = 'dlabel-dot';
+        el.appendChild(catEl);
+        el.appendChild(dotEl);
+        if (isConstellation) {
+            el.classList.add('constellation-label');
+        }
 
             // Click opens a fixed side panel with word-by-word reveal
             (function(cat, ft, fk) {
@@ -2542,10 +2590,10 @@ function showInterpretationPanel(userVision) {
 
                     if (cachedText) {
                         // Gemini מוכן — הצג ישירות
-                        revealText(cachedText, 80);
+                        revealText(genderize(cachedText), 80);
                     } else {
                         // הצג טקסט סטטי
-                        revealText(ft, 150);
+                        revealText(genderize(ft), 150);
 
                         // רשום callback לכשה-Gemini יחזור
                         window._pagmarPanelUpdateFn = function(result) {
@@ -2556,7 +2604,7 @@ function showInterpretationPanel(userVision) {
                                 textDiv.style.opacity = '0';
                                 setTimeout(function() {
                                     if (!panel.isConnected) return;
-                                    revealText(liveText, 0);
+                                    revealText(genderize(liveText), 0);
                                     textDiv.style.opacity = '1';
                                 }, 650);
                             }
@@ -2576,7 +2624,6 @@ function showInterpretationPanel(userVision) {
             })(category, fullText, pool[idx][2] || '');
 
             el.style.cursor = 'pointer';
-        }
 
         overlay.appendChild(el);
 
@@ -2617,8 +2664,8 @@ function showInterpretationPanel(userVision) {
         return Math.hypot(a.pt.x, a.pt.y) - Math.hypot(b.pt.x, b.pt.y);
     });
     window.labelDataSorted.forEach(function(item, i) {
-        // First label appears at zoom 0.75 (almost default), each next requires slightly more zoom
-        item.zoomThreshold = 0.75 + i * 0.15; // 0.75, 0.90, 1.05, 1.20, 1.35...
+        // Constellation / major labels appear smoothly starting at zoom 0.25
+        item.zoomThreshold = 0.25 + i * 0.08;
     });
 
     // ── UPDATE LOOP — Proximity & Zoom reveal ──────────────
@@ -2626,8 +2673,8 @@ function showInterpretationPanel(userVision) {
 
 
     window.updateDataLabels = function() {
-        // HIDE LABELS DURING INITIAL BUILD-UP (first 3 seconds after reveal)
-        if (typeof skyIntroTime !== 'undefined' && skyIntroTime < 3.0) {
+        // HIDE LABELS DURING INITIAL BUILD-UP (first 1.5 seconds after reveal)
+        if (typeof skyIntroTime !== 'undefined' && skyIntroTime < 1.5) {
             labelData.forEach(function(item) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2644,8 +2691,8 @@ function showInterpretationPanel(userVision) {
             window._labelStaggerStart = null; // reset stagger so re-reveal is fresh after drag
             return;
         }
-        // HIDE ALL LABELS IN GALAXY VIEW — labels only show when at or above default zoom
-        if (cam.scale < 0.65) {
+        // HIDE ALL LABELS ONLY AT EXTREME DEEP SPACE ZOOM (< 0.20)
+        if (cam.scale < 0.20) {
             labelData.forEach(function(item, idx) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2757,8 +2804,11 @@ function showInterpretationPanel(userVision) {
                 return;
             }
 
-            var lx = sx + offsetX;
-            var ly = sy + offsetY;
+            // Scale offsets by zoom so labels stay near their stars at all zoom levels
+            var scaledOffX = offsetX * Math.min(cam.scale, 1.5);
+            var scaledOffY = offsetY * Math.min(cam.scale, 1.5);
+            var lx = sx + scaledOffX;
+            var ly = sy + scaledOffY;
 
             el.style.opacity = a;
             if (!isExpanded) {
@@ -2895,56 +2945,6 @@ function initConstellationSystem(userVision) {
     // Will be placed at world offsets far from the user's main constellation
 
     const ghostDefs = [
-        {
-            nameHe: 'הדג',   nameEn: 'the fish',
-            color: 'rgba(140,200,255,',
-            textHe: 'גבולות מטושטשים בין הידוע לנסתר — מי שנמשך לדגים שוחה בין עולמות. הים הוא רק התחלה.',
-            textEn: 'Between the known and the hidden, the fish swims through both. The ocean is just the beginning.',
-            offset: { x: 7200, y: -4800 },
-            pts: [ {x:0,y:0},{x:60,y:-20},{x:130,y:0},{x:60,y:20},{x:0,y:0},
-                   {x:130,y:0},{x:180,y:-35},{x:180,y:35} ],
-            lines: [[0,1],[1,2],[2,3],[3,0],[2,4],[4,5],[5,6],[5,7]]
-        },
-        {
-            nameHe: 'העטלף', nameEn: 'the bat',
-            color: 'rgba(200,140,255,',
-            textHe: 'רואה בחושך — מנווט בלי אור. מי שמזהה את קונסטלציית העטלף נושא בתוכו ידע שאינו זקוק לשמש.',
-            textEn: 'Seeing in darkness — navigating without light. Whoever finds this shape carries knowledge that needs no sun.',
-            offset: { x: -9500, y: -6200 },
-            pts: [ {x:0,y:0},{x:-80,y:-30},{x:-150,y:-80},{x:-120,y:-10},
-                   {x:80,y:-30},{x:150,y:-80},{x:120,y:-10},{x:0,y:50} ],
-            lines: [[0,1],[1,2],[1,3],[0,4],[4,5],[4,6],[0,7],[3,7],[6,7]]
-        },
-        {
-            nameHe: 'הסוס',  nameEn: 'the horse',
-            color: 'rgba(255,210,120,',
-            textHe: 'כח שמחכה לאות — אנרגיה צבורה לפרק הבא. הסוס לא רץ לאין מקום; הוא בוחר את הרגע.',
-            textEn: 'Power waiting for a signal. The horse does not run aimlessly — it chooses its moment.',
-            offset: { x: 5800, y: -11000 },
-            pts: [ {x:0,y:0},{x:30,y:-80},{x:60,y:-140},{x:20,y:-160},
-                   {x:-30,y:-120},{x:-60,y:-40},{x:-40,y:40},{x:0,y:80} ],
-            lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]]
-        },
-        {
-            nameHe: 'הנשר',  nameEn: 'the eagle',
-            color: 'rgba(255,180,130,',
-            textHe: 'הגובה אינו בריחה — הוא פרספקטיבה. הנשר יודע מה קטן ומה גדול כי ראה את שניהם.',
-            textEn: 'Height is not escape — it is perspective. The eagle knows what is small and what is vast, because it has seen both.',
-            offset: { x: -8800, y: 9500 },
-            pts: [ {x:0,y:0},{x:-100,y:-40},{x:-170,y:-10},{x:-90,y:20},
-                   {x:100,y:-40},{x:170,y:-10},{x:90,y:20},{x:0,y:70} ],
-            lines: [[0,1],[1,2],[1,3],[0,4],[4,5],[4,6],[0,7]]
-        },
-        {
-            nameHe: 'הלב',   nameEn: 'the heart',
-            color: 'rgba(255,130,160,',
-            textHe: 'מה שנסגר לא נשבר — הוא שומר. הלב בשמיים זוכר כל מה שנאמר בשקט ולא נשמע.',
-            textEn: 'What closes does not break — it protects. The heart in the sky remembers all that was spoken in silence.',
-            offset: { x: 12500, y: 6800 },
-            pts: [ {x:-40,y:-40},{x:0,y:-70},{x:40,y:-40},{x:50,y:0},
-                   {x:0,y:50},{x:-50,y:0} ],
-            lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]
-        },
         {
             nameHe: 'הירח',  nameEn: 'the moon',
             color: 'rgba(200,230,255,',
@@ -3086,8 +3086,8 @@ function initConstellationSystem(userVision) {
         if (match && match.length >= 3) {
             c = new THREE.Color(parseInt(match[0])/255, parseInt(match[1])/255, parseInt(match[2])/255);
         }
-        // Soften the color so it's not a harsh saturated RGB dot
-        c.lerp(new THREE.Color(1, 1, 1), 0.65);
+        // Soften the color slightly — keep prismatic tint
+        c.lerp(new THREE.Color(1, 1, 1), 0.40);
 
         const lineGeo = new THREE.BufferGeometry();
         const linePos = [];
@@ -3118,7 +3118,7 @@ function initConstellationSystem(userVision) {
                     uColor: { value: c },
                     uType: { value: beamType },
                     uOpacity: { value: 0.0 },
-                    uGlow: { value: 0.55 },
+                    uGlow: { value: 1.8 },
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 },
                     uDepth: { value: 0.6 },
@@ -3131,7 +3131,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            mesh.scale.set(2.0, 2.0, 1); // bigger for prismatic visibility
+            mesh.scale.set(3.5, 3.5, 1); // big prismatic beams like user constellation
             mesh.position.set(pt.x, pt.y, 0);
             gs.starMeshes.push(mesh);
             gs.group.add(mesh);
@@ -3296,7 +3296,7 @@ function initConstellationSystem(userVision) {
                 const MIN_STAR_PX  = 72;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
                 gs.group.children.forEach(child => {
-                    if (child.isMesh) child.scale.set(2.0 * compensation, 2.0 * compensation, 1);
+                    if (child.isMesh) child.scale.set(3.5 * compensation, 3.5 * compensation, 1);
                 });
             }
             // Boost ghost brightness in galaxy view so they're clearly visible
@@ -3306,7 +3306,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.forEach(mat => {
                 mat.uniforms.uOpacity.value = Math.min(1.0, (a * 2.5 + hGlow * 1.8) * galaxyBoost);
                 mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
-                mat.uniforms.uGlow.value = cam.scale > 1.0 ? 0.75 : 0.55; // boost glow when zoomed in
+                mat.uniforms.uGlow.value = cam.scale > 1.0 ? 2.2 : 1.8; // strong prismatic glow like user constellation
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -3423,6 +3423,86 @@ function initConstellationSystem(userVision) {
                 gs.infoEl.style.display = 'none';
             }
         });
+
+        // ── USER CONSTELLATION LABEL ─────────────────────────────────────
+        if (window.skyRevealState === 'revealed' && window.hasWandered) {
+            if (!window.userConstellationLabel) {
+                window.userConstellationLabel = document.createElement('div');
+                window.userConstellationLabel.style.cssText = [
+                    'position: absolute',
+                    'font-family: SimplerMono, Courier New, monospace',
+                    'letter-spacing: 0.18em',
+                    'text-align: center',
+                    'white-space: nowrap',
+                    'pointer-events: auto',
+                    'cursor: pointer',
+                    'z-index: 10',
+                    'transform: translate(-50%, -100%)',
+                    'transition: opacity 0.8s ease, transform 0.3s ease',
+                    'color: rgba(255,255,255,0.92)'
+                ].join(';');
+                
+                // Click to return home
+                window.userConstellationLabel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    targetCam.x = 0;
+                    targetCam.y = 0;
+                    targetCam.scale = 1.2;
+                    window._focusedGhostIndex = -1; // back to user
+                    
+                    const titleEl = document.getElementById('user-constellation-title');
+                    if (titleEl) {
+                        const name = window.userConstellationName || window.userVision || '';
+                        titleEl.textContent = '— ' + name + ' —';
+                        titleEl.style.opacity = '1';
+                    }
+                });
+                
+                // Hover effect
+                window.userConstellationLabel.addEventListener('mouseover', () => {
+                    window.userConstellationLabel.style.textDecoration = 'underline';
+                    window.userConstellationLabel.style.textUnderlineOffset = '4px';
+                    window.userConstellationLabel.style.textShadow = '0 0 14px rgba(255,255,255,0.7), 0 0 30px rgba(255,255,255,0.3)';
+                    window.userConstellationLabel.style.letterSpacing = '0.26em';
+                });
+                window.userConstellationLabel.addEventListener('mouseout', () => {
+                    window.userConstellationLabel.style.textDecoration = 'none';
+                    window.userConstellationLabel.style.textShadow = 'none';
+                    window.userConstellationLabel.style.letterSpacing = '0.18em';
+                });
+                
+                const skyScreen = document.getElementById('sky-ui');
+                if (skyScreen) skyScreen.appendChild(window.userConstellationLabel);
+            }
+            
+            // Calculate alpha similar to ghosts
+            const camDist = Math.hypot(cam.x, cam.y);
+            let targetAlpha = (camDist > 800) ? 0.75 : 0.0;
+            const screenX = (-cam.x) * cam.scale;
+            const screenY = (-cam.y) * cam.scale;
+            const halfW = window.innerWidth * 0.55;
+            const halfH = window.innerHeight * 0.55;
+            const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
+            const screenAlpha = onScreen ? Math.max(0, 0.65 - cam.scale * 1.55) : 0;
+            targetAlpha = Math.max(targetAlpha, screenAlpha);
+            
+            window._userLabelAlpha = (window._userLabelAlpha || 0) + (targetAlpha - (window._userLabelAlpha || 0)) * 0.06;
+            
+            if (window._userLabelAlpha > 0.04) {
+                const s2 = w2s(0, 0); // user constellation is at 0,0
+                window.userConstellationLabel.style.display = 'block';
+                window.userConstellationLabel.style.left = s2.x + 'px';
+                window.userConstellationLabel.style.top = (s2.y - 50 * cam.scale) + 'px';
+                window.userConstellationLabel.style.fontSize = Math.round(8 + window._userLabelAlpha * 5) + 'px';
+                window.userConstellationLabel.style.opacity = (window._userLabelAlpha * 0.9).toFixed(2);
+                window.userConstellationLabel.textContent = (window.userConstellationName || window.userVision || '').toUpperCase();
+            } else {
+                window.userConstellationLabel.style.display = 'none';
+            }
+        } else if (window.userConstellationLabel) {
+            window.userConstellationLabel.style.display = 'none';
+            window._userLabelAlpha = 0;
+        }
     };
 }
 
@@ -3642,7 +3722,7 @@ function renderQ() {
     }
 
     // Split text into words to fade them in one by one — speedy but still graceful
-    const words = q.text.split(' ');
+    const words = genderize(q.text).split(' ');
     words.forEach((w, i) => {
         const span = document.createElement('span');
         span.innerText = w + ' ';
@@ -3665,7 +3745,7 @@ function renderQ() {
 
     // Sub-text
     if (q.sub) {
-        const subWords = q.sub.split(' ');
+        const subWords = genderize(q.sub).split(' ');
         subWords.forEach((w, i) => {
             const span = document.createElement('span');
             span.innerText = w + ' ';
@@ -3701,7 +3781,7 @@ function renderQ() {
         q.options.forEach((opt, idx) => {
             const b = document.createElement('button');
             b.className = 'q-opt'; 
-            b.innerText = opt;
+            b.innerText = genderize(opt);
             const normalizedAns = qData.en.options[idx]; 
             
             // Check existing lines to avoid overlaps
@@ -3962,6 +4042,62 @@ function renderQ() {
         const inputHolder = document.createElement('div');
         inputHolder.style.cssText = 'position:absolute; top:52%; left:50%; transform:translateX(-50%); width:85%; max-width:400px; opacity:0; transition:opacity 1.2s ease; text-align:center;';
         inputHolder.appendChild(inp);
+
+        // ── GENDER SELECTOR (only for name question) ──
+        if (qData.id === 'name') {
+            const genderWrap = document.createElement('div');
+            genderWrap.id = 'gender-selector';
+            genderWrap.style.cssText = 'margin-top: 24px; display: flex; justify-content: center; gap: 12px; direction: rtl;';
+
+            const genderLabel = document.createElement('span');
+            genderLabel.style.cssText = 'display: block; width: 100%; text-align: center; margin-bottom: 10px; font-family: "SimplerPro", sans-serif; font-size: 0.85rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em;';
+            genderLabel.textContent = currentLang === 'he' ? 'לשון פנייה' : 'Pronoun';
+            genderWrap.appendChild(genderLabel);
+
+            const genderOptions = currentLang === 'he'
+                ? [{ val: 'female', label: 'נקבה' }, { val: 'male', label: 'זכר' }, { val: 'other', label: 'אחר' }]
+                : [{ val: 'female', label: 'She' }, { val: 'male', label: 'He' }, { val: 'other', label: 'They' }];
+
+            genderOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn gender-btn';
+                btn.textContent = opt.label;
+                btn.style.cssText = 'padding: 6px 18px; font-size: 0.82rem; letter-spacing: 0.1em; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.5); border-radius: 2px; cursor: pointer; transition: all 0.3s ease; font-family: "SimplerPro", sans-serif;';
+                btn.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    answers.gender = opt.val;
+                    // Highlight selected
+                    genderWrap.querySelectorAll('.gender-btn').forEach(b => {
+                        b.style.borderColor = 'rgba(255,255,255,0.15)';
+                        b.style.color = 'rgba(255,255,255,0.5)';
+                        b.style.background = 'transparent';
+                    });
+                    btn.style.borderColor = 'rgba(255,255,255,0.5)';
+                    btn.style.color = 'rgba(255,255,255,0.95)';
+                    btn.style.background = 'rgba(255,255,255,0.08)';
+                });
+                genderWrap.appendChild(btn);
+            });
+
+            // Default to 'other' if nothing selected
+            if (!answers.gender) answers.gender = 'other';
+
+            inputHolder.appendChild(genderWrap);
+
+            // Pre-select the current gender button after render
+            setTimeout(() => {
+                const currentGender = answers.gender || 'other';
+                genderWrap.querySelectorAll('.gender-btn').forEach(b => {
+                    const matchOpt = genderOptions.find(o => o.label === b.textContent);
+                    if (matchOpt && matchOpt.val === currentGender) {
+                        b.style.borderColor = 'rgba(255,255,255,0.5)';
+                        b.style.color = 'rgba(255,255,255,0.95)';
+                        b.style.background = 'rgba(255,255,255,0.08)';
+                    }
+                });
+            }, 50);
+        }
+
         // yearPreview intentionally omitted (removed by design)
         inputArea.appendChild(inputHolder);
         
@@ -4621,9 +4757,9 @@ async function buildSignalField() {
             // Questionnaire button positions (vertex) can be far from central cluster,
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
-                ? (1.5 + rand() * 0.5)     // 1.5–2.0 — labeled stars: long dramatic beams
+                ? (2.5 + rand() * 1.0)     // 2.5–3.5 — labeled stars: big dramatic prism beams
                 : (isVertexStar || isQDrivenStar)
-                    ? (0.95 + rand() * 0.45)  // 0.95–1.40 — Q-shape stars: vivid beams
+                    ? (1.4 + rand() * 0.8)   // 1.4–2.2 — Q-shape stars: strong prisms
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
             
             // Use personal hue but allow slight drift for a sparkling effect
@@ -4697,7 +4833,7 @@ async function buildSignalField() {
         const clusterY = Math.sin(sectorAngle) * radius * 0.9;
         
         const elType = elementTypes[Math.floor(rand() * elementTypes.length)];
-        const scaleBase = 1.8 + rand() * 2.5;
+        const scaleBase = 1.8 + rand() * 2.5; // Rorschach major star scale
         const baseAngleRight = rand() * Math.PI * 2;
         
         // Base hue for this lobe (strictly separated blocks of color)
@@ -4740,15 +4876,15 @@ async function buildSignalField() {
         majorPoints.push(ptRight, ptLeft);
         
         // Balanced: more minor stars for richer visual density
-        const numMinors = 15 + Math.floor(rand() * 15);
+        const numMinors = 22 + Math.floor(rand() * 18);
         for (let i = 0; i < numMinors; i++) {
             const minR2 = 10 + rand() * 150;
             const minA = rand() * Math.PI * 2;
             const mrX = clusterX + Math.cos(minA) * minR2;
             const mrY = clusterY + Math.sin(minA) * minR2;
             
-            const minorType = 'dot'; // Minor background stars = simple dots, NOT beams/blades
-            const minScale = scaleBase * (0.3 + rand() * 0.5);
+            const minorType = elementTypes[i % elementTypes.length]; // Background stars use prismatic blades/crystals, NOT simple dots
+            const minScale = scaleBase * (0.4 + rand() * 0.4);
             const minBaseA = rand() * Math.PI * 2;
             
             const minorHueRight = lobeHue;
@@ -4823,7 +4959,7 @@ async function buildSignalField() {
     // dot-type (3.0) = soft point light, not 6-ray star or beam line
     // Spread across huge radius so they appear everywhere during exploration
     {
-        const STAR_COUNT    = 1200;   // more stars across much larger area
+        const STAR_COUNT    = 1800;   // denser starfield for richer night sky
         const FIELD_RADIUS  = 20000;  // covers entire sky including ghost constellation zone (5000-16000)
         const CENTER_CLEAR  = 100;    // keep user constellation zone clear
 
@@ -4833,10 +4969,10 @@ async function buildSignalField() {
             const sfX  = Math.cos(sfAngle) * sfR;
             const sfY  = Math.sin(sfAngle) * sfR * 0.72;
             const sfZ  = (rand() - 0.5) * 800;
-            // Most stars are very faint tiny dots; ~8% are slightly brighter
-            const bright      = rand() < 0.15;
-            const sfScale     = bright ? (0.15 + rand() * 0.12) : (0.08 + rand() * 0.10);
-            const sfOpacity   = bright ? (0.35 + rand() * 0.25) : (0.12 + rand() * 0.18);
+            // ~20% are brighter accent stars
+            const bright      = rand() < 0.22;
+            const sfScale     = bright ? (0.18 + rand() * 0.14) : (0.10 + rand() * 0.12);
+            const sfOpacity   = bright ? (0.45 + rand() * 0.30) : (0.18 + rand() * 0.22);
             const sfGlow      = bright ? (0.45 + rand() * 0.35) : (0.15 + rand() * 0.25);
             skyPoints.push({
                 x: sfX, y: sfY, z: sfZ,
@@ -4996,6 +5132,8 @@ async function buildSignalField() {
     skyPoints.forEach(pt => {
         // Prismatic language: bladeFn (0) = single beam, crystalFn (1) = 6-ray sparkle, dotFn (3) = soft dot
         let typeVal = 0.0; // blade — single dramatic prism beam (used for main constellation)
+        if (pt.elementType === 'halo')    typeVal = 0.0; // halo — single prism beam
+        if (pt.elementType === 'flare')   typeVal = 0.0; // flare — single prism beam
         if (pt.elementType === 'dot')     typeVal = 3.0; // soft micro dot
         if (pt.elementType === 'crystal') typeVal = 1.0; // 6-ray sparkle — used for starfield
         if (pt.elementType === 'shard')   typeVal = 2.0; // X-cut shard
@@ -6187,7 +6325,7 @@ function updatePoint(pt, dt, isClosest) {
         const rpEase = rp * rp * (3 - 2 * rp);
         const pulseDampen = clamp((cam.scale - 0.30) / 1.0, 0.05, 1.0);
         const pulse = Math.sin(pt.pulseClock) * 0.12 * pulseDampen + (1.0 - 0.12 * pulseDampen);
-        const hoverScale = 1.0 + pt.hoverPulse * 0.12 * pulseDampen;
+        const hoverScale = 1.0 + pt.hoverPulse * 0.25 * pulseDampen;
         const skeletonScale = 0.10;
         const fullScale = pt.scale;
 
@@ -6209,9 +6347,9 @@ function updatePoint(pt, dt, isClosest) {
             s = Math.max(s, minScreenSize * globalBreath);
         }
 
-        // Constellation beams: cap maximum scale so beams don't become too long at zoom-in
+        // Constellation beams: reasonable cap for clean single prisms
         if (!isStarfield) {
-            const maxBeamScale = 1.8; // prevents overly long beam rays
+            const maxBeamScale = 2.0;
             s = Math.min(s, maxBeamScale);
         }
 
@@ -6220,7 +6358,9 @@ function updatePoint(pt, dt, isClosest) {
         const HH = window.innerHeight;
         // Depth opens gradually: starts flat (z=0), deepens over 10s for a "rising from flat" feel
         const depthOpenFactor = (window.skyRevealState === 'revealed') ? Math.min(skyIntroTime / 10.0, 1.0) : 0.0;
-        const parallaxStrength = 0.15 * rpEase * depthOpenFactor;
+        let parallaxFade = 1.0;
+        if (cam.scale < 0.8) parallaxFade = Math.max(0.0, (cam.scale - 0.3) / 0.5); // fade parallax on zoom out
+        const parallaxStrength = 0.15 * rpEase * depthOpenFactor * parallaxFade;
         const depthOffset = (pt.depthLayer - 1.0) * parallaxStrength;
         const parallaxX = (sp.x - WW / 2) * depthOffset;
         const parallaxY = (sp.y - HH / 2) * depthOffset;
@@ -6255,7 +6395,7 @@ function updatePoint(pt, dt, isClosest) {
             const baseOp = pt.isMajor ? 0.75 : 0.60;
             const litOp  = pt.isMajor ? 1.00 : 0.85;
             opacity = lerp(baseOp, litOp, lanternSoft);
-            opacity += pt.hoverPulse * 0.05 * pulseDampen;
+            opacity += pt.hoverPulse * 0.25 * pulseDampen;
             // Breathing glow in revealed state
             if (window.skyRevealState === 'revealed') {
                 opacity += (globalBreath - 1.0) * 1.2;
@@ -6295,13 +6435,19 @@ function updatePoint(pt, dt, isClosest) {
             light = lerp(0.95, light, zoomColorFactor); // White when zoomed out
         }
         
+        // Hover: burst of vivid color on proximity
+        if (pt.hoverPulse > 0.01) {
+            sat = lerp(sat, 1.0, pt.hoverPulse);
+            light = lerp(light, 0.65, pt.hoverPulse * 0.5);
+        }
+        
         pt.mesh.material.uniforms.uColor.value.setHSL(hue, sat, light);
 
         // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
             const baseGlow = pt.isMajor ? 2.5 : 1.4; // Vibrant prismatic glow — dramatic beams
-            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 0.5) * lanternSoft;
+            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 2.5) * lanternSoft;
             
             if (window.skyRevealState === 'revealed') {
                 // Breathing glow
@@ -6339,7 +6485,7 @@ function updatePoint(pt, dt, isClosest) {
             if (pt.theme === 'Starfield') {
                 opacity = Math.max(opacity, 0.45); // Starfield — bright night-sky dots
             } else if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia') {
-                opacity = Math.max(opacity, 0.12); // Background stars — subtle
+                opacity = Math.max(opacity, 0.22); // Background stars — moderately visible
             } else {
                 opacity *= 0.15; // Pure ambient dust — barely visible
             }
@@ -6959,17 +7105,23 @@ function showHorizon() {
     const change  = answers.change  || '';
     const observation = window.selectedPareidolia || '';
 
-    // Title
+    // Title — focused on what the user identified
     const titleEl = document.getElementById('ui-horizontitle');
-    if (titleEl) titleEl.innerText = isHe ? `מפת האופק של ${name}` : `${name}'s Horizon Map`;
+    if (titleEl) titleEl.innerText = isHe 
+        ? `מה שזיהית בדימוי` 
+        : `What You Identified`;
 
     // "What you saw" label
     const obsLabel = document.getElementById('horizon-obs-label');
-    if (obsLabel) obsLabel.innerText = isHe ? 'מה שראית בדימוי:' : 'What you saw in the image:';
+    if (obsLabel) obsLabel.innerText = isHe ? 'בתוך הנקודות, ראית:' : 'In the points, you saw:';
 
-    // User's observation (verbatim)
+    // User's observation (verbatim) — the star of the show
     const symbolEl = document.getElementById('horizon-symbol');
-    if (symbolEl) symbolEl.innerText = observation || (isHe ? '—' : '—');
+    if (symbolEl) {
+        symbolEl.innerText = observation || (isHe ? '—' : '—');
+        symbolEl.style.fontSize = 'clamp(1.6rem, 4vw, 2.4rem)';
+        symbolEl.style.color = 'rgba(255,255,255,0.95)';
+    }
 
     // Dream block
     const dreamRow = document.getElementById('horizon-dream-row');
@@ -6983,11 +7135,14 @@ function showHorizon() {
         if (!isHe && dreamRow) dreamRow.style.textAlign = 'left';
     }
 
-    // Poetic reflection
+    // Poetic reflection — centered on the identification
     const descEl = document.getElementById('horizon-desc');
     if (descEl) {
         if (observation) {
-            descEl.innerText = buildPoeticReflection(observation, dream, req, change, isHe);
+            const identityReflection = isHe
+                ? `מתוך אלפי נקודות אור, זיהית ${observation}. הצורה הזו לא הייתה בדימוי — היא הייתה בך. מה שאנחנו רואים בתוך הכאוס הוא תמיד השיקוף הכי כנה של מה שמתרחש בפנים.`
+                : `Out of thousands of points of light, you identified ${observation}. That shape wasn't in the image — it was in you. What we see in chaos is always the most honest reflection of what's happening inside.`;
+            descEl.innerText = identityReflection;
         } else {
             descEl.innerText = isHe
                 ? 'הדימוי נולד מהנקודות שמסרת. המשמעות שלו מתחילה במה שתראי בתוכו.'
