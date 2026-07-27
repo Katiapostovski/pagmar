@@ -6395,7 +6395,9 @@ function showPareidoliaPrompt() {
         if (window.skyRevealState === 'recognition') return;
         // Reset dwell timer on any interaction
         window._dwellLastMove = performance.now();
-        const zf = e.deltaY < 0 ? 1.006 : 0.994; // Slower, meditative zoom
+        const scrollMag = Math.min(Math.abs(e.deltaY), 120); // cap at 120px
+        const zoomStep  = 0.008 + (scrollMag / 120) * 0.072; // 0.8%–8% per tick
+        const zf = e.deltaY < 0 ? 1 + zoomStep : 1 - zoomStep;
         const newScale = clamp(targetCam.scale * zf, 0.25, 10.0);
         const mwx = (e.clientX - W * 0.5) / cam.scale + cam.x;
         const mwy = (e.clientY - H * 0.5) / cam.scale + cam.y;
