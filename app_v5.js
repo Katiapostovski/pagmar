@@ -263,13 +263,13 @@ void main() {
     float iCore = getPrismIntensity(uv, uType);
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Chromatic aberration: subtle spectral at default zoom (1.35), vivid at deep zoom
-    // smoothstep(0.8, 2.0) → ~45% at zoom 1.35, 100% at zoom 2.0+
-    float prismGate = smoothstep(0.8, 2.0, clamp(uZoom, 0.0, 10.0));
+    // Vivid spectral visible from default zoom — white CORE (high iCore*4.0 overwhelms color)
+    // tips are fully spectral. Matches reference: white star centers, rainbow beam edges.
+    float prismGate = smoothstep(0.5, 2.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // mix 0.18: tip color visible but predominantly white — matches reference look
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.18);
+    // mix 0.55: tip = vivid rainbow, center stays white (4x brightness overpowers it)
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, clamp(prismGate * uGlow * 0.55, 0.0, 1.0));
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
