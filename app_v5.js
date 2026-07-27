@@ -263,12 +263,13 @@ void main() {
     float iCore = getPrismIntensity(uv, uType);
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // White at default zoom (1.35). Colors only emerge when zooming deeper (>1.6)
-    float prismGate = smoothstep(1.6, 3.0, clamp(uZoom, 0.0, 10.0));
+    // Chromatic aberration: subtle spectral at default zoom (1.35), vivid at deep zoom
+    // smoothstep(0.8, 2.0) → ~45% at zoom 1.35, 100% at zoom 2.0+
+    float prismGate = smoothstep(0.8, 2.0, clamp(uZoom, 0.0, 10.0));
     float angle = atan(uv.y, uv.x);
     vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // Subtle chromatic aberration: ~30% color at zoom 2.0, vivid at deep zoom
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.38);
+    // mix 0.18: tip color visible but predominantly white — matches reference look
+    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, prismGate * uGlow * 0.18);
     vec3 col = baseCol * iCore * 4.0 * twinkle;
 
     float intensity = iCore;
@@ -4768,32 +4769,36 @@ async function buildSignalField() {
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
     } // end else (bilateral shape fallback)
 
-    // ── STARFIELD — tiny prismatic background stars across the whole sky ──
-    // Creates the effect of a real night sky with embedded constellations
+    // ── STARFIELD — crystal-sparkle background stars filling the whole sky ──
+    // Crystal type (1.0) creates 6-ray star pattern — looks like real night sky stars
     {
-        const STAR_FIELD_COUNT = 185;
-        const FIELD_RADIUS     = 1500;
-        const CENTER_CLEAR     = 130; // keep user constellation zone free
-        for (let si = 0; si < STAR_FIELD_COUNT; si++) {
+        const STAR_POSITIONS  = 420;    // many stars so the whole sky feels full
+        const FIELD_RADIUS    = 2200;   // large enough to fill any pan area
+        const CENTER_CLEAR    = 120;    // keep user constellation zone uncluttered
+
+        for (let si = 0; si < STAR_POSITIONS; si++) {
             const sfAngle = rand() * Math.PI * 2;
-            const sfR     = CENTER_CLEAR + Math.pow(rand(), 0.6) * FIELD_RADIUS; // denser near middle-field
-            const sfX = Math.cos(sfAngle) * sfR;
-            const sfY = Math.sin(sfAngle) * sfR * 0.78; // slightly compressed vertically
-            const sfZ = (rand() - 0.5) * 500;
-            const sfScale    = 0.07 + rand() * 0.26;          // tiny stars
-            const sfOpacity  = 0.20 + rand() * 0.38;          // varied brightness
-            const sfGlow     = 0.28 + rand() * 0.55;          // subtle glow
-            const sfHue      = rand() * 360;
+            // Uniform distribution (not power-weighted) for even sky coverage
+            const sfR  = CENTER_CLEAR + rand() * FIELD_RADIUS;
+            const sfX  = Math.cos(sfAngle) * sfR;
+            const sfY  = Math.sin(sfAngle) * sfR * 0.75; // slightly compressed vertically
+            const sfZ  = (rand() - 0.5) * 600;
+            // Varied brightness: some bright, most faint — like real sky
+            const bright         = rand() < 0.12; // 12% are brighter "named" stars
+            const sfScale        = bright ? (0.18 + rand() * 0.22) : (0.06 + rand() * 0.11);
+            const sfOpacity      = bright ? (0.55 + rand() * 0.35) : (0.20 + rand() * 0.30);
+            const sfGlow         = bright ? (0.65 + rand() * 0.55) : (0.18 + rand() * 0.35);
             skyPoints.push({
                 x: sfX, y: sfY, z: sfZ,
                 originalX: sfX, originalY: sfY, originalZ: sfZ,
                 targetX: sfX, targetY: sfY, targetZ: sfZ,
                 starX: sfX, starY: sfY,
-                isMajor: false, elementType: 'blade',
+                isMajor: false,
+                elementType: 'crystal', // 6-ray sparkle — not a single line beam
                 theme: 'Starfield',
                 text: null, isBlurred: false,
                 baseAngle: rand() * Math.PI * 2,
-                scale: sfScale, hue: sfHue,
+                scale: sfScale, hue: rand() * 360,
                 isSeed: false, depthLayer: 1.8 + rand() * 1.2,
                 fogRevealed: 0.8, hoverPulse: 0, permanentlyRevealed: false,
                 pulseClock: Math.random() * Math.PI * 2,
@@ -4803,7 +4808,6 @@ async function buildSignalField() {
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0,
                 maxRevealProgress: 0, neighborPts: [],
                 isVertexStar: false, isQPathStar: false,
-                // Custom starfield values stored at creation (stable across frames)
                 starfieldOpacity: sfOpacity,
                 starfieldGlow: sfGlow
             });
@@ -4936,10 +4940,11 @@ async function buildSignalField() {
     // Nodes
     skyMeshes = [];
     skyPoints.forEach(pt => {
-        // Prismatic language: bladeFn (type 0) = single dramatic prism beam
-        // Each star rotated by baseAngle → every star has its own unique ray direction
-        let typeVal = 0.0; // blade/prism beam — the single-ray prism look the user wants
-        if (pt.elementType === 'dot') typeVal = 3.0;    // very small micro dots stay soft
+        // Prismatic language: bladeFn (0) = single beam, crystalFn (1) = 6-ray sparkle, dotFn (3) = soft dot
+        let typeVal = 0.0; // blade — single dramatic prism beam (used for main constellation)
+        if (pt.elementType === 'dot')     typeVal = 3.0; // soft micro dot
+        if (pt.elementType === 'crystal') typeVal = 1.0; // 6-ray sparkle — used for starfield
+        if (pt.elementType === 'shard')   typeVal = 2.0; // X-cut shard
 
         const ptColor = new THREE.Color().setHSL(pt.hue / 360, pt.theme === 'Unresolved' ? 0.4 : 1.0, 0.65);
 
