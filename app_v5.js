@@ -265,7 +265,9 @@ void main() {
     // Real prism splits white light: R/G/B travel at slightly different angles.
     // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
     float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
-    float aberration = prismGate * uGlow * 0.005; // very thin fringes — not split beams
+    // Base thin fringes (0.005) + sparkle boost on hover/glow (uGlow > 1.0 = hover)
+    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
+    float aberration = prismGate * (0.005 + hoverBoost);
 
     // Slowly rotating split direction → organic prismatic feel
     vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
@@ -3834,6 +3836,18 @@ function renderQ() {
                         lastAnswerPos = { x: safeX, y: safeY };
                         advanceQ(false); // just fade
                     }
+                    // ── ANSWER FEEDBACK: flash the selected button ──
+                    b.style.transition = 'all 0.15s ease';
+                    b.style.borderColor = 'rgba(255,255,255,0.9)';
+                    b.style.boxShadow = '0 0 20px rgba(255,255,255,0.35), inset 0 0 12px rgba(255,255,255,0.1)';
+                    b.style.background = 'rgba(255,255,255,0.12)';
+                    b.style.transform = 'translate(-50%, -50%) scale(1.04)';
+                    // Brief pulse then settle
+                    setTimeout(() => {
+                        b.style.transition = 'all 0.6s ease';
+                        b.style.transform = 'translate(-50%, -50%) scale(0.96)';
+                        b.style.opacity = '0.6';
+                    }, 200);
                 }
             };
             optsContainer.appendChild(b);
@@ -3977,8 +3991,9 @@ function renderQ() {
             const backBtn = document.createElement('button');
             backBtn.id = 'q-back-fixed';
             backBtn.className = 'btn';
-            backBtn.style.cssText = 'position:fixed; top:16px; right:16px; z-index:9999; padding:6px 20px; font-size:1.4rem; line-height:1; display:inline-flex; align-items:center; justify-content:center;';
-            backBtn.textContent = '\u2192'; // \u2192 RTL back arrow
+            backBtn.style.cssText = 'position:fixed; top:1.6rem; right:1.6rem; z-index:9999; padding:0.4rem 0.9rem; font-size:0.72rem; letter-spacing:0.18em; opacity:0.6; transition:opacity 0.3s; display:inline-flex; align-items:center; justify-content:center; line-height:1;';
+            backBtn.textContent = '\u2192'; // RTL back arrow
+            backBtn.style.fontSize = '0.9rem'; // arrow glyph slightly larger than label text
             backBtn.title = currentLang === 'he' ? '\u05d7\u05d6\u05d5\u05e8' : 'Back';
             backBtn.onclick = () => {
                 qIndex--;
@@ -4792,10 +4807,10 @@ async function buildSignalField() {
             const sfY  = Math.sin(sfAngle) * sfR * 0.72;
             const sfZ  = (rand() - 0.5) * 800;
             // Most stars are very faint tiny dots; ~8% are slightly brighter
-            const bright      = rand() < 0.08;
-            const sfScale     = bright ? (0.08 + rand() * 0.10) : (0.03 + rand() * 0.06);
-            const sfOpacity   = bright ? (0.22 + rand() * 0.18) : (0.06 + rand() * 0.12);
-            const sfGlow      = bright ? (0.35 + rand() * 0.30) : (0.08 + rand() * 0.18);
+            const bright      = rand() < 0.15;
+            const sfScale     = bright ? (0.15 + rand() * 0.12) : (0.08 + rand() * 0.10);
+            const sfOpacity   = bright ? (0.35 + rand() * 0.25) : (0.12 + rand() * 0.18);
+            const sfGlow      = bright ? (0.45 + rand() * 0.35) : (0.15 + rand() * 0.25);
             skyPoints.push({
                 x: sfX, y: sfY, z: sfZ,
                 originalX: sfX, originalY: sfY, originalZ: sfZ,
