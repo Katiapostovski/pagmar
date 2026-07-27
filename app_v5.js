@@ -260,25 +260,31 @@ float getPrismIntensity(vec2 p, float type) {
 
 void main() {
     vec2 uv = vUv * 2.0 - 1.0;
-    
-    // Prismatic stars: white at zoom-out, subtle spectrum colors on zoom-in
-    float iCore = getPrismIntensity(uv, uType);
+
+    // ── CHROMATIC ABERRATION ──
+    // Real prism splits white light: R/G/B travel at slightly different angles.
+    // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
+    float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
+    float aberration = prismGate * uGlow * 0.015; // offset amount (keeps fringes thin)
+
+    // Slowly rotating split direction → organic prismatic feel
+    vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
+
+    // Three offset samples: R shifted one way, B the other, G at center
+    float iR = getPrismIntensity(uv + abDir * aberration, uType);
+    float iG = getPrismIntensity(uv, uType);
+    float iB = getPrismIntensity(uv - abDir * aberration, uType);
+
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    // Prism coloring: beam TIPS show rainbow, CENTER stays white (iCore*4.0 overpowers tint)
-    // smoothstep(0.8, 3.0): at zoom 1.35 → gate~0.25, at zoom 2.0 → gate~0.55
-    float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
-    float angle = atan(uv.y, uv.x);
-    vec3 prismCol = spectral(angle / 6.28318 + uTime * 0.03);
-    // mix 0.42: tips get warm spectral tint, centers stay white via brightness saturation
-    vec3 baseCol = mix(vec3(0.97, 0.97, 1.0), prismCol, clamp(prismGate * uGlow * 0.42, 0.0, 1.0));
-    vec3 col = baseCol * iCore * 4.0 * twinkle;
+    // Colored fringes (4×) + bright white core (2.5×) = center white, edges spectral
+    vec3 col = (vec3(iR, iG, iB) * 4.0 + vec3(0.97, 0.97, 1.0) * iG * 2.5) * twinkle;
 
-    float intensity = iCore;
+    float iCore = max(iR, max(iG, iB));
     float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
-    float alpha = intensity * uOpacity * zoomFade;
+    float alpha = iCore * uOpacity * zoomFade;
 
-    // Major star: subtle warm core pulse, only on clear zoom-in
+    // Major star: subtle warm core pulse
     if (uHasLabel > 0.5) {
         float discoveryFactor = smoothstep(1.3, 2.0, clamp(uZoom, 0.0, 10.0));
         float r = length(uv);
