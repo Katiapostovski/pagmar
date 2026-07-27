@@ -3203,9 +3203,9 @@ function initConstellationSystem(userVision) {
     titleEl.id = 'user-constellation-title';
     titleEl.style.cssText = `
         position:absolute;
-        top: 50%;
+        top: 32px;
         left: 50%;
-        transform: translate(-50%, -50%) scale(0.8);
+        transform: translateX(-50%) scale(1.0);
         font-family: 'Hadassah', serif;
         font-size: clamp(1.4rem, 2.8vw, 2rem);
         letter-spacing: 0.45em;
@@ -3217,7 +3217,7 @@ function initConstellationSystem(userVision) {
         text-align: center;
         white-space: nowrap;
         text-shadow: 0 0 30px rgba(255,255,255,0.8);
-        transition: all 4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transition: opacity 2s ease, filter 2s ease;
         opacity: 0;
         filter: blur(8px);
         border-bottom: 1px solid rgba(255,255,255,0.0);
@@ -3247,7 +3247,6 @@ function initConstellationSystem(userVision) {
     requestAnimationFrame(() => {
         titleEl.style.opacity = '1';
         titleEl.style.filter = 'blur(0px)';
-        titleEl.style.transform = 'translate(-50%, -40vh) scale(1.0)';
     });
 
     // ── EXPLORATION RADIUS: how close camera must be to see ghost ──
@@ -6260,11 +6259,17 @@ function updatePoint(pt, dt, isClosest) {
         const pointScale = lerp(skeletonScale, fullScale, sizeFactor);
         let s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
 
-        // Starfield: maintain minimum visible size at any zoom level
+        // Starfield: maintain visible size at any zoom level
         if (pt.theme === 'Starfield') {
             // Zoom compensation: at extreme zoom-out, boost scale so dots stay visible
-            const minScreenSize = 0.025; // minimum visible scale
+            const minScreenSize = 0.06; // bigger minimum for clear night-sky dots
             s = Math.max(s, minScreenSize * globalBreath);
+        }
+
+        // Constellation beams: cap maximum scale so beams don't become too long at zoom-in
+        if (!isStarfield) {
+            const maxBeamScale = 1.8; // prevents overly long beam rays
+            s = Math.min(s, maxBeamScale);
         }
 
         // POSITION
@@ -6376,7 +6381,7 @@ function updatePoint(pt, dt, isClosest) {
                 glowValue = pt.isMajor ? 1.5 : 0.8;
             } else if (pt.theme === 'Starfield') {
                 // Starfield glow always active — visible during exploration too
-                glowValue = pt.starfieldGlow || 0.25;
+                glowValue = pt.starfieldGlow || 0.5;
             } else {
                 glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
             }
@@ -6388,8 +6393,10 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.isQPathStar) {
             opacity = Math.max(opacity, 0.58); // Path outline — clearly visible
         } else if (!pt.isMajor && !pt.isVertexStar && !pt.isQPathStar) {
-            if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia' || pt.theme === 'Starfield') {
-                opacity = Math.max(opacity, 0.12); // Background & starfield — preserve their set opacity
+            if (pt.theme === 'Starfield') {
+                opacity = Math.max(opacity, 0.45); // Starfield — bright night-sky dots
+            } else if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia') {
+                opacity = Math.max(opacity, 0.12); // Background stars — subtle
             } else {
                 opacity *= 0.15; // Pure ambient dust — barely visible
             }
