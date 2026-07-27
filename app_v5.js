@@ -7166,3 +7166,160 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ══════════════════════════════════════════════════════════
+// ── SCREENSAVER / INACTIVITY RESET ───────────────────────
+// After 2 minutes of no interaction → ask "still here?"
+// After 5 more seconds → reload (fresh questionnaire)
+// ══════════════════════════════════════════════════════════
+(function() {
+    const IDLE_TIMEOUT_MS  = 2 * 60 * 1000; // 2 minutes
+    const PROMPT_TIMEOUT_MS = 5 * 1000;       // 5 seconds to respond
+    let idleTimer    = null;
+    let promptTimer  = null;
+    let promptOverlay = null;
+
+    // ── Reset the idle clock on ANY user activity ──
+    function resetIdleTimer() {
+        // If prompt is showing and user interacts, dismiss it
+        if (promptOverlay) {
+            dismissPrompt();
+        }
+        clearTimeout(idleTimer);
+        clearTimeout(promptTimer);
+        idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
+    }
+
+    // ── Show "still here?" overlay ──
+    function showIdlePrompt() {
+        if (promptOverlay) return; // already showing
+
+        promptOverlay = document.createElement('div');
+        promptOverlay.id = 'idle-prompt-overlay';
+        promptOverlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            cursor: pointer;
+        `;
+
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: rgba(20, 20, 35, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 40px 50px;
+            text-align: center;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(100, 100, 200, 0.08);
+            transform: scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-width: 380px;
+        `;
+
+        const question = document.createElement('h2');
+        question.style.cssText = `
+            font-family: 'Hadassah', serif;
+            font-weight: 300;
+            font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0 0 12px 0;
+            letter-spacing: 0.08em;
+        `;
+        question.textContent = '?עדיין כאן';
+
+        const subtitle = document.createElement('p');
+        subtitle.style.cssText = `
+            font-family: var(--font-mono, "SimplerMono", monospace);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin: 0 0 24px 0;
+            letter-spacing: 0.05em;
+        `;
+        subtitle.textContent = 'לחצו כדי להמשיך';
+
+        // Countdown bar
+        const barWrap = document.createElement('div');
+        barWrap.style.cssText = `
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        `;
+        const barFill = document.createElement('div');
+        barFill.style.cssText = `
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(180, 160, 255, 0.6), rgba(255, 200, 150, 0.6));
+            transition: width ${PROMPT_TIMEOUT_MS}ms linear;
+            border-radius: 2px;
+        `;
+        barWrap.appendChild(barFill);
+
+        card.appendChild(question);
+        card.appendChild(subtitle);
+        card.appendChild(barWrap);
+        promptOverlay.appendChild(card);
+        document.body.appendChild(promptOverlay);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                promptOverlay.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+                // Start countdown bar
+                barFill.style.width = '0%';
+            });
+        });
+
+        // Click anywhere → dismiss and continue
+        promptOverlay.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            dismissPrompt();
+        });
+
+        // Start the 5-second countdown → reload
+        promptTimer = setTimeout(() => {
+            // Fade to black then reload
+            if (promptOverlay) {
+                promptOverlay.style.transition = 'opacity 1s ease';
+                promptOverlay.style.opacity = '0';
+                promptOverlay.style.background = 'rgba(0, 0, 0, 1)';
+                promptOverlay.style.opacity = '1';
+            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        }, PROMPT_TIMEOUT_MS);
+    }
+
+    // ── Dismiss the prompt and reset idle timer ──
+    function dismissPrompt() {
+        clearTimeout(promptTimer);
+        if (promptOverlay) {
+            promptOverlay.style.opacity = '0';
+            const el = promptOverlay;
+            setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 700);
+            promptOverlay = null;
+        }
+        // Restart idle monitoring
+        idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
+    }
+
+    // ── Listen for all user activity events ──
+    const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'pointerdown'];
+    ACTIVITY_EVENTS.forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // ── Start the idle timer ──
+    idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
+})();
