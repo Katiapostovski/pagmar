@@ -4929,11 +4929,11 @@ async function buildSignalField() {
             const clusterY = coord[1] * shapeRadius * -1; // flip Y (THREE.js convention)
             const clusterZ = (rand() - 0.5) * 30; 
             
-            // Vertex/key-corner stars use 'halo' (crystal) — tight 6-point star, no huge streaks
             const isQDrivenStar = isQCoord; // came from questionnaire drawing
-            // All Q-shape stars use the same simple DOT type — unified clean constellation!
-            // No massive prism blades shooting randomly.
-            const elType = 'dot';
+            
+            // Vertex/key-corner stars MUST be 'halo' to create the beautiful prismatic blades!
+            // Path stars use simple 'dot' to prevent GPU lag and blinding glare.
+            const elType = isVertexStar ? 'halo' : 'dot';
 
             // Scale hierarchy: vertex are notably bigger but NOT massive
             // ALL Q-shape stars IDENTICAL size — vertex stars must NOT look like a separate shape.
