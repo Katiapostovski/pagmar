@@ -4980,8 +4980,8 @@ async function buildSignalField() {
                 pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 0, neighborPts: [],
-                isVertexStar: isVertexStar,           // key corner point of questionnaire shape
-                isQPathStar: isQDrivenStar && !isVertexStar // path/edge point between vertices
+                isVertexStar: false,           // key corner point of questionnaire shape
+                isQPathStar: false // path/edge point between vertices
             };
             const minorL = {
                 ...minorR,
@@ -5017,8 +5017,8 @@ async function buildSignalField() {
                 pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 0, neighborPts: [],
-                isVertexStar: isVertexStar,           // key corner point of questionnaire shape
-                isQPathStar: isQDrivenStar && !isVertexStar // path/edge point between vertices
+                isVertexStar: false,           // key corner point of questionnaire shape
+                isQPathStar: false // path/edge point between vertices
             };
             
             const microLeft = {
