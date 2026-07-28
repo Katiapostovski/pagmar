@@ -2961,7 +2961,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -6500, y: -5250 },
+            offset: { x: -4200, y: -3400 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -2971,7 +2971,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -9500, y: 6500 },
+            offset: { x: -6100, y: 4200 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -2981,7 +2981,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 8500, y: 5500 },
+            offset: { x: 5500, y: 3500 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -2992,7 +2992,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,255,',
             textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
             textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -5500, y: 6800 },
+            offset: { x: -3500, y: 4400 },
             pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
                    {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
             lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
@@ -3002,7 +3002,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 6800, y: -5800 },
+            offset: { x: 4400, y: -3700 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3012,7 +3012,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: 9800, y: -4200 },
+            offset: { x: 6300, y: -2700 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3023,7 +3023,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: 4200, y: 7200 },
+            offset: { x: 2700, y: 4600 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
@@ -3125,11 +3125,24 @@ function initConstellationSystem(userVision) {
             ptAngles[b] = ang;
         });
 
+        // Add some random distractor stars around the ghost constellation so it feels like a real starry patch
+        const numDist = 12 + Math.floor(Math.random() * 8);
+        for (let i = 0; i < numDist; i++) {
+            const minR2 = Math.random() * 450;
+            const minA = Math.random() * Math.PI * 2;
+            ghost.pts.push({
+                x: Math.cos(minA) * minR2,
+                y: Math.sin(minA) * minR2,
+                isDistractor: true
+            });
+            ptAngles.push(Math.random() * Math.PI * 2);
+        }
+
         // Create Points — store mesh references for animation
         gs.starMeshes = [];
         ghost.pts.forEach((pt, pi) => {
             const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
-            const beamType = 0.0; // 'blade' (0.0) matches the user's signature prismatic language (long glowing crossing lines)
+            const beamType = pt.isDistractor ? 3.0 : 0.0; // 3.0 = dot, 0.0 = blade
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
@@ -3152,8 +3165,10 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            mesh.scale.set(1.0, 1.0, 1); // smaller base size
-            mesh.position.set(pt.x, pt.y, 0);
+            const baseScale = pt.isDistractor ? (3.0 + Math.random() * 6.0) : (7.0 + Math.random() * 10.0);
+            mesh.userData.baseScale = baseScale;
+            mesh.scale.set(baseScale, baseScale, 1.0);
+            mesh.position.set(pt.x, pt.y, pt.isDistractor ? -20 : 0);
             gs.starMeshes.push(mesh);
             gs.group.add(mesh);
         });
@@ -3262,10 +3277,15 @@ function initConstellationSystem(userVision) {
             
             // As you zoom in, they reach full 1.0 color intensity
             const zoomInFactor = smoothstep(0.3, 0.9, cam.scale); 
-            const intensity = lerp(ageIntensity, 1.0, zoomInFactor);
+            const intensity = window.isScreensaverMode ? 1.0 : lerp(ageIntensity, 1.0, zoomInFactor);
             
             // Overall target alpha
-            let targetAlpha = onScreen ? (exploreFade * intensity) : 0;
+            let targetAlpha = 0;
+            if (window.isScreensaverMode) {
+                targetAlpha = intensity; // Always visible in screensaver
+            } else if (onScreen) {
+                targetAlpha = exploreFade * intensity;
+            }
             
             // Apply restrictions
             if (!timeMet) targetAlpha = Math.max(0, targetAlpha);
@@ -3343,11 +3363,14 @@ function initConstellationSystem(userVision) {
                 let targetScale = 1.2 * compensation; // 1.2 base scale for ghosts
                 
                 // Keep them reasonably bounded
-                const maxAllowedChildScale = 2.0 / Math.max(0.01, cam.scale);
-                targetScale = Math.min(targetScale, maxAllowedChildScale);
+                const maxAllowedChildScale = 25.0 / Math.max(0.01, cam.scale);
                 
                 gs.group.children.forEach(child => {
-                    if (child.isMesh) child.scale.set(targetScale, targetScale, 1);
+                    if (child.isMesh && child.userData.baseScale) {
+                        let targetScale = child.userData.baseScale * compensation;
+                        targetScale = Math.min(targetScale, maxAllowedChildScale);
+                        child.scale.set(targetScale, targetScale, 1);
+                    }
                 });
             }
             // Match ghost brightness exactly to user constellation
@@ -4875,9 +4898,13 @@ async function buildSignalField() {
             skyPoints.push(minorR);
         }
     } else {
-        // Arrange lobes in distinct angular sectors so color clusters are spatially separated
-        for (let lobe = 0; lobe < numLobes; lobe++) {
-        // Spread lobes evenly around the full circle so clusters don't overlap
+        if (window.isScreensaverMode) {
+            // In screensaver mode, skip building the fallback constellation.
+            // We just want to see the background scattered constellations!
+        } else {
+            // Arrange lobes in distinct angular sectors so color clusters are spatially separated
+            for (let lobe = 0; lobe < numLobes; lobe++) {
+            // Spread lobes evenly around the full circle so clusters don't overlap
         const sectorAngle = (Math.PI * 2 / numLobes) * lobe + rand() * 0.3;
         const radius = 80 + rand() * 220; 
         const clusterX = Math.cos(sectorAngle) * radius;
@@ -7349,6 +7376,7 @@ if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
     // Mock the answers and visual params so initSky doesn't crash
     answers = {};
     window.vp = buildVisualParams();
+    window.skyRevealState = 'revealed';
     
     // Launch Sky
     initSky();
@@ -7358,6 +7386,7 @@ if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
         cam.targetScale = 0.08;
         cam.targetX = 0;
         cam.targetY = 0;
+        window.skyRevealState = 'revealed';
     }, 100);
     
     // Exit screensaver on any interaction
@@ -7468,23 +7497,25 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         const card = document.createElement('div');
+        card.dir = 'rtl';
         card.style.cssText = `
-            background: rgba(4, 4, 10, 0.93);
-            backdrop-filter: blur(16px) saturate(1.3);
-            -webkit-backdrop-filter: blur(16px) saturate(1.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
             padding: 2.2rem 2.4rem 2rem;
             text-align: center;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             transform: scale(0.9);
             transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
             max-width: 380px;
             direction: rtl;
-            color: rgba(200, 200, 215, 0.9);
+            color: #eee;
         `;
 
         const question = document.createElement('h2');
+        question.dir = 'rtl';
         question.style.cssText = `
             font-family: 'Hadassah', serif;
             font-weight: 300;
