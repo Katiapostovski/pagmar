@@ -4993,8 +4993,8 @@ async function buildSignalField() {
         }
     }
 
-    // ── BACKGROUND CONSTELLATIONS (Always generated unless screensaver skips fallback) ──
-    if (!window.isScreensaverMode) {
+    // ── BACKGROUND CONSTELLATIONS (Only if NO user shape is drawn!) ──
+    if (!isQDriven && !window.isScreensaverMode) {
         // Arrange lobes in distinct angular sectors so color clusters are spatially separated
         for (let lobe = 0; lobe < numLobes; lobe++) {
             // Spread lobes evenly around the full circle so clusters don't overlap
@@ -5130,7 +5130,7 @@ async function buildSignalField() {
     // dot-type (3.0) = soft point light, not 6-ray star or beam line
     // Spread across huge radius so they appear everywhere during exploration
     {
-        const STAR_COUNT    = 1800;   // denser starfield for richer night sky
+        const STAR_COUNT    = 1000;   // less dense starfield so it's not overwhelming
         const FIELD_RADIUS  = 20000;  // covers entire sky including ghost constellation zone (5000-16000)
         const CENTER_CLEAR  = 100;    // keep user constellation zone clear
 
@@ -5142,9 +5142,9 @@ async function buildSignalField() {
             const sfZ  = (rand() - 0.5) * 800;
             // ~20% are brighter accent stars
             const bright      = rand() < 0.22;
-            const sfScale     = bright ? (0.12 + rand() * 0.10) : (0.06 + rand() * 0.08);
-            const sfOpacity   = bright ? (0.25 + rand() * 0.15) : (0.10 + rand() * 0.15);
-            const sfGlow      = bright ? (0.20 + rand() * 0.20) : (0.05 + rand() * 0.10);
+            const sfScale     = bright ? (0.09 + rand() * 0.08) : (0.05 + rand() * 0.06);
+            const sfOpacity   = bright ? (0.15 + rand() * 0.10) : (0.05 + rand() * 0.08);
+            const sfGlow      = bright ? (0.10 + rand() * 0.15) : (0.03 + rand() * 0.08);
             skyPoints.push({
                 x: sfX, y: sfY, z: sfZ,
                 originalX: sfX, originalY: sfY, originalZ: sfZ,
@@ -5250,6 +5250,9 @@ async function buildSignalField() {
         if (pt.theme === 'Pareidolia' && !pt.isMajor) {
             continue; // Skip line drawing for dense minor dots
         }
+        if (pt.theme === 'Starfield') {
+            continue; // Skip line drawing for background starfield
+        }
         
         // Find nearest neighbors based on TARGET ASSEMBLED position, not random star position
         let candidates = [];
@@ -5258,6 +5261,7 @@ async function buildSignalField() {
             
             // Don't connect to minor pareidolia dots either
             if (otherPt.theme === 'Pareidolia' && !otherPt.isMajor) continue;
+            if (otherPt.theme === 'Starfield') continue;
             
             // Must use originalX/Y so the mesh looks structured
             const d = Math.hypot(pt.originalX - otherPt.originalX, pt.originalY - otherPt.originalY);
