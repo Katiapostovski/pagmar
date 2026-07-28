@@ -7376,7 +7376,7 @@ if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
     
     // Mock the answers and visual params so initSky doesn't crash
     answers = {};
-    window.vp = buildVisualParams();
+    buildVisualParams();
     window.skyRevealState = 'revealed';
     
     // Launch Sky
