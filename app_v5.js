@@ -3523,8 +3523,15 @@ function initConstellationSystem(userVision) {
                     'pointer-events: none',
                     'z-index: 11',
                     'transform: translate(-50%, 20px)',
-                    'transition: opacity 1.2s ease',
-                    'direction: rtl'
+                    'transition: opacity 1.2s ease, transform 0.8s ease',
+                    'direction: rtl',
+                    'background: rgba(4, 4, 10, 0.7)',
+                    'padding: 24px',
+                    'border: 1px solid rgba(255,255,255,0.15)',
+                    'border-radius: 16px',
+                    'backdrop-filter: blur(20px) saturate(1.2)',
+                    '-webkit-backdrop-filter: blur(20px) saturate(1.2)',
+                    'box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4)'
                 ].join(';');
                 skyScreen.appendChild(gs.infoEl);
             }
