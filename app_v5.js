@@ -3199,7 +3199,8 @@ function initConstellationSystem(userVision) {
         gs.starMeshes = [];
         ghost.pts.forEach((pt, pi) => {
             const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
-            const beamType = pt.isDistractor ? 3.0 : 0.0; // 3.0 = dot, 0.0 = blade
+            // Use one main prism for the ghost anchor (pi===0), and soft dots for the rest to prevent massive glare
+            const beamType = pt.isDistractor ? 3.0 : (pi === 0 ? 0.0 : 3.0);
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
@@ -5328,9 +5329,9 @@ async function buildSignalField() {
         if (pt.elementType === 'shard')   typeVal = 2.0; // X-cut shard
         
         // PERFORMANCE & VISUAL FIX: If a point is not a major anchor, DO NOT let it use the massive blade shader.
-        // 150 minor blades overlapping causes GPU lag and blinding white glare. Downgrade to crystal.
+        // 150 minor blades overlapping causes GPU lag and blinding white glare. Downgrade to dot.
         if (!pt.isMajor && typeVal === 0.0) {
-            typeVal = 1.0; 
+            typeVal = 3.0; // Changed to DOT to completely eliminate prisms in the background
         }
 
         const ptColor = new THREE.Color().setHSL(pt.hue / 360, pt.theme === 'Unresolved' ? 0.4 : 1.0, 0.65);
