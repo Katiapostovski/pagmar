@@ -3237,38 +3237,35 @@ function initConstellationSystem(userVision) {
             const gs = ghostState[gi];
 
             // Distance from camera center to ghost center (world space)
-            const camDist = Math.hypot(cam.x - ghost.offset.x, cam.y - ghost.offset.y);
-            // Proximity: close = 1.0, far = 0.0. Start revealing at 4000 units.
-            const proximity = smoothstep(4000, 1000, camDist);
-            
-            // ── Screen-based reveal when zoomed out ─────────────────────
             const screenX = (ghost.offset.x - cam.x) * cam.scale;
             const screenY = (ghost.offset.y - cam.y) * cam.scale;
-            const halfW = window.innerWidth * 0.55;
-            const halfH = window.innerHeight * 0.55;
+            const halfW = window.innerWidth * 0.7; // slight overscan
+            const halfH = window.innerHeight * 0.7;
             const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
             
-            // Scatter factor: make them fade in gradually and pseudo-randomly
-            const randomDelay = (Math.sin(gi * 12.9898) * 43758.5453) % 1; 
-            const randPositive = Math.abs(randomDelay); // 0.0 to 1.0
-            
-            // Start appearing as the user title disappears (cam.scale ~ 0.45)
-            // Some appear immediately at 0.45, others wait until 0.25
-            const appearStart = 0.45 - (randPositive * 0.20); 
-            // Fully revealed 0.15 further zoomed out
+            // Random delay for initial appearance
+            const randomDelay = Math.abs((Math.sin(gi * 12.9898) * 43758.5453) % 1); 
+            const appearStart = 0.45 - (randomDelay * 0.15); 
             const appearEnd = appearStart - 0.15;
             
-            const zoomOutReveal = onScreen ? smoothstep(appearStart, appearEnd, cam.scale) : 0;
+            // Visible if zoomed out enough
+            const zoomOutReveal = smoothstep(appearStart, appearEnd, cam.scale);
+            
+            // Visible if panned away from the main constellation (which is at 0,0)
+            const distFromCenter = Math.hypot(cam.x, cam.y);
+            const panReveal = smoothstep(200, 800, distFromCenter);
+            
+            const exploreFade = Math.max(zoomOutReveal, panReveal);
             
             // Age factor: older (low gi) = weaker glow, newer (high gi) = brighter glow
             const ageIntensity = 0.15 + (gi / ghostDefs.length) * 0.85; // 0.15 to 1.0
             
-            // As you zoom in (proximity), they reach full 1.0 color intensity
-            // Far away, they are limited by ageIntensity
-            const intensity = lerp(ageIntensity, 1.0, proximity);
+            // As you zoom in, they reach full 1.0 color intensity
+            const zoomInFactor = smoothstep(0.3, 0.9, cam.scale); 
+            const intensity = lerp(ageIntensity, 1.0, zoomInFactor);
             
             // Overall target alpha
-            let targetAlpha = Math.max(zoomOutReveal, proximity) * intensity;
+            let targetAlpha = onScreen ? (exploreFade * intensity) : 0;
             
             // Apply restrictions
             if (!timeMet) targetAlpha = Math.max(0, targetAlpha);
