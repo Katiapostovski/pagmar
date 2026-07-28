@@ -3290,8 +3290,18 @@ function initConstellationSystem(userVision) {
 
             // Update WebGL uniforms and position
             if (gs.group) {
-                // Ghost stays at its FIXED world position (no orbital movement)
-                const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
+                // Apply global organic 3D rotation to ghost offsets so they sync with the main constellation's parallax
+                const cosY = Math.cos(globalRotY);
+                const sinY = Math.sin(globalRotY);
+                const cosX = Math.cos(globalRotX);
+                const sinX = Math.sin(globalRotX);
+                
+                // Rotate offset around origin
+                let rx = ghost.offset.x * cosY;
+                let rz = ghost.offset.x * sinY;
+                let ry = ghost.offset.y * cosX - rz * sinX;
+                
+                const rp = { x: rx, y: ry, z: 0 };
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
 
@@ -3348,13 +3358,15 @@ function initConstellationSystem(userVision) {
                 }
 
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
-                // Ghosts shrink slightly when zoomed out so they look like distant constellations
-                const BASE_STAR_PX = 200 * 1.4;
+                // Ensure ghost sizes match the main constellation logic.
+                // Since gs.group.scale is already cam.scale, child scale only needs to be the base scale * compensation.
+                const BASE_STAR_PX = 450;
                 const MIN_STAR_PX  = 80;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 2.5 * compensation; // Very large scale, blades drop off quickly so they need size
-                // CLAMP: Ensure ghost beams NEVER exceed the max screen scale (2.0) of the user constellation
-                const maxAllowedChildScale = 4.0 / Math.max(0.01, cam.scale);
+                let targetScale = 1.2 * compensation; // 1.2 base scale for ghosts
+                
+                // Keep them reasonably bounded
+                const maxAllowedChildScale = 2.0 / Math.max(0.01, cam.scale);
                 targetScale = Math.min(targetScale, maxAllowedChildScale);
                 
                 gs.group.children.forEach(child => {
@@ -3397,10 +3409,6 @@ function initConstellationSystem(userVision) {
                 gs.labelEl.addEventListener('click', (e) => {
                     e.stopPropagation();
                     // Center camera on visual centroid of this constellation's stars
-                    const cx = ghost.pts.reduce((s, p) => s + p.x, 0) / ghost.pts.length;
-                    const cy = ghost.pts.reduce((s, p) => s + p.y, 0) / ghost.pts.length;
-                    targetCam.x = ghost.offset.x + cx;
-                    targetCam.y = ghost.offset.y - cy;
                     targetCam.scale = 1.5;
                     // Reset rotation so constellation faces the viewer
                     if (gs.selfRotY !== undefined) gs.selfRotY = 0;
@@ -5716,9 +5724,28 @@ function skyLoop(ts) {
         globalRotX = lerp(globalRotX, targetGlobalRotX, 0.05);
         globalRotY = lerp(globalRotY, targetGlobalRotY, 0.05);
         
-        // Do NOT auto-pull back to center — let the user wander freely in the galaxy.
-        // (Removed: targetCam.x lerp to 0, targetCam.y lerp to 0)
-        // No auto-zoom-out — user controls zoom freely.
+        // Track the focused ghost constellation if one is clicked
+        if (window._focusedGhostIndex !== undefined && window.ghostDefs && window.ghostDefs[window._focusedGhostIndex]) {
+            const ghost = window.ghostDefs[window._focusedGhostIndex];
+            const cosY = Math.cos(globalRotY);
+            const sinY = Math.sin(globalRotY);
+            const cosX = Math.cos(globalRotX);
+            const sinX = Math.sin(globalRotX);
+            
+            // Centroid (cached from click if needed, or recompute approx)
+            const cx = ghost.pts.reduce((s, p) => s + p.x, 0) / ghost.pts.length;
+            const cy = ghost.pts.reduce((s, p) => s + p.y, 0) / ghost.pts.length;
+            
+            let ox = ghost.offset.x + cx;
+            let oy = ghost.offset.y - cy;
+            
+            let rx = ox * cosY;
+            let rz = ox * sinY;
+            let ry = oy * cosX - rz * sinX;
+            
+            targetCam.x = rx;
+            targetCam.y = ry;
+        }
     } else {
         // Auto camera drift if not dragging (original behavior)
         if (!isDragging && !window.cameraWanderPath) {
@@ -6776,11 +6803,15 @@ function showPareidoliaPrompt() {
         window._dwellLastMove = performance.now();
         const zf = e.deltaY < 0 ? 1.022 : 0.978; // Smooth, controllable zoom
         const newScale = clamp(targetCam.scale * zf, 0.18, 12.0);
-        const mwx = (e.clientX - W * 0.5) / cam.scale + cam.x;
-        const mwy = (e.clientY - H * 0.5) / cam.scale + cam.y;
-        targetCam.x = mwx - (e.clientX - W * 0.5) / newScale;
-        targetCam.y = mwy - (e.clientY - H * 0.5) / newScale;
-        targetCam.scale = newScale;
+        
+        if (newScale !== targetCam.scale) {
+            // Use targetCam to calculate world position to avoid jumpy panning during fast scrolls
+            const mwx = (e.clientX - W * 0.5) / targetCam.scale + targetCam.x;
+            const mwy = (e.clientY - H * 0.5) / targetCam.scale + targetCam.y;
+            targetCam.x = mwx - (e.clientX - W * 0.5) / newScale;
+            targetCam.y = mwy - (e.clientY - H * 0.5) / newScale;
+            targetCam.scale = newScale;
+        }
     }, { passive: false });
 
     // Reset dwell timer on pointer/mouse move
