@@ -36,7 +36,6 @@ app_v5_test.js
 # ── Duplicate Three.js copies ────────────────
 # (only three_direct.js is referenced in index.html)
 three.min.js
-three_global.js
 three_r128.js
 three_r128_backup.js
 
