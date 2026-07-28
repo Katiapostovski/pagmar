@@ -610,7 +610,7 @@ const UI_TEXTS = {
         pareidoliaOpts: ['חיה', 'בית', 'צמח', 'כנף', 'מסלול', 'דמות', 'כלי', 'משהו אחר']
     },
     en: {
-        title: 'The stars don\'t know you',
+        title: 'How the stars align for you',
         subtitle: '',
         tagline: '',
         startBtn: 'Enter',
