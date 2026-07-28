@@ -849,6 +849,7 @@ let lastMouse = { x: 0, y: 0 };
 let skyPoints = [];
 let majorPoints = [];
 let skyRunning = false;
+let skyLoopId = null;
 let lastTS = 0;
 let skyIntroTime = 0;
 let lastCamX = null;
@@ -4685,6 +4686,11 @@ function initDiscoverySystem() {
 }
 
 async function initSky() {
+    if (skyLoopId) {
+        cancelAnimationFrame(skyLoopId);
+        skyLoopId = null;
+    }
+    
     showScreen('screen-sky');
     
     // Initialize globalMouse to screen center so mouse reveal works immediately even before move
@@ -4692,8 +4698,14 @@ async function initSky() {
 
     // Remove the 2D canvas from DOM if it exists and replace with Three.js
     const oldCanvas = document.getElementById('sky-canvas');
-    const container = oldCanvas ? oldCanvas.parentElement : document.getElementById('screen-sky');
-    if (oldCanvas) oldCanvas.remove();
+    if (oldCanvas) {
+        if (typeof renderer !== 'undefined' && renderer) {
+            renderer.dispose();
+        }
+        oldCanvas.remove();
+    }
+
+    const container = document.getElementById('screen-sky');
 
     W = window.innerWidth;
     H = window.innerHeight;
@@ -4742,7 +4754,7 @@ async function initSky() {
     // DISCOVERY SYSTEM — aurora, glimmers, breadcrumbs, secrets, position text
     initDiscoverySystem();
 
-    requestAnimationFrame(skyLoop);
+    skyLoopId = requestAnimationFrame(skyLoop);
 
     // Resume AudioContext (Chrome requires user gesture)
     const resumeAudio = () => {
@@ -5785,7 +5797,7 @@ async function buildSignalField() {
 // ======================================================
 function skyLoop(ts) {
     if (!skyRunning) return;
-    requestAnimationFrame(skyLoop);
+    skyLoopId = requestAnimationFrame(skyLoop);
     
     // Fix: ts is undefined on the manual first call, preventing NaN cascade
     const now = performance.now();
