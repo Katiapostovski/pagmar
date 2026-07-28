@@ -7653,9 +7653,9 @@ document.addEventListener('DOMContentLoaded', () => {
             dismissPrompt();
         });
 
-        // Start the 5-second countdown → start screensaver mode
+        // Start the 5-second countdown → return to main page
         promptTimer = setTimeout(() => {
-            // Fade to black then start screensaver
+            // Fade to black then reload to initial state
             if (promptOverlay) {
                 promptOverlay.style.transition = 'opacity 1s ease';
                 promptOverlay.style.opacity = '0';
@@ -7663,8 +7663,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 promptOverlay.style.opacity = '1';
             }
             setTimeout(() => {
-                sessionStorage.setItem('pagmar_screensaver', 'true');
-                window.location.reload();
+                sessionStorage.removeItem('pagmar_screensaver');
+                window.location.href = window.location.pathname;
             }, 1200);
         }, PROMPT_TIMEOUT_MS);
     }
