@@ -4857,30 +4857,54 @@ async function buildSignalField() {
         
         // shapeCoords is now an array of [x, y] coordinates sampled from a canvas
         // There could be 500-2000 points.
+        // ── PERFORMANCE: SUBSAMPLE TO AVOID THOUSANDS OF MESHES ──
+        const MAX_POINTS = 150;
+        let finalShapeCoords = [];
+        let isQDriven = !!(window._qDrawingPoints && window._qDrawingPoints === shapeCoords);
         
+        if (isQDriven && shapeCoords.length > MAX_POINTS) {
+            const vertices = [];
+            const pathPts = [];
+            shapeCoords.forEach((c, i) => {
+                if (c.length === 3 && c[2] === 1) vertices.push({c, i});
+                else pathPts.push({c, i});
+            });
+            const neededPathPts = Math.max(0, MAX_POINTS - vertices.length);
+            const step = Math.max(1, Math.floor(pathPts.length / neededPathPts));
+            const sampledPathPts = pathPts.filter((_, idx) => idx % step === 0).slice(0, neededPathPts);
+            
+            // Recombine and sort back to original order
+            const combined = [...vertices, ...sampledPathPts].sort((a,b) => a.i - b.i);
+            
+            // Re-map and update vertex indices
+            window._qVertexIndices = new Set();
+            combined.forEach((item, newIdx) => {
+                if (item.c.length === 3 && item.c[2] === 1) window._qVertexIndices.add(newIdx);
+                finalShapeCoords.push(item.c);
+            });
+        } else {
+            finalShapeCoords = shapeCoords;
+        }
+
         // We need exactly 8 major points for the text labels.
-        // When using questionnaire drawing, spread them evenly. Otherwise, random pick.
-        const isQDriven = !!(window._qDrawingPoints && window._qDrawingPoints === shapeCoords);
         const majorIndices = new Set();
         if (isQDriven && window._qVertexIndices && window._qVertexIndices.size >= 3) {
-            // Use actual questionnaire vertex dots as major (labeled) stars
             window._qVertexIndices.forEach(idx => {
                 if (majorIndices.size < 8) majorIndices.add(idx);
             });
-            // Fill remaining slots evenly if fewer than 8 vertices
-            const step = Math.max(1, Math.floor(shapeCoords.length / (8 - majorIndices.size + 1)));
-            for (let si = 0; majorIndices.size < 8 && si < shapeCoords.length; si += step) {
+            const step = Math.max(1, Math.floor(finalShapeCoords.length / (8 - majorIndices.size + 1)));
+            for (let si = 0; majorIndices.size < 8 && si < finalShapeCoords.length; si += step) {
                 majorIndices.add(si);
             }
         } else {
-            while (majorIndices.size < 8 && majorIndices.size < shapeCoords.length) {
-                majorIndices.add(Math.floor(rand() * shapeCoords.length));
+            while (majorIndices.size < 8 && majorIndices.size < finalShapeCoords.length) {
+                majorIndices.add(Math.floor(rand() * finalShapeCoords.length));
             }
         }
         
         let majorIdx = 0;
         
-        shapeCoords.forEach((coord, i) => {
+        finalShapeCoords.forEach((coord, i) => {
             // Questionnaire-driven: coord[2] holds isVertex flag (1=vertex, 0=path point)
             // Use vertex = large labeled star, path points = clearly visible medium stars
             const isQCoord = Array.isArray(coord) && coord.length === 3;
@@ -4968,13 +4992,12 @@ async function buildSignalField() {
             };
             skyPoints.push(minorR);
         }
-    } else {
-        if (window.isScreensaverMode) {
-            // In screensaver mode, skip building the fallback constellation.
-            // We just want to see the background scattered constellations!
-        } else {
-            // Arrange lobes in distinct angular sectors so color clusters are spatially separated
-            for (let lobe = 0; lobe < numLobes; lobe++) {
+    }
+
+    // ── BACKGROUND CONSTELLATIONS (Always generated unless screensaver skips fallback) ──
+    if (!window.isScreensaverMode) {
+        // Arrange lobes in distinct angular sectors so color clusters are spatially separated
+        for (let lobe = 0; lobe < numLobes; lobe++) {
             // Spread lobes evenly around the full circle so clusters don't overlap
         const sectorAngle = (Math.PI * 2 / numLobes) * lobe + rand() * 0.3;
         const radius = 80 + rand() * 220; 
@@ -5102,8 +5125,6 @@ async function buildSignalField() {
         }
         
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
-        } // end else (screensaver mode)
-    } // end else (bilateral shape fallback)
 
     // ── STARFIELD — tiny prismatic points filling the ENTIRE sky ──
     // dot-type (3.0) = soft point light, not 6-ray star or beam line
@@ -5121,9 +5142,9 @@ async function buildSignalField() {
             const sfZ  = (rand() - 0.5) * 800;
             // ~20% are brighter accent stars
             const bright      = rand() < 0.22;
-            const sfScale     = bright ? (0.18 + rand() * 0.14) : (0.10 + rand() * 0.12);
-            const sfOpacity   = bright ? (0.45 + rand() * 0.30) : (0.18 + rand() * 0.22);
-            const sfGlow      = bright ? (0.45 + rand() * 0.35) : (0.15 + rand() * 0.25);
+            const sfScale     = bright ? (0.12 + rand() * 0.10) : (0.06 + rand() * 0.08);
+            const sfOpacity   = bright ? (0.25 + rand() * 0.15) : (0.10 + rand() * 0.15);
+            const sfGlow      = bright ? (0.20 + rand() * 0.20) : (0.05 + rand() * 0.10);
             skyPoints.push({
                 x: sfX, y: sfY, z: sfZ,
                 originalX: sfX, originalY: sfY, originalZ: sfZ,
