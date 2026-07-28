@@ -5247,7 +5247,7 @@ async function buildSignalField() {
         pt.neighborPts = [];
         
         // Pointillism shapes should NOT draw a tangled web between their dense minor stars
-        if (pt.theme === 'Pareidolia' && !pt.isMajor) {
+        if (pt.theme === 'Pareidolia' && !pt.isMajor && !pt.isQPathStar) {
             continue; // Skip line drawing for dense minor dots
         }
         if (pt.theme === 'Starfield') {
@@ -5260,7 +5260,7 @@ async function buildSignalField() {
             const otherPt = skyPoints[j];
             
             // Don't connect to minor pareidolia dots either
-            if (otherPt.theme === 'Pareidolia' && !otherPt.isMajor) continue;
+            if (otherPt.theme === 'Pareidolia' && !otherPt.isMajor && !otherPt.isQPathStar) continue;
             if (otherPt.theme === 'Starfield') continue;
             
             // Must use originalX/Y so the mesh looks structured
