@@ -2,15 +2,7 @@
    PAGMAR — שמיים שנפתחים  |  build: v0728fix15
    Progressive Signal Field Reveal Engine
    ===================================================== */
-// VERSION CHECK — visible red banner confirms this code loaded
-window.PAGMAR_VERSION = 'v0728fix17';
-window.addEventListener('DOMContentLoaded', () => {
-    const vb = document.createElement('div');
-    vb.style.cssText = 'position:fixed;bottom:4px;left:4px;z-index:99999;background:rgba(200,0,0,0.9);color:#fff;padding:3px 8px;font:bold 10px monospace;border-radius:3px;pointer-events:none;';
-    vb.textContent = window.PAGMAR_VERSION;
-    document.body.appendChild(vb);
-    setTimeout(() => { if (vb.parentNode) vb.remove(); }, 60000);
-});
+
 
 // ======================================================
 // GEMINI API — מנוע פרשנות אישי חכם
@@ -3822,12 +3814,7 @@ function renderQ() {
 
         // Wait for questionnaire to fully fade, then fade in the sky (smooth reveal)
         setTimeout(() => {
-            // DEBUG: mark that we're about to call initSky
-            const _preDbg = document.createElement('div');
-            _preDbg.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99999;background:rgba(255,200,0,0.95);color:#000;font:bold 13px monospace;padding:10px 14px;border-radius:8px;pointer-events:none;';
-            _preDbg.textContent = '→ renderQ calling initSky...';
-            document.body.appendChild(_preDbg);
-            setTimeout(() => { if (_preDbg.parentNode) _preDbg.remove(); }, 60000);
+
 
             const skyScreen = document.getElementById('screen-sky');
             skyScreen.style.transition = 'opacity 3.0s ease-in'; // Set BEFORE active class is added
@@ -4699,15 +4686,6 @@ function initDiscoverySystem() {
 }
 
 async function initSky() {
-    // ABSOLUTE FIRST LINE: create debug overlay so we know initSky was called
-    const _dbg = document.createElement('div');
-    _dbg.id = 'pagmar-debug-overlay';
-    _dbg.style.cssText = 'position:fixed;top:10px;left:10px;z-index:99999;background:rgba(0,180,0,0.95);color:#000;font:bold 13px monospace;padding:12px 16px;border-radius:8px;max-width:90vw;pointer-events:none;white-space:pre-wrap;';
-    _dbg.textContent = '✓ initSky ENTERED\nskyRevealState: ' + window.skyRevealState;
-    document.body.appendChild(_dbg);
-
-  try {
-    console.log('[PAGMAR DEBUG] initSky() called. skyRevealState:', window.skyRevealState);
     showScreen('screen-sky');
     
     // Initialize globalMouse to screen center so mouse reveal works immediately even before move
@@ -4736,27 +4714,7 @@ async function initSky() {
     cam.x = vp.camStartX; cam.y = vp.camStartY; cam.scale = vp.startScale;
     targetCam.x = vp.camStartX; targetCam.y = vp.camStartY; targetCam.scale = vp.startScale;
 
-    _dbg.textContent += '\n→ About to call buildSignalField...';
-
-    try {
-        await buildSignalField();
-        const srcSvg = document.getElementById('q-svg');
-        const dstSvg = document.getElementById('sky-lineart-svg');
-        const overlay = document.getElementById('recognition-overlay');
-        _dbg.textContent = '✓ buildSignalField DONE\n' +
-            'skyRevealState: ' + window.skyRevealState + '\n' +
-            'skyPoints: ' + (typeof skyPoints !== 'undefined' ? skyPoints.length : 'undef') + '\n' +
-            'q-svg lines: ' + (srcSvg ? srcSvg.querySelectorAll('line').length : -1) + '\n' +
-            'sky-lineart children: ' + (dstSvg ? dstSvg.children.length : -1) + '\n' +
-            'recog display: ' + (overlay ? overlay.style.display : 'null') + '\n' +
-            '_qDrawingPoints: ' + (window._qDrawingPoints ? window._qDrawingPoints.length : 'null');
-        _dbg.style.background = 'rgba(0,180,0,0.95)';
-    } catch(e) {
-        console.error('[PAGMAR DEBUG] buildSignalField error:', e);
-        _dbg.textContent = '✗ buildSignalField CRASHED\n' + e.message + '\n' + (e.stack || '').slice(0, 300);
-        _dbg.style.background = 'rgba(220,0,0,0.95)';
-        _dbg.style.color = '#fff';
-    }
+    await buildSignalField();
 
     initCameraEvents();
     // Show constellation title immediately with the image
@@ -4799,13 +4757,6 @@ async function initSky() {
     document.addEventListener('mousemove', resumeAudio, { once: true });
     document.addEventListener('click', resumeAudio, { once: true });
 
-  } catch(outerErr) {
-    _dbg.textContent = '✗ initSky CRASHED\n' + outerErr.message + '\n' + (outerErr.stack || '').slice(0, 400);
-    _dbg.style.background = 'rgba(220,0,0,0.95)';
-    _dbg.style.color = '#fff';
-  }
-    // Auto-hide after 120 seconds
-    setTimeout(() => { if (_dbg.parentNode) _dbg.remove(); }, 120000);
 }
 
 
