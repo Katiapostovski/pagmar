@@ -4682,7 +4682,7 @@ function initDiscoverySystem() {
     };
 }
 
-function initSky() {
+async function initSky() {
     console.log('[PAGMAR DEBUG] initSky() called. skyRevealState:', window.skyRevealState);
     showScreen('screen-sky');
     
@@ -4712,7 +4712,11 @@ function initSky() {
     cam.x = vp.camStartX; cam.y = vp.camStartY; cam.scale = vp.startScale;
     targetCam.x = vp.camStartX; targetCam.y = vp.camStartY; targetCam.scale = vp.startScale;
 
-    buildSignalField();
+    try {
+        await buildSignalField();
+    } catch(e) {
+        console.error('[PAGMAR DEBUG] buildSignalField error:', e);
+    }
 
     initCameraEvents();
     // Show constellation title immediately with the image
@@ -5359,35 +5363,70 @@ async function buildSignalField() {
         if (srcSvg && dstSvg) {
             dstSvg.innerHTML = '';
             const lines = srcSvg.querySelectorAll('line, path');
-            console.log('[PAGMAR DEBUG] Total lines+paths found:', lines.length);
-            if (lines.length > 0) {
-                const rawPts = [], rawSegs = [];
-                // We now use paths (curves) instead of straight lines in the questionnaire
-                const paths = Array.from(srcSvg.querySelectorAll('path'));
-                paths.forEach(p => {
-                    const d = p.getAttribute('d');
-                    // Format: M x1 y1 Q cx cy x2 y2
-                    const match = d.match(/M\s+([-\d.]+)\s+([-\d.]+)\s+Q\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)\s+([-\d.]+)/);
-                    if (match) {
-                        const x1 = parseFloat(match[1]);
-                        const y1 = parseFloat(match[2]);
-                        const x2 = parseFloat(match[3]);
-                        const y2 = parseFloat(match[4]);
-                        rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
-                        rawSegs.push({x1, y1, x2, y2});
-                    }
-                });
-                
-                // Fallback for lines just in case
-                const svgLines = Array.from(srcSvg.querySelectorAll('line'));
-                svgLines.forEach(line => {
-                    const x1 = parseFloat(line.getAttribute('x1'));
-                    const y1 = parseFloat(line.getAttribute('y1'));
-                    const x2 = parseFloat(line.getAttribute('x2'));
-                    const y2 = parseFloat(line.getAttribute('y2'));
+            const circles = srcSvg.querySelectorAll('circle');
+            console.log('[PAGMAR DEBUG] Total lines+paths found:', lines.length, 'circles:', circles.length);
+            
+            // Collect raw points and segments from ALL SVG elements
+            const rawPts = [], rawSegs = [];
+            
+            // Paths (quadratic curves)
+            const paths = Array.from(srcSvg.querySelectorAll('path'));
+            paths.forEach(p => {
+                const d = p.getAttribute('d');
+                // Format: M x1 y1 Q cx cy x2 y2
+                const match = d.match(/M\s+([-\d.]+)\s+([-\d.]+)\s+Q\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)\s+([-\d.]+)/);
+                if (match) {
+                    const x1 = parseFloat(match[1]);
+                    const y1 = parseFloat(match[2]);
+                    const x2 = parseFloat(match[3]);
+                    const y2 = parseFloat(match[4]);
                     rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
                     rawSegs.push({x1, y1, x2, y2});
-                });
+                }
+            });
+            
+            // Straight lines
+            const svgLines = Array.from(srcSvg.querySelectorAll('line'));
+            svgLines.forEach(line => {
+                const x1 = parseFloat(line.getAttribute('x1'));
+                const y1 = parseFloat(line.getAttribute('y1'));
+                const x2 = parseFloat(line.getAttribute('x2'));
+                const y2 = parseFloat(line.getAttribute('y2'));
+                rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
+                rawSegs.push({x1, y1, x2, y2});
+            });
+            
+            // Also collect circle positions as standalone points  
+            const svgCircles = Array.from(srcSvg.querySelectorAll('circle'));
+            svgCircles.forEach(c => {
+                const cx = parseFloat(c.getAttribute('cx'));
+                const cy = parseFloat(c.getAttribute('cy'));
+                if (!isNaN(cx) && !isNaN(cy)) {
+                    // Check if this point is already in rawPts (avoid duplicates)
+                    const alreadyExists = rawPts.some(p => Math.abs(p.x - cx) < 5 && Math.abs(p.y - cy) < 5);
+                    if (!alreadyExists) {
+                        rawPts.push({x: cx, y: cy});
+                    }
+                }
+            });
+            
+            // If we have circles but no lines, create segments connecting adjacent circles
+            if (rawSegs.length === 0 && svgCircles.length >= 2) {
+                console.log('[PAGMAR DEBUG] No lines/paths but found circles, creating connecting segments');
+                for (let i = 0; i < svgCircles.length - 1; i++) {
+                    const cx1 = parseFloat(svgCircles[i].getAttribute('cx'));
+                    const cy1 = parseFloat(svgCircles[i].getAttribute('cy'));
+                    const cx2 = parseFloat(svgCircles[i+1].getAttribute('cx'));
+                    const cy2 = parseFloat(svgCircles[i+1].getAttribute('cy'));
+                    if (!isNaN(cx1) && !isNaN(cy1) && !isNaN(cx2) && !isNaN(cy2)) {
+                        rawSegs.push({x1: cx1, y1: cy1, x2: cx2, y2: cy2});
+                    }
+                }
+            }
+            
+            console.log('[PAGMAR DEBUG] After collection: rawPts:', rawPts.length, 'rawSegs:', rawSegs.length);
+            
+            if (rawPts.length > 0) {
                 let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
                 rawPts.forEach(p => { minX = Math.min(minX,p.x); maxX = Math.max(maxX,p.x); minY = Math.min(minY,p.y); maxY = Math.max(maxY,p.y); });
                 const bw = maxX - minX || 1, bh = maxY - minY || 1;
@@ -5463,6 +5502,18 @@ async function buildSignalField() {
                 });
                 
                 window.lastUserConstellation = { pts: uniquePts, lines: linesArr };
+            } else {
+                console.log('[PAGMAR DEBUG] No SVG data at all in q-svg! Showing constellation points directly.');
+                // Fallback: make the WebGL constellation points visible so user sees something
+                skyPoints.forEach(pt => {
+                    if (pt.mesh) {
+                        pt.mesh.visible = true;
+                        const u = pt.mesh.material.uniforms;
+                        u.uOpacity.value = pt.isMajor ? 0.8 : 0.5;
+                        u.uGlow.value    = pt.isMajor ? 0.3 : 0.15;
+                    }
+                });
+                if (webglLines) webglLines.visible = true;
             }
         }
         
