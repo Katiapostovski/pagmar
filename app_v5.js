@@ -3729,6 +3729,7 @@ function renderQ() {
         // Go directly to sky in recognition mode
         window.skyRevealState = 'recognition';
         window.revelationProgress = 0;
+        console.log('[PAGMAR DEBUG] Questionnaire complete! skyRevealState:', window.skyRevealState, '_qDrawingPoints:', window._qDrawingPoints ? window._qDrawingPoints.length : 'null');
         
         // Gradual Transition: Fade out questionnaire quickly so sky screen has no overlap
         const qScreen = document.getElementById('screen-questionnaire');
@@ -4682,6 +4683,7 @@ function initDiscoverySystem() {
 }
 
 function initSky() {
+    console.log('[PAGMAR DEBUG] initSky() called. skyRevealState:', window.skyRevealState);
     showScreen('screen-sky');
     
     // Initialize globalMouse to screen center so mouse reveal works immediately even before move
@@ -5316,6 +5318,7 @@ async function buildSignalField() {
     // ══════════════════════════════════════════════════════
     // RECOGNITION MODE SETUP
     // ══════════════════════════════════════════════════════
+    console.log('[PAGMAR DEBUG] buildSignalField done. skyRevealState:', window.skyRevealState, 'skyPoints:', skyPoints.length);
     if (window.skyRevealState === 'recognition') {
         // All points are placed at their assembled positions and fully visible
         // so the user can see the shape and name it.
@@ -5351,9 +5354,12 @@ async function buildSignalField() {
         // 3. Draw questionnaire SVG lines on the sky overlay
         const srcSvg = document.getElementById('q-svg');
         const dstSvg = document.getElementById('sky-lineart-svg');
+        console.log('[PAGMAR DEBUG] Recognition mode entered. srcSvg:', !!srcSvg, 'dstSvg:', !!dstSvg);
+        if (srcSvg) console.log('[PAGMAR DEBUG] q-svg children:', srcSvg.children.length, 'lines:', srcSvg.querySelectorAll('line').length, 'paths:', srcSvg.querySelectorAll('path').length, 'circles:', srcSvg.querySelectorAll('circle').length);
         if (srcSvg && dstSvg) {
             dstSvg.innerHTML = '';
             const lines = srcSvg.querySelectorAll('line, path');
+            console.log('[PAGMAR DEBUG] Total lines+paths found:', lines.length);
             if (lines.length > 0) {
                 const rawPts = [], rawSegs = [];
                 // We now use paths (curves) instead of straight lines in the questionnaire
