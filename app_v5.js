@@ -4718,6 +4718,31 @@ async function initSky() {
         console.error('[PAGMAR DEBUG] buildSignalField error:', e);
     }
 
+    // ── ON-SCREEN DEBUG: shows state info visually ──
+    (function() {
+        const dbg = document.createElement('div');
+        dbg.id = 'pagmar-debug-overlay';
+        dbg.style.cssText = 'position:fixed;top:40px;right:10px;z-index:9999;background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;padding:8px 12px;border-radius:6px;max-width:350px;pointer-events:none;';
+        const srcSvg = document.getElementById('q-svg');
+        const dstSvg = document.getElementById('sky-lineart-svg');
+        const overlay = document.getElementById('recognition-overlay');
+        const lines = srcSvg ? srcSvg.querySelectorAll('line').length : -1;
+        const paths = srcSvg ? srcSvg.querySelectorAll('path').length : -1;
+        const circles = srcSvg ? srcSvg.querySelectorAll('circle').length : -1;
+        const dstChildren = dstSvg ? dstSvg.children.length : -1;
+        dbg.innerHTML = 
+            'skyRevealState: ' + window.skyRevealState + '<br>' +
+            'skyPoints: ' + (typeof skyPoints !== 'undefined' ? skyPoints.length : 'undef') + '<br>' +
+            'q-svg lines: ' + lines + ', paths: ' + paths + ', circles: ' + circles + '<br>' +
+            'sky-lineart-svg children: ' + dstChildren + '<br>' +
+            'recog-overlay display: ' + (overlay ? overlay.style.display : 'null') + '<br>' +
+            '_qDrawingPoints: ' + (window._qDrawingPoints ? window._qDrawingPoints.length : 'null') + '<br>' +
+            'cache: v0728fix14';
+        document.body.appendChild(dbg);
+        // Auto-hide after 30 seconds
+        setTimeout(() => { if (dbg.parentNode) dbg.parentNode.removeChild(dbg); }, 30000);
+    })();
+
     initCameraEvents();
     // Show constellation title immediately with the image
     const earlyVision = answers.pareidolia || '';
