@@ -1,7 +1,16 @@
 /* =====================================================
-   PAGMAR — שמיים שנפתחים  |  build: 2026-07-27-0348
+   PAGMAR — שמיים שנפתחים  |  build: v0728fix15
    Progressive Signal Field Reveal Engine
    ===================================================== */
+// VERSION CHECK — visible red banner confirms this code loaded
+window.PAGMAR_VERSION = 'v0728fix15';
+window.addEventListener('DOMContentLoaded', () => {
+    const vb = document.createElement('div');
+    vb.style.cssText = 'position:fixed;bottom:4px;left:4px;z-index:99999;background:rgba(200,0,0,0.9);color:#fff;padding:3px 8px;font:bold 10px monospace;border-radius:3px;pointer-events:none;';
+    vb.textContent = window.PAGMAR_VERSION;
+    document.body.appendChild(vb);
+    setTimeout(() => { if (vb.parentNode) vb.remove(); }, 60000);
+});
 
 // ======================================================
 // GEMINI API — מנוע פרשנות אישי חכם
@@ -4737,7 +4746,7 @@ async function initSky() {
             'sky-lineart-svg children: ' + dstChildren + '<br>' +
             'recog-overlay display: ' + (overlay ? overlay.style.display : 'null') + '<br>' +
             '_qDrawingPoints: ' + (window._qDrawingPoints ? window._qDrawingPoints.length : 'null') + '<br>' +
-            'cache: v0728fix14';
+            'cache: v0728fix15';
         document.body.appendChild(dbg);
         // Auto-hide after 30 seconds
         setTimeout(() => { if (dbg.parentNode) dbg.parentNode.removeChild(dbg); }, 30000);

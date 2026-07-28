@@ -17,6 +17,7 @@
   for = "/*.html"
   [headers.values]
     Content-Type          = "text/html; charset=UTF-8"
+    Cache-Control         = "no-cache, no-store, must-revalidate"
 
 # Correct MIME types for font files
 [[headers]]
