@@ -4931,9 +4931,9 @@ async function buildSignalField() {
             
             // Vertex/key-corner stars use 'halo' (crystal) — tight 6-point star, no huge streaks
             const isQDrivenStar = isQCoord; // came from questionnaire drawing
-            // All Q-shape stars use the same crystal type — unified prismatic look
-            // Only background dust uses the simple dot type
-            const elType = isVertexStar ? 'halo' : (isQDrivenStar ? 'dot' : 'crystal');
+            // All Q-shape stars use the same simple DOT type — unified clean constellation!
+            // No massive prism blades shooting randomly.
+            const elType = 'dot';
 
             // Scale hierarchy: vertex are notably bigger but NOT massive
             // ALL Q-shape stars IDENTICAL size — vertex stars must NOT look like a separate shape.
@@ -4979,6 +4979,14 @@ async function buildSignalField() {
             if (isMajorPoint) {
                 majorPoints.push(pt);
                 majorIdx++;
+            }
+            
+            // EXACT TRACING: Connect lineart stars sequentially in the order drawn!
+            if (isQDrivenStar && i > 0) {
+                const prevPt = skyPoints[skyPoints.length - 2];
+                if (prevPt && (prevPt.isVertexStar || prevPt.isQPathStar)) {
+                    pt.neighborPts.push(prevPt);
+                }
             }
         });
         
@@ -5262,6 +5270,9 @@ async function buildSignalField() {
         pt.neighborPts = [];
         
         // Pointillism shapes should NOT draw a tangled web between their dense minor stars
+        if (pt.theme === 'Pareidolia' && (pt.isQPathStar || pt.isVertexStar)) {
+            continue; // Lineart points are already connected sequentially!
+        }
         if (pt.theme === 'Pareidolia' && !pt.isMajor && !pt.isQPathStar) {
             continue; // Skip line drawing for dense minor dots
         }
@@ -6156,7 +6167,8 @@ function skyLoop(ts) {
             if (opt === pt || opt.mesh.visible === false) continue;
             
             const d = Math.hypot(pt.x - opt.x, pt.y - opt.y);
-            const thresh = 250 * pt.assemblyProgress;
+            // Q-shape points connect sequentially, ignore distance threshold
+            const thresh = _isQShapePt ? 99999 : (250 * pt.assemblyProgress);
 
             if (d < thresh) {
                 // Fade line based on appearP of both connected points
