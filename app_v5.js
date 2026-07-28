@@ -4944,6 +4944,10 @@ async function buildSignalField() {
                 : (isVertexStar || isQDrivenStar)
                     ? (1.2 + rand() * 0.8)   // 1.2-2.0 - visible path
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
+
+            // Hide the extra "dot" stars that make up the path. 
+            // We want the WebGL lines to connect them, but the dots themselves shouldn't be visible.
+            const meshVisibleOverride = isQDrivenStar && !isVertexStar ? false : true;
             
             // Use personal hue but allow slight drift for a sparkling effect
             const cOffset = Math.floor(personalHue / 45);
@@ -4972,7 +4976,8 @@ async function buildSignalField() {
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 0, neighborPts: [],
                 isVertexStar: isVertexStar,           // key corner point of questionnaire shape
-                isQPathStar: isQDrivenStar && !isVertexStar // path/edge point between vertices
+                isQPathStar: isQDrivenStar && !isVertexStar, // path/edge point between vertices
+                _meshVisibleOverride: meshVisibleOverride // used later when creating mesh
             };
             
             skyPoints.push(pt);
@@ -5370,6 +5375,11 @@ async function buildSignalField() {
         const mesh = new THREE.Mesh(planeGeo, mat);
         // Rotate each star's blade to its own angle → unique prism direction per star
         mesh.rotation.z = pt.baseAngle || 0;
+        // Apply override if this point should be invisible (e.g. path points)
+        if (pt._meshVisibleOverride === false) {
+            mesh.visible = false;
+        }
+
         scene.add(mesh);
         skyMeshes.push(mesh);
         pt.mesh = mesh;
