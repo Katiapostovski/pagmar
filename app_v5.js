@@ -5572,7 +5572,7 @@ async function buildSignalField() {
                 console.log('[PAGMAR DEBUG] No SVG data at all in q-svg! Showing constellation points directly.');
                 // Fallback: make the WebGL constellation points visible so user sees something
                 skyPoints.forEach(pt => {
-                    if (pt.mesh) {
+                    if (pt.mesh && pt._meshVisibleOverride !== false) {
                         pt.mesh.visible = true;
                         const u = pt.mesh.material.uniforms;
                         u.uOpacity.value = pt.isMajor ? 0.8 : 0.5;
@@ -5713,8 +5713,12 @@ async function buildSignalField() {
                         }
                         
                         // Restore ALL mesh visibility (recognition mode hid them)
-                        if (webglLines) webglLines.visible = false; // User explicitly requested no linear image
-                        skyPoints.forEach(pt => { if (pt.mesh) pt.mesh.visible = true; });
+                        if (webglLines) webglLines.visible = true; // Lines ARE requested!
+                        skyPoints.forEach(pt => { 
+                            if (pt.mesh && pt._meshVisibleOverride !== false) {
+                                pt.mesh.visible = true; 
+                            }
+                        });
 
                         // The camera will not move or zoom here per user request, 
                         // allowing the stars to build up peacefully in their place.
@@ -6812,6 +6816,8 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.appearP !== undefined && pt.appearP < 0.01) {
             pt.mesh.visible = false;
         } else if (!pt.permanentlyRevealed && !pt.isSeed && pt.theme !== 'Starfield' && lanternSoft < 0.01) {
+            pt.mesh.visible = false;
+        } else if (pt._meshVisibleOverride === false) {
             pt.mesh.visible = false;
         } else {
             pt.mesh.visible = true;
