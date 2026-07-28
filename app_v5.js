@@ -2961,7 +2961,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -5500, y: -4500 },
+            offset: { x: -8250, y: -6750 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -2971,7 +2971,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -8200, y: 5500 },
+            offset: { x: -12300, y: 8250 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -2981,7 +2981,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 7500, y: 4800 },
+            offset: { x: 11250, y: 7200 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -2992,7 +2992,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,255,',
             textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
             textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -4800, y: 5800 },
+            offset: { x: -7200, y: 8700 },
             pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
                    {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
             lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
@@ -3002,7 +3002,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 5800, y: -5000 },
+            offset: { x: 8700, y: -7500 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3012,7 +3012,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: 8500, y: -3500 },
+            offset: { x: 12750, y: -5250 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3023,7 +3023,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: 3500, y: 6200 },
+            offset: { x: 5250, y: 9300 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
@@ -3073,7 +3073,7 @@ function initConstellationSystem(userVision) {
         saved.forEach((g, i) => {
             const seed = (i + 1) * 137.5;
             const angle = seed * (Math.PI / 180);
-            const dist = 1200 + (seed % 2800);
+            const dist = 4000 + (seed % 16000); // spread much wider (4000 to 20000)
             g.offset = {
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist
@@ -3238,50 +3238,40 @@ function initConstellationSystem(userVision) {
 
             // Distance from camera center to ghost center (world space)
             const camDist = Math.hypot(cam.x - ghost.offset.x, cam.y - ghost.offset.y);
-            const proximity = Math.max(0, 1 - camDist / GHOST_REVEAL_WORLD);
+            // Proximity: close = 1.0, far = 0.0. Start revealing at 4000 units.
+            const proximity = smoothstep(4000, 1000, camDist);
             
             // ── Screen-based reveal when zoomed out ─────────────────────
-            // When cam.scale < 0.35, ghosts that appear on screen should
-            // become visible — giving the galaxy exploration experience
             const screenX = (ghost.offset.x - cam.x) * cam.scale;
             const screenY = (ghost.offset.y - cam.y) * cam.scale;
             const halfW = window.innerWidth * 0.55;
             const halfH = window.innerHeight * 0.55;
             const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
-            // Ghost reveal: start as title disappears (cam.scale≈0.42), fully visible at cam.scale=0.20
-            if (cam.scale < 0.42) {
-                if (gs.zoomRevealStart === undefined) gs.zoomRevealStart = nowSec;
-            } else {
-                gs.zoomRevealStart = undefined;
-            }
             
-            let zoomTimeAlpha = 1.0;
-            if (gs.zoomRevealStart !== undefined) {
-                const elapsed = nowSec - gs.zoomRevealStart;
-                // Very fast stagger: wait between 0s and 1.2s
-                const delay = (gi % 7) * 0.2; 
-                zoomTimeAlpha = clamp((elapsed - delay) / 0.8, 0, 1); // fade in over 0.8 seconds
-            } else {
-                zoomTimeAlpha = 0;
-            }
+            // Scatter factor: make them fade in gradually and pseudo-randomly
+            const randomDelay = (Math.sin(gi * 12.9898) * 43758.5453) % 1; 
+            const randPositive = Math.abs(randomDelay); // 0.0 to 1.0
             
-            const screenAlpha = onScreen ? Math.max(0, 1.2 - cam.scale * 3.0) * zoomTimeAlpha : 0;
-            // Check if user has wandered far enough from the starting center (0,0) to start revealing ghosts
-            if (!window.hasWandered && Math.hypot(cam.x, cam.y) > 800) {
-                window.hasWandered = true;
-            }
+            // Start appearing as the user title disappears (cam.scale ~ 0.45)
+            // Some appear immediately at 0.45, others wait until 0.25
+            const appearStart = 0.45 - (randPositive * 0.20); 
+            // Fully revealed 0.15 further zoomed out
+            const appearEnd = appearStart - 0.15;
             
-            // Galaxy zoom-out reveal: screen-based alpha when zoomed out
-            // Screen ghosts should always show when visible (no wander needed)
-            const screenTargetAlpha = screenAlpha;
+            const zoomOutReveal = onScreen ? smoothstep(appearStart, appearEnd, cam.scale) : 0;
             
-            let targetAlpha = window.hasWandered ? (proximity * proximity * 0.75) : 0.0;
-            // Screen-based reveal is independent of hasWandered — just zoom out to see them
-            targetAlpha = Math.max(targetAlpha, screenTargetAlpha);
+            // Age factor: older (low gi) = weaker glow, newer (high gi) = brighter glow
+            const ageIntensity = 0.15 + (gi / ghostDefs.length) * 0.85; // 0.15 to 1.0
+            
+            // As you zoom in (proximity), they reach full 1.0 color intensity
+            // Far away, they are limited by ageIntensity
+            const intensity = lerp(ageIntensity, 1.0, proximity);
+            
+            // Overall target alpha
+            let targetAlpha = Math.max(zoomOutReveal, proximity) * intensity;
             
             // Apply restrictions
-            if (!timeMet) targetAlpha = Math.max(0, targetAlpha); // timeMet restriction only for pan-based
-            targetAlpha *= zoomFactor;
+            if (!timeMet) targetAlpha = Math.max(0, targetAlpha);
 
             // Smooth alpha
             gs.alpha += (targetAlpha - gs.alpha) * 0.06;
@@ -3290,18 +3280,8 @@ function initConstellationSystem(userVision) {
 
             // Update WebGL uniforms and position
             if (gs.group) {
-                // Apply global organic 3D rotation to ghost offsets so they sync with the main constellation's parallax
-                const cosY = Math.cos(globalRotY);
-                const sinY = Math.sin(globalRotY);
-                const cosX = Math.cos(globalRotX);
-                const sinX = Math.sin(globalRotX);
-                
-                // Rotate offset around origin
-                let rx = ghost.offset.x * cosY;
-                let rz = ghost.offset.x * sinY;
-                let ry = ghost.offset.y * cosX - rz * sinX;
-                
-                const rp = { x: rx, y: ry, z: 0 };
+                // Ghost stays at its FIXED world position
+                const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
 
@@ -3409,6 +3389,10 @@ function initConstellationSystem(userVision) {
                 gs.labelEl.addEventListener('click', (e) => {
                     e.stopPropagation();
                     // Center camera on visual centroid of this constellation's stars
+                    const cx = ghost.pts.reduce((s, p) => s + p.x, 0) / ghost.pts.length;
+                    const cy = ghost.pts.reduce((s, p) => s + p.y, 0) / ghost.pts.length;
+                    targetCam.x = ghost.offset.x + cx;
+                    targetCam.y = ghost.offset.y - cy;
                     targetCam.scale = 1.5;
                     // Reset rotation so constellation faces the viewer
                     if (gs.selfRotY !== undefined) gs.selfRotY = 0;
@@ -5721,31 +5705,10 @@ function skyLoop(ts) {
         ghostRotY += 0.00035; // Ghost constellations rotate independently at their own pace
         
         // Smoothly interpolate rotation
-        globalRotX = lerp(globalRotX, targetGlobalRotX, 0.05);
-        globalRotY = lerp(globalRotY, targetGlobalRotY, 0.05);
-        
-        // Track the focused ghost constellation if one is clicked
-        if (window._focusedGhostIndex !== undefined && window.ghostDefs && window.ghostDefs[window._focusedGhostIndex]) {
-            const ghost = window.ghostDefs[window._focusedGhostIndex];
-            const cosY = Math.cos(globalRotY);
-            const sinY = Math.sin(globalRotY);
-            const cosX = Math.cos(globalRotX);
-            const sinX = Math.sin(globalRotX);
-            
-            // Centroid (cached from click if needed, or recompute approx)
-            const cx = ghost.pts.reduce((s, p) => s + p.x, 0) / ghost.pts.length;
-            const cy = ghost.pts.reduce((s, p) => s + p.y, 0) / ghost.pts.length;
-            
-            let ox = ghost.offset.x + cx;
-            let oy = ghost.offset.y - cy;
-            
-            let rx = ox * cosY;
-            let rz = ox * sinY;
-            let ry = oy * cosX - rz * sinX;
-            
-            targetCam.x = rx;
-            targetCam.y = ry;
-        }
+        // Fade out parallax when zoomed out so everything feels like a single layer
+        const parallaxFade = smoothstep(0.3, 0.6, cam.scale);
+        globalRotX = lerp(globalRotX, targetGlobalRotX * parallaxFade, 0.05);
+        globalRotY = lerp(globalRotY, targetGlobalRotY * parallaxFade, 0.05);
     } else {
         // Auto camera drift if not dragging (original behavior)
         if (!isDragging && !window.cameraWanderPath) {
