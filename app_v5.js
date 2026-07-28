@@ -6027,9 +6027,11 @@ function skyLoop(ts) {
     });
 
     // Use setDrawRange to only render written lines (no need to zero the rest)
-    webglLineGeo.setDrawRange(0, lineIdx / 3);
-    webglLineGeo.attributes.position.needsUpdate = true;
-    webglLineGeo.attributes.color.needsUpdate = true;
+    if (typeof webglLineGeo !== 'undefined' && webglLineGeo) {
+        webglLineGeo.setDrawRange(0, lineIdx / 3);
+        webglLineGeo.attributes.position.needsUpdate = true;
+        webglLineGeo.attributes.color.needsUpdate = true;
+    }
 
     renderer.render(scene, threeCam);
 
