@@ -4849,6 +4849,8 @@ async function buildSignalField() {
     
     // coreNum determines the number of primary lobes (between 5 and 8)
     const numLobes = 5 + (vp.coreNum % 4); 
+    
+    let isQDriven = false;
 
     if (shapeCoords) {
         // ── DYNAMIC PAREIDOLIA SHAPE GEOMETRY (POINTILLISM) ──────────────
@@ -4859,7 +4861,7 @@ async function buildSignalField() {
         // ── PERFORMANCE: SUBSAMPLE TO AVOID THOUSANDS OF MESHES ──
         const MAX_POINTS = 150;
         let finalShapeCoords = [];
-        let isQDriven = !!(window._qDrawingPoints && window._qDrawingPoints === shapeCoords);
+        isQDriven = !!(window._qDrawingPoints && window._qDrawingPoints === shapeCoords);
         
         if (isQDriven && shapeCoords.length > MAX_POINTS) {
             const vertices = [];
