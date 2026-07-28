@@ -7439,8 +7439,10 @@ buildDOM();
 updateLang('he'); // Initialize text and default to Hebrew
 
 // --- Screensaver Mode Check ---
-if (sessionStorage.getItem('pagmar_screensaver') === 'true' || window.location.hash === '#screensaver') {
-    window.isScreensaverMode = true;
+if (window.location.hash === '#screensaver') {
+    window.location.href = window.location.pathname; // clear hash and reload
+}
+if (false) { // Screensaver disabled
     
     // Hide opening screen completely
     const scrOpen = document.getElementById('screen-opening');
