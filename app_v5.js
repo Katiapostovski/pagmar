@@ -5726,6 +5726,13 @@ function skyLoop(ts) {
             targetCam.y = Math.cos(animClock * 0.15) * 50;
         }
     }
+    
+    if (window.isScreensaverMode && !isDragging) {
+        // Slow majestic drift across the galaxy
+        targetCam.x = Math.sin(animClock * 0.05) * 1200;
+        targetCam.y = Math.cos(animClock * 0.03) * 1200;
+        targetCam.scale = 0.08; // Keep it zoomed out
+    }
 
     cam.x     = lerp(cam.x,     targetCam.x,     0.04);
     cam.y     = lerp(cam.y,     targetCam.y,     0.04);
@@ -7340,6 +7347,41 @@ window.toggleLegend = toggleLegend; // expose globally for onclick
 buildDOM();
 updateLang('he'); // Initialize text and default to Hebrew
 
+// --- Screensaver Mode Check ---
+if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
+    window.isScreensaverMode = true;
+    
+    // Hide opening screen
+    const scrOpen = document.getElementById('screen-opening');
+    if (scrOpen) scrOpen.classList.remove('active');
+    
+    // Mock the answers and visual params so initSky doesn't crash
+    answers = {};
+    window.vp = buildVisualParams();
+    
+    // Launch Sky
+    initSky();
+    
+    // Force extreme zoom out for screensaver view
+    setTimeout(() => {
+        cam.targetScale = 0.08;
+        cam.targetX = 0;
+        cam.targetY = 0;
+    }, 100);
+    
+    // Exit screensaver on any interaction
+    const exitScreensaver = () => {
+        sessionStorage.removeItem('pagmar_screensaver');
+        window.location.reload();
+    };
+    
+    // Add listeners after a slight delay to avoid triggering from the 'still here' click
+    setTimeout(() => {
+        document.addEventListener('pointerdown', exitScreensaver, {once:true});
+        document.addEventListener('keydown', exitScreensaver, {once:true});
+    }, 1000);
+}
+
 // ── GLOBAL LIGHT-POINT CURSOR (all screens) ──
 (function initGlobalCursor() {
     document.body.style.cursor = 'none'; // hide native cursor everywhere
@@ -7436,12 +7478,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const card = document.createElement('div');
         card.style.cssText = `
-            background: rgba(20, 20, 35, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            padding: 40px 50px;
+            background: rgba(4, 4, 10, 0.93);
+            backdrop-filter: blur(16px) saturate(1.3);
+            -webkit-backdrop-filter: blur(16px) saturate(1.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0;
+            padding: 2.2rem 2.4rem 2rem;
             text-align: center;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(100, 100, 200, 0.08);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
             transform: scale(0.9);
             transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
             max-width: 380px;
@@ -7509,9 +7553,9 @@ document.addEventListener('DOMContentLoaded', () => {
             dismissPrompt();
         });
 
-        // Start the 5-second countdown → reload
+        // Start the 5-second countdown → start screensaver mode
         promptTimer = setTimeout(() => {
-            // Fade to black then reload
+            // Fade to black then start screensaver
             if (promptOverlay) {
                 promptOverlay.style.transition = 'opacity 1s ease';
                 promptOverlay.style.opacity = '0';
@@ -7519,6 +7563,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 promptOverlay.style.opacity = '1';
             }
             setTimeout(() => {
+                sessionStorage.setItem('pagmar_screensaver', 'true');
                 window.location.reload();
             }, 1200);
         }, PROMPT_TIMEOUT_MS);
