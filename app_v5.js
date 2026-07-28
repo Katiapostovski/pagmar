@@ -2961,7 +2961,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -8250, y: -6750 },
+            offset: { x: -6500, y: -5250 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -2971,7 +2971,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -12300, y: 8250 },
+            offset: { x: -9500, y: 6500 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -2981,7 +2981,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 11250, y: 7200 },
+            offset: { x: 8500, y: 5500 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -2992,7 +2992,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,255,',
             textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
             textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -7200, y: 8700 },
+            offset: { x: -5500, y: 6800 },
             pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
                    {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
             lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
@@ -3002,7 +3002,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 8700, y: -7500 },
+            offset: { x: 6800, y: -5800 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3012,7 +3012,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: 12750, y: -5250 },
+            offset: { x: 9800, y: -4200 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3023,7 +3023,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: 5250, y: 9300 },
+            offset: { x: 4200, y: 7200 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
@@ -3073,7 +3073,7 @@ function initConstellationSystem(userVision) {
         saved.forEach((g, i) => {
             const seed = (i + 1) * 137.5;
             const angle = seed * (Math.PI / 180);
-            const dist = 4000 + (seed % 16000); // spread much wider (4000 to 20000)
+            const dist = 3000 + (seed % 10000); // spread (3000 to 13000)
             g.offset = {
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist
@@ -3296,8 +3296,8 @@ function initConstellationSystem(userVision) {
 
                 // ── Animate star positions within the constellation ────────
                 if (gs.starMeshes && gs.starMeshes.length > 0) {
-                    const rotY = gs.selfRotY;
-                    const rotX = Math.sin(gs.selfRotY * 0.31 + gi * 0.7) * 0.4;
+                    const rotY = gs.selfRotY + globalRotY;
+                    const rotX = Math.sin(gs.selfRotY * 0.31 + gi * 0.7) * 0.4 + globalRotX;
                     const t = gs.selfRotY;
                     gs.starMeshes.forEach((mesh, si) => {
                         const origPt = ghost.pts[si];
@@ -7483,6 +7483,8 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: scale(0.9);
             transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
             max-width: 380px;
+            direction: rtl;
+            color: rgba(200, 200, 215, 0.9);
         `;
 
         const question = document.createElement('h2');
@@ -7493,8 +7495,9 @@ document.addEventListener('DOMContentLoaded', () => {
             color: rgba(255, 255, 255, 0.9);
             margin: 0 0 12px 0;
             letter-spacing: 0.08em;
+            direction: rtl;
         `;
-        question.textContent = '?עדיין כאן';
+        question.textContent = 'עדיין כאן?';
 
         const subtitle = document.createElement('p');
         subtitle.style.cssText = `
