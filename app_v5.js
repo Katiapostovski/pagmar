@@ -7372,25 +7372,15 @@ updateLang('he'); // Initialize text and default to Hebrew
 if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
     window.isScreensaverMode = true;
     
-    // Hide opening screen
-    const scrOpen = document.getElementById('screen-opening');
-    if (scrOpen) scrOpen.classList.remove('active');
+    // Clear the DOM to ensure a pure black screen without any background scripts interfering
+    document.body.innerHTML = '';
+    document.body.style.backgroundColor = '#000000';
     
-    // Mock the answers and visual params so initSky doesn't crash
-    answers = {};
-    buildVisualParams();
-    window.skyRevealState = 'revealed';
-    
-    // Launch Sky
-    initSky();
-    
-    // Force extreme zoom out for screensaver view
-    setTimeout(() => {
-        cam.targetScale = 0.08;
-        cam.targetX = 0;
-        cam.targetY = 0;
-        window.skyRevealState = 'revealed';
-    }, 100);
+    // Add subtle text
+    const scrText = document.createElement('div');
+    scrText.style.cssText = "position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.2); font-family:'Cormorant Garamond', serif; font-size:20px; font-weight:300; letter-spacing:4px; pointer-events:none; user-select:none;";
+    scrText.textContent = "P A G M A R";
+    document.body.appendChild(scrText);
     
     // Exit screensaver on any interaction
     const exitScreensaver = () => {
@@ -7398,7 +7388,6 @@ if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
         window.location.reload();
     };
     
-    // Add listeners after a slight delay to avoid triggering from the 'still here' click
     setTimeout(() => {
         document.addEventListener('pointerdown', exitScreensaver, {once:true});
         document.addEventListener('keydown', exitScreensaver, {once:true});
