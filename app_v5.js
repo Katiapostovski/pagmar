@@ -5031,6 +5031,7 @@ async function buildSignalField() {
         }
         
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
+        } // end else (screensaver mode)
     } // end else (bilateral shape fallback)
 
     // ── STARFIELD — tiny prismatic points filling the ENTIRE sky ──
