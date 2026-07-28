@@ -6592,8 +6592,8 @@ function updatePoint(pt, dt, isClosest) {
         // Ensure user constellation and ghosts match perfectly when zoomed out (scattered constellations)
         if (window.skyRevealState === 'revealed' && pt.theme !== 'Starfield') {
             const BASE_STAR_PX = 450 * pointScale;
-            const MIN_STAR_PX  = 100;
-            const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
+            const MIN_STAR_PX  = pt.isMajor ? 100 : 15;
+            const compensation = Math.max(1.0, MIN_STAR_PX / Math.max(1.0, BASE_STAR_PX * Math.max(0.05, cam.scale)));
             s *= compensation;
         }
 
