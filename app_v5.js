@@ -3027,6 +3027,33 @@ function initConstellationSystem(userVision) {
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
+        },
+        {
+            nameHe: 'העכביש', nameEn: 'the spider',
+            color: 'rgba(255,150,150,',
+            textHe: 'העכביש אורג את עולמו מתוך עצמו.',
+            textEn: 'The spider weaves its world from within.',
+            offset: { x: 0, y: 0 },
+            pts: [ {x:0,y:0}, {x:50,y:-50}, {x:70,y:-20}, {x:70,y:20}, {x:50,y:50}, {x:-50,y:50}, {x:-70,y:20}, {x:-70,y:-20}, {x:-50,y:-50} ],
+            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]]
+        },
+        {
+            nameHe: 'האריה', nameEn: 'the lion',
+            color: 'rgba(255,200,100,',
+            textHe: 'מלך החיות.',
+            textEn: 'King of the beasts.',
+            offset: { x: 0, y: 0 },
+            pts: [ {x:0,y:0}, {x:40,y:-60}, {x:80,y:-20}, {x:60,y:40}, {x:0,y:80}, {x:-60,y:40}, {x:-80,y:-20}, {x:-40,y:-60} ],
+            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]]
+        },
+        {
+            nameHe: 'הציפור', nameEn: 'the bird',
+            color: 'rgba(150,200,255,',
+            textHe: 'מעוף אל הלא נודע.',
+            textEn: 'Flight into the unknown.',
+            offset: { x: 0, y: 0 },
+            pts: [ {x:0,y:20}, {x:100,y:-40}, {x:40,y:-10}, {x:0,y:-60}, {x:-40,y:-10}, {x:-100,y:-40} ],
+            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[4,5],[2,3],[3,4]]
         }
     ];
 
@@ -3042,45 +3069,71 @@ function initConstellationSystem(userVision) {
     }
 
     try {
-        // Collect names already in hardcoded ghostDefs to prevent duplicates
-        const existingNames = new Set(ghostDefs.map(g => 
-            (g.nameHe || g.nameEn || '').trim().replace(/^ה/, '').toLowerCase()
-        ));
-        const seenNames = new Set(); // Track names we've already added from saved
-        const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
-            .filter(g => {
-                const name = (g.nameHe || g.nameEn || '').trim();
-                const cleanName = name.replace(/^ה/, '');
-                const lowerName = cleanName.toLowerCase();
-        const blocklist = [
-            'חתול', 'cat',
-            'יהלום', 'diamond',
-            'פרה', 'cow',
-            'שועל', 'שועל ראשון', 'fox',
-            'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
-        ];
-                // Skip if same as current user's constellation
-                if (currentVision && lowerName === currentVision.toLowerCase()) return false;
-                // Skip if already exists in hardcoded ghostDefs
-                if (existingNames.has(lowerName)) return false;
-                // Skip if we already saw this name (deduplicate)
-                if (seenNames.has(lowerName)) return false;
-                seenNames.add(lowerName);
-                return !blocklist.some(b => cleanName.toLowerCase() === b.toLowerCase() || name.toLowerCase() === b.toLowerCase());
+        if (!window.isScreensaverMode) {
+            // Collect names already in hardcoded ghostDefs to prevent duplicates
+            const existingNames = new Set(ghostDefs.map(g => 
+                (g.nameHe || g.nameEn || '').trim().replace(/^ה/, '').toLowerCase()
+            ));
+            const seenNames = new Set(); // Track names we've already added from saved
+            const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
+                .filter(g => {
+                    const name = (g.nameHe || g.nameEn || '').trim();
+                    const cleanName = name.replace(/^ה/, '');
+                    const lowerName = cleanName.toLowerCase();
+            const blocklist = [
+                'חתול', 'cat',
+                'יהלום', 'diamond',
+                'פרה', 'cow',
+                'שועל', 'שועל ראשון', 'fox',
+                'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
+            ];
+                    // Skip if same as current user's constellation
+                    if (currentVision && lowerName === currentVision.toLowerCase()) return false;
+                    // Skip if already exists in hardcoded ghostDefs
+                    if (existingNames.has(lowerName)) return false;
+                    // Skip if we already saw this name (deduplicate)
+                    if (seenNames.has(lowerName)) return false;
+                    seenNames.add(lowerName);
+                    return !blocklist.some(b => cleanName.toLowerCase() === b.toLowerCase() || name.toLowerCase() === b.toLowerCase());
+                });
+            // Persist cleaned (deduplicated) list permanently
+            try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
+            saved.forEach((g, i) => {
+                const seed = (i + 1) * 137.5;
+                const angle = seed * (Math.PI / 180);
+                const dist = 3000 + (seed % 10000); // spread (3000 to 13000)
+                g.offset = {
+                    x: Math.cos(angle) * dist,
+                    y: Math.sin(angle) * dist
+                };
+                ghostDefs.push(g);
             });
-        // Persist cleaned (deduplicated) list permanently
-        try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
-        saved.forEach((g, i) => {
-            const seed = (i + 1) * 137.5;
-            const angle = seed * (Math.PI / 180);
-            const dist = 3000 + (seed % 10000); // spread (3000 to 13000)
-            g.offset = {
-                x: Math.cos(angle) * dist,
-                y: Math.sin(angle) * dist
-            };
-            ghostDefs.push(g);
-        });
+        }
     } catch(e) {}
+    
+    // SCREENSAVER MODE SPREAD
+    if (window.isScreensaverMode) {
+        // Arrange the shapes beautifully in a wide circle
+        const radius = 6000;
+        ghostDefs.forEach((g, i) => {
+            const angle = (i / ghostDefs.length) * Math.PI * 2;
+            g.offset = {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            };
+        });
+        
+        // Also put a central star?
+        // Add a purely decorative central point
+        ghostDefs.push({
+            nameHe: 'PAGMAR', nameEn: 'PAGMAR',
+            color: 'rgba(255,255,255,',
+            textHe: '', textEn: '',
+            offset: { x: 0, y: 0 },
+            pts: [{x:0,y:0}],
+            lines: []
+        });
+    }
 
     // ── WEBGL GHOST GEOMETRY ─────────────────────────────────────────
     const ghostPlaneGeo = new THREE.PlaneGeometry(200, 200);
@@ -3112,7 +3165,9 @@ function initConstellationSystem(userVision) {
         gs.lineMat.color = new THREE.Color(1, 1, 1);
         const lineMesh = new THREE.LineSegments(lineGeo, gs.lineMat);
         gs.lineMesh = lineMesh; // store reference
-        // gs.group.add(lineMesh); // REMOVED wireframe lines to avoid the "linear image" the user dislikes
+        if (window.isScreensaverMode) {
+            gs.group.add(lineMesh); // Add lines back for the screensaver mode so it matches the screenshot!
+        }
 
         // Calculate angles for ghost points based on their lines so beams align structurally
         const ptAngles = new Array(ghost.pts.length).fill(null);
@@ -4705,6 +4760,10 @@ async function buildSignalField() {
     }
     skyPoints = [];
     majorPoints = [];
+    
+    // In screensaver mode, we ONLY want the ghost constellations, not the main user one
+    if (window.isScreensaverMode) return;
+    
     const { rand, texts, dominantElement, topology, personalHue } = vp;
     const labelsDiv = document.getElementById('sky-labels');
     if (labelsDiv) labelsDiv.innerHTML = '';
@@ -7369,22 +7428,31 @@ buildDOM();
 updateLang('he'); // Initialize text and default to Hebrew
 
 // --- Screensaver Mode Check ---
-if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
+if (sessionStorage.getItem('pagmar_screensaver') === 'true' || window.location.hash === '#screensaver') {
     window.isScreensaverMode = true;
     
-    // Clear the DOM to ensure a pure black screen without any background scripts interfering
-    document.body.innerHTML = '';
-    document.body.style.backgroundColor = '#000000';
+    // Hide opening screen completely
+    const scrOpen = document.getElementById('screen-opening');
+    if (scrOpen) scrOpen.style.display = 'none';
     
-    // Add subtle text
-    const scrText = document.createElement('div');
-    scrText.style.cssText = "position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.2); font-family:'Cormorant Garamond', serif; font-size:20px; font-weight:300; letter-spacing:4px; pointer-events:none; user-select:none;";
-    scrText.textContent = "P A G M A R";
-    document.body.appendChild(scrText);
+    // Setup for 3D
+    answers = {};
+    buildVisualParams();
+    window.skyRevealState = 'revealed';
     
-    // Exit screensaver on any interaction
+    initSky();
+    
+    setTimeout(() => {
+        cam.targetScale = 0.08;
+        cam.targetX = 0;
+        cam.targetY = 0;
+    }, 100);
+    
     const exitScreensaver = () => {
         sessionStorage.removeItem('pagmar_screensaver');
+        if (window.location.hash === '#screensaver') {
+            window.location.hash = '';
+        }
         window.location.reload();
     };
     
@@ -7392,6 +7460,10 @@ if (sessionStorage.getItem('pagmar_screensaver') === 'true') {
         document.addEventListener('pointerdown', exitScreensaver, {once:true});
         document.addEventListener('keydown', exitScreensaver, {once:true});
     }, 1000);
+} else {
+    // Show opening screen only if NOT in screensaver mode
+    const scrOpen = document.getElementById('screen-opening');
+    if (scrOpen) scrOpen.classList.add('active');
 }
 
 // ── GLOBAL LIGHT-POINT CURSOR (all screens) ──
