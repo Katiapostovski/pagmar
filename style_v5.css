@@ -160,15 +160,15 @@ html, body {
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 400px;
-    background: rgba(10, 10, 15, 0.85);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
+    background: rgba(4, 4, 10, 0.93);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0;
     padding: 30px;
     z-index: 2000;
     color: #eee;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
     transition: opacity 0.4s ease;
 }
 
@@ -866,15 +866,16 @@ html, body {
     z-index: 120;
     max-width: 480px;
     width: 90%;
-    background: rgba(6, 8, 14, 0.82);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(4, 4, 10, 0.93);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0;
     padding: 1.6rem 2rem 1.4rem;
-    border-radius: 2px;
     opacity: 1;
     transition: opacity 0.5s ease;
     pointer-events: auto;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
 }
 #deep-text-modal.hidden {
     opacity: 0;

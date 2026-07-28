@@ -2862,21 +2862,21 @@ function showGhostInfoPanel(ghost, clickX, clickY) {
         left: 50%; top: 50%;
         transform: translate(-50%, -50%) scale(0.92);
         width: min(420px, 88vw);
-        background: rgba(5, 5, 18, 0.88);
-        border: 1px solid ${col}0.25);
-        border-radius: 4px;
+        background: rgba(4, 4, 10, 0.93);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0;
         padding: 36px 32px 28px;
         font-family: 'SimplerMono', 'Courier New', monospace;
         color: rgba(220, 220, 235, 0.9);
         z-index: 2000;
         pointer-events: auto;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px) saturate(1.3);
+        -webkit-backdrop-filter: blur(16px) saturate(1.3);
         text-align: ${isHe ? 'right' : 'left'};
         direction: ${isHe ? 'rtl' : 'ltr'};
         opacity: 0;
         transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2,0.8,0.2,1);
-        box-shadow: 0 0 60px ${col}0.12), inset 0 0 30px ${col}0.04);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
     `;
 
     panel.innerHTML = `
