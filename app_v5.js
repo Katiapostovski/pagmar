@@ -5370,8 +5370,8 @@ async function buildSignalField() {
                 });
                 
                 // Fallback for lines just in case
-                const lines = Array.from(srcSvg.querySelectorAll('line'));
-                lines.forEach(line => {
+                const svgLines = Array.from(srcSvg.querySelectorAll('line'));
+                svgLines.forEach(line => {
                     const x1 = parseFloat(line.getAttribute('x1'));
                     const y1 = parseFloat(line.getAttribute('y1'));
                     const x2 = parseFloat(line.getAttribute('x2'));
@@ -5480,7 +5480,7 @@ async function buildSignalField() {
             setTimeout(() => {
                 qEl.style.opacity = '1';
                 document.getElementById('recog-input-wrap').style.opacity = '1';
-            }, 1200);
+            }, 9000);
             
             // 5. Handle revelation trigger — dramatic reveal
             const triggerRevelation = async () => {
