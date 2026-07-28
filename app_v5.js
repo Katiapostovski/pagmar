@@ -3430,7 +3430,7 @@ function initConstellationSystem(userVision) {
             }
             // Match ghost brightness exactly to user constellation
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = 0.0; // Force line wireframes invisible permanently
+            if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow to exactly match the active constellation
                 mat.uniforms.uOpacity.value = Math.min(2.5, a * 1.2 + hGlow * 0.8); // Cranked up opacity to match main constellation
@@ -6000,8 +6000,12 @@ function skyLoop(ts) {
     });
 
     // Update lines geometry
-    const positions = webglLineGeo.attributes.position.array;
-    const colors = webglLineGeo.attributes.color.array;
+    let positions = null;
+    let colors = null;
+    if (typeof webglLineGeo !== 'undefined' && webglLineGeo) {
+        positions = webglLineGeo.attributes.position.array;
+        colors = webglLineGeo.attributes.color.array;
+    }
     let lineIdx = 0;
     let colorIdx = 0;
 
