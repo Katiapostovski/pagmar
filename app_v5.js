@@ -5322,11 +5322,8 @@ async function buildSignalField() {
         skyPoints.forEach(pt => {
             pt.x = pt.originalX;
             pt.y = pt.originalY;
-            pt.assemblyProgress = 1.0;
-            pt.isPermanentlyAssembled = true;
-            pt.permanentlyRevealed = true;  // ALL points visible from start
-            pt.appearP = 1.0;               // Skip staggered reveal in recognition mode
-            pt.fogRevealed = 1.0;
+            // Removed forcing appearP and permanentlyRevealed to 1.0 so they will do their slow fade-in when revealed
+
             // Force correct shader uniforms immediately so first frame renders correctly
             if (pt.mesh) {
                 const u = pt.mesh.material.uniforms;
@@ -5590,7 +5587,7 @@ async function buildSignalField() {
                         }
                         
                         // Restore ALL mesh visibility (recognition mode hid them)
-                        if (webglLines) webglLines.visible = false; // User explicitly requested no linear image
+                        if (webglLines) webglLines.visible = true;
                         skyPoints.forEach(pt => { if (pt.mesh) pt.mesh.visible = true; });
 
                         // The camera will not move or zoom here per user request, 
