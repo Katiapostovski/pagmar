@@ -3938,7 +3938,6 @@ function renderQ() {
             const maxX = window.innerWidth - paddingX;
             const minY = paddingY;
             const maxY = window.innerHeight - paddingY;
-            
             // Question text bounding box (center of screen, roughly 760×400px)
             const qExclLeft   = centerX - 390;
             const qExclRight  = centerX + 390;
@@ -5125,6 +5124,7 @@ async function buildSignalField() {
         }
         
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
+    } // end if (!window.isScreensaverMode)
 
     // ── STARFIELD — tiny prismatic points filling the ENTIRE sky ──
     // dot-type (3.0) = soft point light, not 6-ray star or beam line
