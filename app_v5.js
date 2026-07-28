@@ -4932,7 +4932,7 @@ async function buildSignalField() {
             const isQDrivenStar = isQCoord; // came from questionnaire drawing
             // All Q-shape stars use the same crystal type — unified prismatic look
             // Only background dust uses the simple dot type
-            const elType = (isVertexStar || isQDrivenStar) ? 'halo' : 'dot';
+            const elType = isVertexStar ? 'halo' : (isQDrivenStar ? 'dot' : 'crystal');
 
             // Scale hierarchy: vertex are notably bigger but NOT massive
             // ALL Q-shape stars IDENTICAL size — vertex stars must NOT look like a separate shape.
@@ -5326,6 +5326,12 @@ async function buildSignalField() {
         if (pt.elementType === 'dot')     typeVal = 3.0; // soft micro dot
         if (pt.elementType === 'crystal') typeVal = 1.0; // 6-ray sparkle — used for starfield
         if (pt.elementType === 'shard')   typeVal = 2.0; // X-cut shard
+        
+        // PERFORMANCE & VISUAL FIX: If a point is not a major anchor, DO NOT let it use the massive blade shader.
+        // 150 minor blades overlapping causes GPU lag and blinding white glare. Downgrade to crystal.
+        if (!pt.isMajor && typeVal === 0.0) {
+            typeVal = 1.0; 
+        }
 
         const ptColor = new THREE.Color().setHSL(pt.hue / 360, pt.theme === 'Unresolved' ? 0.4 : 1.0, 0.65);
 
