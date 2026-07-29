@@ -223,13 +223,12 @@ vec3 spectral(float t) {
     return c * c * 1.8; // boosted — more vivid prismatic colors
 }
 
-// Prismatic blade (type 0) - elegant 4-pointed lens flare for main vertices
+// Prismatic blade (type 0) - single long dramatic prism beam per vertex
 float bladeFn(vec2 p) {
-    float len = mix(0.8, 1.4, fract(uSeed * 17.3));
-    float xDecay = exp(-abs(p.x) * 45.0 * len) * exp(-abs(p.y) * 15.0);
-    float yDecay = exp(-abs(p.y) * 45.0 * len) * exp(-abs(p.x) * 15.0);
-    float core  = smoothstep(0.02, 0.0, abs(p.x) + abs(p.y));
-    return (xDecay + yDecay) * 0.9 + core * 0.6;
+    float lenVariation = mix(0.8, 1.8, fract(uSeed * 17.3));
+    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 1.5 * lenVariation);
+    float core  = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
+    return blade + core * 1.5;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -5255,7 +5254,7 @@ async function buildSignalField() {
     });
 
     // Minor ambient background stars: very last, barely visible
-    let nextMinorDelay = Math.max(40.0, nextMajorDelay + 3.0);
+    let nextMinorDelay = Math.max(12.0, nextMajorDelay + 2.0);
     nonMajorPts.forEach(pt => {
         if (pt.theme === 'Starfield') {
             // Starfield stars appear IMMEDIATELY — no staggered delay
@@ -5527,7 +5526,7 @@ async function buildSignalField() {
                         const len = Math.hypot(txf(seg.x2)*flip - txf(seg.x1)*flip, tyf(seg.y2) - tyf(seg.y1));
                         l.style.strokeDasharray = len;
                         l.style.strokeDashoffset = len;
-                        l.style.transition = 'stroke-dashoffset 7s ease-in-out 1.5s';
+                        l.style.transition = 'stroke-dashoffset 3.5s ease-in-out 0.8s';
                         dstSvg.appendChild(l);
                         requestAnimationFrame(() => { l.getBoundingClientRect(); l.style.strokeDashoffset = '0'; });
                     });
@@ -6623,8 +6622,8 @@ function updatePoint(pt, dt, isClosest) {
         // Ensure user constellation and ghosts match perfectly when zoomed out (scattered constellations)
         if (window.skyRevealState === 'revealed' && pt.theme !== 'Starfield') {
             const BASE_STAR_PX = 450 * pointScale;
-            // Drastically lower the MIN_STAR_PX so they don't become massive white blobs on zoom-out
-            const MIN_STAR_PX  = pt.isMajor ? 24 : 8;
+            // Keep stars tiny on extreme zoom-out to avoid white blobs
+            const MIN_STAR_PX  = pt.isMajor ? 18 : 5;
             const compensation = Math.max(1.0, MIN_STAR_PX / Math.max(1.0, BASE_STAR_PX * Math.max(0.05, cam.scale)));
             s *= compensation;
         }
@@ -6730,7 +6729,6 @@ function updatePoint(pt, dt, isClosest) {
         pt.mesh.material.uniforms.uColor.value.setHSL(hue, sat, light);
 
         // Glow — ENHANCED: pulsing organic luminescence
-        // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
             const baseGlow = pt.isMajor ? 1.5 : 0.8; // Reduced to prevent blinding glare on zoom out
@@ -6754,7 +6752,7 @@ function updatePoint(pt, dt, isClosest) {
         } else {
             // Background constellations (Rorschach/Pareidolia): glow in prism state
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
-                glowValue = pt.isMajor ? 1.5 : 0.8;
+                glowValue = pt.isMajor ? 0.8 : 0.35;
             } else if (pt.theme === 'Starfield') {
                 // Starfield glow always active — visible during exploration too
                 glowValue = pt.starfieldGlow || 0.5;
