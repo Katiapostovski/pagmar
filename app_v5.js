@@ -226,9 +226,9 @@ vec3 spectral(float t) {
 // Prismatic blade (type 0) - single long dramatic prism beam per vertex
 float bladeFn(vec2 p) {
     float lenVariation = mix(0.8, 1.8, fract(uSeed * 17.3));
-    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 1.5 * lenVariation);
-    float core  = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 1.5;
+    float blade = exp(-abs(p.y) * 45.0) * exp(-abs(p.x) * 2.0 * lenVariation);
+    blade += exp(-length(p) * 20.0) * 0.4; // Soft core to make the prism less sparse
+    return blade;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -5254,7 +5254,7 @@ async function buildSignalField() {
     });
 
     // Minor ambient background stars: very last, barely visible
-    let nextMinorDelay = Math.max(12.0, nextMajorDelay + 2.0);
+    let nextMinorDelay = Math.max(4.0, nextMajorDelay + 1.0);
     nonMajorPts.forEach(pt => {
         if (pt.theme === 'Starfield') {
             // Starfield stars appear IMMEDIATELY — no staggered delay
@@ -5328,7 +5328,7 @@ async function buildSignalField() {
     webglLineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
     webglLineGeo.setAttribute('color', new THREE.BufferAttribute(lineCol, 3));
     webglLines = new THREE.LineSegments(webglLineGeo, lineMat);
-    scene.add(webglLines); // Added back so we can see the crystal connections form!
+    // scene.add(webglLines); // Removed to satisfy: "there are some lines between the points remove them"
 
     // Nodes
     skyMeshes = [];
@@ -5341,11 +5341,7 @@ async function buildSignalField() {
         if (pt.elementType === 'crystal') typeVal = 1.0; // 6-ray sparkle — used for starfield
         if (pt.elementType === 'shard')   typeVal = 2.0; // X-cut shard
         
-        // PERFORMANCE & VISUAL FIX: If a point is not a major anchor, DO NOT let it use the massive blade shader.
-        // 150 minor blades overlapping causes GPU lag and blinding white glare. Downgrade to dot.
-        if (!pt.isMajor && typeVal === 0.0) {
-            typeVal = 3.0; // Changed to DOT to completely eliminate prisms in the background
-        }
+        // ALL constellation points use blade prisms — no dots. Non-majors get lower glow via updatePoint.
 
         const ptColor = new THREE.Color().setHSL(pt.hue / 360, pt.theme === 'Unresolved' ? 0.4 : 1.0, 0.65);
 
@@ -5501,46 +5497,37 @@ async function buildSignalField() {
                 const txf = (x) => (x-bcx)*sc, tyf = (y) => (y-bcy)*sc;
                 
                  const drawSide = (flip) => {
-                    // DOTS APPEAR FIRST: immediately visible, define the shape
-                    rawPts.forEach(p => {
-                        const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
-                        c.setAttribute('cx', cx2 + txf(p.x)*flip);
-                        c.setAttribute('cy', cy2 + tyf(p.y));
-                        c.setAttribute('r','1.8');
-                        c.setAttribute('fill','rgba(255,255,255,0.88)');
-                        c.style.opacity = '0';
-                        c.style.transition = 'opacity 1.0s ease-in-out';
-                        dstSvg.appendChild(c);
-                        requestAnimationFrame(() => { c.getBoundingClientRect(); c.style.opacity = '1'; });
-                    });
-                    // LINES CONNECT AFTER (1.5s delay so dots are already visible first)
+                    // LINES ONLY: Draw as a single continuous path to prevent DOM freezing (mouse lag)
+                    // We completely remove the individual circle points per user request ("לא אמור להיות בכלל נקודות")
+                    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+                    let d = '';
+                    let totalLen = 0;
                     rawSegs.forEach(seg => {
-                        const l = document.createElementNS("http://www.w3.org/2000/svg","line");
-                        l.setAttribute('x1', cx2 + txf(seg.x1)*flip);
-                        l.setAttribute('y1', cy2 + tyf(seg.y1));
-                        l.setAttribute('x2', cx2 + txf(seg.x2)*flip);
-                        l.setAttribute('y2', cy2 + tyf(seg.y2));
-                        l.setAttribute('stroke','rgba(255,255,255,0.60)');
-                        l.setAttribute('stroke-width','0.8');
-                        l.setAttribute('stroke-linecap','round');
-                        const len = Math.hypot(txf(seg.x2)*flip - txf(seg.x1)*flip, tyf(seg.y2) - tyf(seg.y1));
-                        l.style.strokeDasharray = len;
-                        l.style.strokeDashoffset = len;
-                        l.style.transition = 'stroke-dashoffset 3.5s ease-in-out 0.8s';
-                        dstSvg.appendChild(l);
-                        requestAnimationFrame(() => { l.getBoundingClientRect(); l.style.strokeDashoffset = '0'; });
+                        const x1 = cx2 + txf(seg.x1)*flip;
+                        const y1 = cy2 + tyf(seg.y1);
+                        const x2 = cx2 + txf(seg.x2)*flip;
+                        const y2 = cy2 + tyf(seg.y2);
+                        d += `M${x1},${y1} L${x2},${y2} `;
+                        totalLen += Math.hypot(x2-x1, y2-y1);
                     });
+                    
+                    if (d) {
+                        path.setAttribute('d', d);
+                        path.setAttribute('stroke','rgba(255,255,255,0.60)');
+                        path.setAttribute('stroke-width','0.8');
+                        path.setAttribute('stroke-linecap','round');
+                        path.setAttribute('fill','none');
+                        // Use a reasonable cap on dash array for the animation
+                        const dashLen = Math.min(totalLen, 10000);
+                        path.style.strokeDasharray = dashLen;
+                        path.style.strokeDashoffset = dashLen;
+                        path.style.transition = 'stroke-dashoffset 4.5s ease-in-out 0.2s';
+                        dstSvg.appendChild(path);
+                        requestAnimationFrame(() => { path.getBoundingClientRect(); path.style.strokeDashoffset = '0'; });
+                    }
                  };
                  drawSide(1);   // Original constellation side
                  drawSide(-1);  // Mirror side — creates Rorschach / inkblot bilateral symmetry
-                 // Subtle vertical center axis line to reinforce the Rorschach fold
-                 const axis = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                 axis.setAttribute('x1', cx2); axis.setAttribute('y1', cy2 - H2 * 0.35);
-                 axis.setAttribute('x2', cx2); axis.setAttribute('y2', cy2 + H2 * 0.35);
-                 axis.setAttribute('stroke', 'rgba(255,255,255,0.00)');
-                 axis.setAttribute('stroke-width', '0.5');
-                 axis.setAttribute('stroke-dasharray', '4 8');
-                 dstSvg.appendChild(axis);
                 
                 // --- Serialize for ghost pool saving later ---
                 const uniquePts = [];
@@ -5576,7 +5563,7 @@ async function buildSignalField() {
                         u.uGlow.value    = pt.isMajor ? 0.3 : 0.15;
                     }
                 });
-                if (webglLines) webglLines.visible = true;
+                if (webglLines) webglLines.visible = false; // User requested: NO connecting lines
             }
         }
         
@@ -5695,7 +5682,7 @@ async function buildSignalField() {
                         // to the normal calm baseGlow (0.55). Without this, bloomProgress=0 forever
                         // → glowValue stays at 3.55 creating a huge diffuse "ghost" image.
                         window.isBloomTriggered = true;
-                        window.bloomProgress = 0.28;  // Skip violent Phase-1 inhale — start directly at gentle expansion
+                        window.bloomProgress = 0.92;  // Start nearly complete — NO initial glow surge
                         window.bloomShockwave = null;  // No shockwave jump
                         window.userConstellationName = userVision;
                         
@@ -5710,7 +5697,7 @@ async function buildSignalField() {
                         }
                         
                         // Restore ALL mesh visibility (recognition mode hid them)
-                        if (webglLines) webglLines.visible = true; // Lines ARE requested!
+                        if (webglLines) webglLines.visible = false; // User requested: NO connecting lines
                         skyPoints.forEach(pt => { 
                             if (pt.mesh && pt._meshVisibleOverride !== false) {
                                 pt.mesh.visible = true; 
@@ -6170,8 +6157,7 @@ function skyLoop(ts) {
     const _isQShapePt = pt.isVertexStar || pt.isQPathStar;
     // Q-shape stars: draw bright connecting lines even in pointillism mode
     // Other stars: only draw lines in non-pointillism mode
-    if (window.skyRevealState === 'revealed' && pt.mesh.visible &&
-        (_isQShapePt || !window.isPointillism)) {
+    if (false) { // DISABLED: user explicitly requested no connecting lines between points
         let linesDrawn = 0;
         for (let i = 0; i < pt.neighborPts.length && linesDrawn < 2; i++) {
             const opt = pt.neighborPts[i];
@@ -6619,20 +6605,13 @@ function updatePoint(pt, dt, isClosest) {
         const pointScale = lerp(skeletonScale, fullScale, sizeFactor);
         let s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
 
-        // Ensure user constellation and ghosts match perfectly when zoomed out (scattered constellations)
-        if (window.skyRevealState === 'revealed' && pt.theme !== 'Starfield') {
-            const BASE_STAR_PX = 450 * pointScale;
-            // Keep stars tiny on extreme zoom-out to avoid white blobs
-            const MIN_STAR_PX  = pt.isMajor ? 18 : 5;
-            const compensation = Math.max(1.0, MIN_STAR_PX / Math.max(1.0, BASE_STAR_PX * Math.max(0.05, cam.scale)));
-            s *= compensation;
-        }
+        // DISABLED: zoom compensation caused white blobs on zoom out.
+        // Prisms now shrink naturally with camera zoom — no artificial size floor.
 
-        // Starfield: maintain visible size at any zoom level
+        // Starfield: allow natural scaling
         if (pt.theme === 'Starfield') {
-            // Zoom compensation: at extreme zoom-out, boost scale so dots stay visible
-            const minScreenSize = 0.06; // bigger minimum for clear night-sky dots
-            s = Math.max(s, minScreenSize * globalBreath);
+            // Remove the hard MIN_SCALE which causes dots to feel "stuck in place" during zoom
+            s = s * 1.5; 
         }
 
         // Constellation beams: reasonable cap for clean single prisms
@@ -6657,7 +6636,8 @@ function updatePoint(pt, dt, isClosest) {
         // Each star appears at full size immediately and fades in gently
         const finalScale = s; // always full size from the first frame
         pt.mesh.scale.set(finalScale, finalScale, 1);
-        pt.mesh.rotation.z = -(pt.baseAngle + skyIntroTime * 0.015 * (vp.motionSpeed || 1.0) * rpEase);
+        // Align all blades uniformly diagonally (Math.PI / 4) so they don't form a chaotic frog shape
+        pt.mesh.rotation.z = Math.PI / 4;
 
         // illum
         let illum;
@@ -6731,8 +6711,8 @@ function updatePoint(pt, dt, isClosest) {
         // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
-            const baseGlow = pt.isMajor ? 1.5 : 0.8; // Reduced to prevent blinding glare on zoom out
-            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 1.5) * lanternSoft;
+            const baseGlow = 0.4; // Uniform glow — no blinding hot spots
+            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 0.8) * lanternSoft;
             
             if (window.skyRevealState === 'revealed') {
                 // Breathing glow
@@ -6740,7 +6720,7 @@ function updatePoint(pt, dt, isClosest) {
                 
                 // During bloom: gentle glow surge
                 if (window.bloomProgress < 1.0) {
-                    glowValue += Math.pow((1.0 - window.bloomProgress), 2.0) * 3.0;
+                    glowValue += Math.pow((1.0 - window.bloomProgress), 2.0) * 0.3;
                 }
                 
                 // Individual sparkle: each point has its own tiny twinkle
@@ -6752,7 +6732,7 @@ function updatePoint(pt, dt, isClosest) {
         } else {
             // Background constellations (Rorschach/Pareidolia): glow in prism state
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
-                glowValue = pt.isMajor ? 0.8 : 0.35;
+                glowValue = 0.45; // Uniform glow for all background constellation prisms
             } else if (pt.theme === 'Starfield') {
                 // Starfield glow always active — visible during exploration too
                 glowValue = pt.starfieldGlow || 0.5;
@@ -6794,7 +6774,7 @@ function updatePoint(pt, dt, isClosest) {
                 revealedBase += (globalBreath - 1.0) * 0.5;
                 // During bloom: moderate crystal vividity
                 if (window.bloomProgress < 1.0) {
-                    revealedBase += Math.pow((1.0 - window.bloomProgress), 2.0) * 0.6;
+                    revealedBase += Math.pow((1.0 - window.bloomProgress), 2.0) * 0.1;
                 }
             }
             state = Math.min(lerp(revealedBase, 2.0, lanternSoft), 2.0);
