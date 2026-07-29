@@ -223,15 +223,13 @@ vec3 spectral(float t) {
     return c * c * 1.8; // boosted — more vivid prismatic colors
 }
 
-// Prismatic blade (type 0) - compact prism beam, elongates on hover
+// Prismatic blade (type 0) - elegant 4-pointed lens flare for main vertices
 float bladeFn(vec2 p) {
-    // Hover elongation: glow stretches the blade horizontally
-    float hoverStretch = smoothstep(0.3, 2.5, uGlow) * 2.0;
-    float lenVariation = mix(0.5, 1.6, fract(uSeed * 17.3)); // random length
-    float xDecay = (3.0 - hoverStretch) * lenVariation; 
-    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * xDecay);
-    float core  = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 0.4;
+    float len = mix(0.8, 1.4, fract(uSeed * 17.3));
+    float xDecay = exp(-abs(p.x) * 45.0 * len) * exp(-abs(p.y) * 15.0);
+    float yDecay = exp(-abs(p.y) * 45.0 * len) * exp(-abs(p.x) * 15.0);
+    float core  = smoothstep(0.02, 0.0, abs(p.x) + abs(p.y));
+    return (xDecay + yDecay) * 0.9 + core * 0.6;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -6625,7 +6623,8 @@ function updatePoint(pt, dt, isClosest) {
         // Ensure user constellation and ghosts match perfectly when zoomed out (scattered constellations)
         if (window.skyRevealState === 'revealed' && pt.theme !== 'Starfield') {
             const BASE_STAR_PX = 450 * pointScale;
-            const MIN_STAR_PX  = pt.isMajor ? 100 : 15;
+            // Drastically lower the MIN_STAR_PX so they don't become massive white blobs on zoom-out
+            const MIN_STAR_PX  = pt.isMajor ? 24 : 8;
             const compensation = Math.max(1.0, MIN_STAR_PX / Math.max(1.0, BASE_STAR_PX * Math.max(0.05, cam.scale)));
             s *= compensation;
         }
@@ -6731,10 +6730,11 @@ function updatePoint(pt, dt, isClosest) {
         pt.mesh.material.uniforms.uColor.value.setHSL(hue, sat, light);
 
         // Glow — ENHANCED: pulsing organic luminescence
+        // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
-            const baseGlow = pt.isMajor ? 2.5 : 1.4; // Vibrant prismatic glow — dramatic beams
-            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 2.5) * lanternSoft;
+            const baseGlow = pt.isMajor ? 1.5 : 0.8; // Reduced to prevent blinding glare on zoom out
+            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 1.5) * lanternSoft;
             
             if (window.skyRevealState === 'revealed') {
                 // Breathing glow
