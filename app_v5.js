@@ -225,10 +225,13 @@ vec3 spectral(float t) {
 
 // Prismatic blade (type 0) - single long dramatic prism beam per vertex
 float bladeFn(vec2 p) {
-    float lenVariation = mix(0.8, 1.8, fract(uSeed * 17.3));
-    float blade = exp(-abs(p.y) * 45.0) * exp(-abs(p.x) * 2.0 * lenVariation);
-    blade += exp(-length(p) * 20.0) * 0.4; // Soft core to make the prism less sparse
-    return blade;
+    // Hover elongation: glow stretches the blade horizontally
+    float hoverStretch = smoothstep(0.3, 2.5, uGlow) * 2.0;
+    float lenVariation = mix(0.5, 1.6, fract(uSeed * 17.3)); // random length
+    float xDecay = (3.0 - hoverStretch) * lenVariation; 
+    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * xDecay);
+    float core  = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
+    return blade + core * 0.4;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -5151,50 +5154,8 @@ async function buildSignalField() {
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
     } // end if (!window.isScreensaverMode)
 
-    // ── STARFIELD — tiny prismatic points filling the ENTIRE sky ──
-    // dot-type (3.0) = soft point light, not 6-ray star or beam line
-    // Spread across huge radius so they appear everywhere during exploration
-    {
-        const STAR_COUNT    = 1000;   // less dense starfield so it's not overwhelming
-        const FIELD_RADIUS  = 20000;  // covers entire sky including ghost constellation zone (5000-16000)
-        const CENTER_CLEAR  = 100;    // keep user constellation zone clear
-
-        for (let si = 0; si < STAR_COUNT; si++) {
-            const sfAngle = rand() * Math.PI * 2;
-            const sfR  = CENTER_CLEAR + rand() * FIELD_RADIUS;
-            const sfX  = Math.cos(sfAngle) * sfR;
-            const sfY  = Math.sin(sfAngle) * sfR * 0.72;
-            const sfZ  = (rand() - 0.5) * 800;
-            // ~20% are brighter accent stars
-            const bright      = rand() < 0.22;
-            const sfScale     = bright ? (0.09 + rand() * 0.08) : (0.05 + rand() * 0.06);
-            const sfOpacity   = bright ? (0.15 + rand() * 0.10) : (0.05 + rand() * 0.08);
-            const sfGlow      = bright ? (0.10 + rand() * 0.15) : (0.03 + rand() * 0.08);
-            skyPoints.push({
-                x: sfX, y: sfY, z: sfZ,
-                originalX: sfX, originalY: sfY, originalZ: sfZ,
-                targetX: sfX, targetY: sfY, targetZ: sfZ,
-                starX: sfX, starY: sfY,
-                isMajor: false,
-                elementType: 'dot',   // soft point — not crystal or blade
-                theme: 'Starfield',
-                text: null, isBlurred: false,
-                baseAngle: rand() * Math.PI * 2,
-                scale: sfScale, hue: rand() * 360,
-                isSeed: false, depthLayer: 2.0 + rand() * 1.5,
-                fogRevealed: 0.8, hoverPulse: 0, permanentlyRevealed: false,
-                pulseClock: Math.random() * Math.PI * 2,
-                state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
-                revealProgress: 0, hasBeenRevealed: false,
-                assemblyProgress: 0, isAssembling: false,
-                totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0,
-                maxRevealProgress: 0, neighborPts: [],
-                isVertexStar: false, isQPathStar: false,
-                starfieldOpacity: sfOpacity,
-                starfieldGlow: sfGlow
-            });
-        }
-    }
+    // ── STARFIELD (REMOVED) ──
+    // The user requested removing the bright white stars that appear stuck during zoom-out.
 
     // Add text labels to one major point per theme
     for (let t = 0; t < 8; t++) {
@@ -6636,8 +6597,8 @@ function updatePoint(pt, dt, isClosest) {
         // Each star appears at full size immediately and fades in gently
         const finalScale = s; // always full size from the first frame
         pt.mesh.scale.set(finalScale, finalScale, 1);
-        // Align all blades uniformly diagonally (Math.PI / 4) so they don't form a chaotic frog shape
-        pt.mesh.rotation.z = Math.PI / 4;
+        // Restore organic rotation based on baseAngle so prisms flow naturally
+        pt.mesh.rotation.z = -(pt.baseAngle + skyIntroTime * 0.015 * (vp.motionSpeed || 1.0) * rpEase);
 
         // illum
         let illum;
