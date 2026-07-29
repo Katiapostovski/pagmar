@@ -225,13 +225,10 @@ vec3 spectral(float t) {
 
 // Prismatic blade (type 0) - single long dramatic prism beam per vertex
 float bladeFn(vec2 p) {
-    // Hover elongation: glow stretches the blade horizontally
-    float hoverStretch = smoothstep(0.3, 2.5, uGlow) * 2.0;
-    float lenVariation = mix(0.1, 0.6, fract(uSeed * 17.3)); // random length, much longer
-    float xDecay = max(0.05, (1.0 - hoverStretch) * lenVariation); 
-    float blade = exp(-abs(p.y) * 300.0) * exp(-abs(p.x) * xDecay); // extremely thin and long
-    float core  = smoothstep(0.015, 0.0, abs(p.x) + abs(p.y)); // tiny core
-    return blade + core * 0.3;
+    float lenVariation = mix(0.8, 1.8, fract(uSeed * 17.3));
+    float blade = exp(-abs(p.y) * 45.0) * exp(-abs(p.x) * 2.0 * lenVariation);
+    blade += exp(-length(p) * 20.0) * 0.4; // Soft core to make the prism less sparse
+    return blade;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -3820,10 +3817,10 @@ function renderQ() {
 
 
             const skyScreen = document.getElementById('screen-sky');
-            skyScreen.style.transition = 'opacity 3.0s ease-in'; // Set BEFORE active class is added
-            initSky(); // showScreen inside adds 'active' → uses the 3.0s transition set above
+            skyScreen.style.transition = 'opacity 1.5s ease-in'; // Set BEFORE active class is added
+            initSky(); // showScreen inside adds 'active' → uses the 1.5s transition set above
             window.updateGlobalBackButton();
-        }, 1800);
+        }, 700);
         
         return;
     }
@@ -5509,11 +5506,11 @@ async function buildSignalField() {
                         c.setAttribute('r','1.8');
                         c.setAttribute('fill','rgba(255,255,255,0.88)');
                         c.style.opacity = '0';
-                        c.style.transition = 'opacity 1.0s ease-in-out';
+                        c.style.transition = 'opacity 1.5s ease-in-out';
                         dstSvg.appendChild(c);
                         requestAnimationFrame(() => { c.getBoundingClientRect(); c.style.opacity = '1'; });
                     });
-                    // LINES CONNECT AFTER (1.5s delay so dots are already visible first)
+                    // LINES CONNECT AFTER (0.5s delay so dots are already visible first)
                     rawSegs.forEach(seg => {
                         const l = document.createElementNS("http://www.w3.org/2000/svg","line");
                         l.setAttribute('x1', cx2 + txf(seg.x1)*flip);
@@ -5526,7 +5523,7 @@ async function buildSignalField() {
                         const len = Math.hypot(txf(seg.x2)*flip - txf(seg.x1)*flip, tyf(seg.y2) - tyf(seg.y1));
                         l.style.strokeDasharray = len;
                         l.style.strokeDashoffset = len;
-                        l.style.transition = 'stroke-dashoffset 3.5s ease-in-out 0.8s';
+                        l.style.transition = 'stroke-dashoffset 6.5s ease-in-out 0.5s';
                         dstSvg.appendChild(l);
                         requestAnimationFrame(() => { l.getBoundingClientRect(); l.style.strokeDashoffset = '0'; });
                     });
