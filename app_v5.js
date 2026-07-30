@@ -6238,9 +6238,10 @@ function skyLoop(ts) {
         if (window.updateDataLabels && window.skyRevealState !== 'recognition') {
             window.updateDataLabels();
         }
-        if (window.updateConstellations) {
-            window.updateConstellations();
-        }
+    }
+    // Ghost constellation positions must update EVERY frame for smooth zoom/pan
+    if (window.updateConstellations) {
+        window.updateConstellations();
     }
 
 
@@ -6632,9 +6633,13 @@ function updatePoint(pt, dt, isClosest) {
                 if (cam.scale > 1.5) {
                     sfOp *= clamp(1.0 - (cam.scale - 1.5) * 0.3, 0.3, 1.0);
                 }
-                // Gentle twinkling
-                const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
-                opacity = sfOp * (0.5 + twinkle * 0.5);
+                // Layered organic twinkling — each star shimmers at its own pace
+                const phase = pt.baseAngle * 10;
+                const slow  = Math.sin(now * 0.0008 + phase) * 0.5 + 0.5;       // slow breath (~8s)
+                const med   = Math.sin(now * 0.003 + phase * 1.7) * 0.5 + 0.5;  // medium (~2s)
+                const fast  = Math.sin(now * 0.012 + phase * 3.1) * 0.5 + 0.5;  // fast flicker
+                const twinkle = slow * 0.5 + med * 0.35 + fast * 0.15;
+                opacity = sfOp * (0.3 + twinkle * 0.7);
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
@@ -6687,11 +6692,12 @@ function updatePoint(pt, dt, isClosest) {
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 glowValue = 0.45; // Uniform glow for all background constellation prisms
             } else if (pt.theme === 'Starfield') {
-                // Starfield glow always active — visible during exploration too
+                // Starfield glow always active — matches opacity twinkling
                 glowValue = pt.starfieldGlow || 0.5;
-                // Gentle Twinkling Glow
-                const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
-                glowValue += twinkle * 0.6;
+                const phase = pt.baseAngle * 10;
+                const slowG  = Math.sin(now * 0.0008 + phase) * 0.5 + 0.5;
+                const medG   = Math.sin(now * 0.003 + phase * 1.7) * 0.5 + 0.5;
+                glowValue += (slowG * 0.4 + medG * 0.3) * 0.5;
             } else {
                 glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
             }
