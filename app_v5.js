@@ -617,7 +617,7 @@ const UI_TEXTS = {
 };
 
 // ── GENDERED HEBREW TEXT HELPER ──
-// Hebrew slash-notation: word/suffix (e.g. מרגיש/ה, יודע/ת, הולך/ת, שואפ/ת)
+// Hebrew slash-notation: word/suffix (e.g. מרגיש/ה, יודע/ת, הולך/ת, שואף/ת)
 // Convention: base = masculine form, base+suffix = feminine form
 // For pronouns (את/ה): base=את (fem), base+ה=אתה (masc) — exception handled below
 // Special: אתה/את and את/ה patterns handled with specific lookup
@@ -698,7 +698,7 @@ const QUESTIONS = [
     },
     {
         id: 'dream', type: 'choice',
-        he: { text: 'מה הדבר שאין לך עדיין ואת/ה הכי שואפ/ת אליו?', sub: '', options: ['שקט פנימי', 'אהבה', 'חופש', 'הצלחה', 'בית', 'יצירה', 'בריאות', 'משמעות', 'אני עוד לא יודע/ת לתת לזה שם'] },
+        he: { text: 'מה הדבר שאין לך עדיין ואת/ה הכי שואף/ת אליו?', sub: '', options: ['שקט פנימי', 'אהבה', 'חופש', 'הצלחה', 'בית', 'יצירה', 'בריאות', 'משמעות', 'אני עוד לא יודע/ת לתת לזה שם'] },
         en: { text: 'What is the one thing you don\'t yet have that you aspire to most?', sub: '', options: ['Inner peace', 'Love', 'Freedom', 'Success', 'Home', 'Creation', 'Health', 'Meaning', 'I don\'t know how to name it yet'] }
     },
     {
@@ -2046,7 +2046,7 @@ function showInterpretationPanel(userVision) {
             'שאיפתך לחופש אינה בריחה — היא שאיפה קוסמית. ' + firstName + ', הכוכבים רואים: אתה/את כבר חצית/ה את רוב הדרך. שלב אחד נוסף של אומץ, ואת/ה שם.'
         ]),
         'אהבה': pick([
-            firstName + ', האהבה שאתה/את שואפ/ת אליה אינה מקרה — היא כח גרביטציה. כוכבים, ' + firstName + ' נשמה שמוכנה לאהוב עמוק, מלא, ומשחרר. המפה שלך מבשרת: מה שבא אלייך קרוב יותר ממה שנדמה.',
+            firstName + ', האהבה שאתה/את שואף/ת אליה אינה מקרה — היא כח גרביטציה. כוכבים, ' + firstName + ' נשמה שמוכנה לאהוב עמוק, מלא, ומשחרר. המפה שלך מבשרת: מה שבא אלייך קרוב יותר ממה שנדמה.',
             firstName + ' נושא/ת בפנים יכולת לאהוב שהיא גדולה ממה שנראה בחוץ. שאיפתך לאהבה היא לא חולשה — היא העוצמה הגדולה ביותר שיש. הדרך שלפנייך מכילה חיבור שיפתיע אותך.'
         ]),
         'יצירה': pick([
@@ -2058,7 +2058,7 @@ function showInterpretationPanel(userVision) {
             'שאיפתך לשקט היא שאיפה של מי שיודע/ת שבתוך הדממה יש תשובות. ' + firstName + ', הכוכבים מבשרים: הפרק הבא בחייך יכניס לך יותר שקט מהפרקים הקודמים. אבל הוא ידרוש שתחליט/י לעצור.'
         ]),
         'הצלחה': pick([
-            firstName + ', ההצלחה שאתה/את שואפ/ת אליה גדולה יותר ממה שאתה/את מרשה/ה לעצמך לדמיין. כוכבים, ' + firstName + ': העוצמה שבך מגוייסת לגמרי — רק המנגנון הפנימי עדיין מחכה לפתיחת הנתיב הנכון. המפה שנוצרה עבורך מגלה: הנתיב כבר שם.',
+            firstName + ', ההצלחה שאתה/את שואף/ת אליה גדולה יותר ממה שאתה/את מרשה/ה לעצמך לדמיין. כוכבים, ' + firstName + ': העוצמה שבך מגוייסת לגמרי — רק המנגנון הפנימי עדיין מחכה לפתיחת הנתיב הנכון. המפה שנוצרה עבורך מגלה: הנתיב כבר שם.',
             'שאיפתך להצלחה אינה יהירות — היא מצפן. ' + firstName + ', הכוכבים רואים: אתה/את בנקודת מפנה. ההחלטות שתקבל/י בשלושת החודשים הקרובים יגדירו את הנרטיב של הפרק הגדול הבא.'
         ]),
         'חיבור': pick([
@@ -3404,20 +3404,17 @@ function initConstellationSystem(userVision) {
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
                 // Ensure ghost sizes match the main constellation logic.
                 // Since gs.group.scale is already cam.scale, child scale only needs to be the base scale * compensation.
-                const BASE_STAR_PX = 450;
-                // Vastly reduced MIN_STAR_PX so ghosts don't become massive white blobs when zooming out
-                const MIN_STAR_PX  = 4;
-                const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 1.2 * compensation; // 1.2 base scale for ghosts
+                // Ghost compensation removed — let them scale naturally with zoom
+                let targetScale = 1.2;
                 
                 // Keep them reasonably bounded
                 const maxAllowedChildScale = 25.0 / Math.max(0.01, cam.scale);
                 
                 gs.group.children.forEach(child => {
                     if (child.isMesh && child.userData.baseScale) {
-                        let targetScale = child.userData.baseScale * compensation;
-                        targetScale = Math.min(targetScale, maxAllowedChildScale);
-                        child.scale.set(targetScale, targetScale, 1);
+                        let childScale = child.userData.baseScale;
+                        childScale = Math.min(childScale, maxAllowedChildScale);
+                        child.scale.set(childScale, childScale, 1);
                     }
                 });
             }
@@ -4921,8 +4918,8 @@ async function buildSignalField() {
             
             const isQDrivenStar = isQCoord; // came from questionnaire drawing
             
-            // All stars in the user's constellation use 'halo' to restore the rich prismatic effect
-            const elType = (isQDrivenStar || !isQDriven) ? 'halo' : 'dot';
+            // All stars use prism beams — no soft dots
+            const elType = 'halo';
 
             // Scale hierarchy: vertex are notably bigger but NOT massive
             // ALL Q-shape stars IDENTICAL size — vertex stars must NOT look like a separate shape.
@@ -4995,7 +4992,7 @@ async function buildSignalField() {
             const minorR = {
                 x: mrX, y: mrY, z: minZ, originalX: mrX, originalY: mrY, originalZ: minZ, targetX: mrX, targetY: mrY, targetZ: minZ,
                 starX: mrX, starY: mrY,
-                anchorIdx: Math.floor(rand()*8), isMajor: false, elementType: 'dot', theme: 'Pareidolia',
+                anchorIdx: Math.floor(rand()*8), isMajor: false, elementType: 'halo', theme: 'Pareidolia',
                 text: null, isBlurred: true, baseAngle: rand() * Math.PI * 2, scale: rand() * 1.5,
                 hue: personalHue, isSeed: false, depthLayer: 1.0 + rand() * 0.5,
                 fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: false,
@@ -5449,9 +5446,26 @@ async function buildSignalField() {
                 const txf = (x) => (x-bcx)*sc, tyf = (y) => (y-bcy)*sc;
                 
                  const drawSide = (flip) => {
-                    // Removed connecting lines/SVG layer entirely per user request: "remove the second layer that connects"
+                    // LINES ONLY — no dots/circles
+                    rawSegs.forEach(seg => {
+                        const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+                        l.setAttribute('x1', cx2 + txf(seg.x1)*flip);
+                        l.setAttribute('y1', cy2 + tyf(seg.y1));
+                        l.setAttribute('x2', cx2 + txf(seg.x2)*flip);
+                        l.setAttribute('y2', cy2 + tyf(seg.y2));
+                        l.setAttribute('stroke','rgba(255,255,255,0.60)');
+                        l.setAttribute('stroke-width','0.8');
+                        l.setAttribute('stroke-linecap','round');
+                        const len = Math.hypot(txf(seg.x2)*flip - txf(seg.x1)*flip, tyf(seg.y2) - tyf(seg.y1));
+                        l.style.strokeDasharray = len;
+                        l.style.strokeDashoffset = len;
+                        l.style.transition = 'stroke-dashoffset 6.5s ease-in-out 0.5s';
+                        dstSvg.appendChild(l);
+                        requestAnimationFrame(() => { l.getBoundingClientRect(); l.style.strokeDashoffset = '0'; });
+                    });
                  };
-                 // Removed drawSide(1); drawSide(-1); and axis line to prevent any white glow/double layer artifacts.
+                 drawSide(1);   // Original constellation side
+                 drawSide(-1);  // Mirror side — Rorschach bilateral symmetry
                 
                 // --- Serialize for ghost pool saving later ---
                 const uniquePts = [];
