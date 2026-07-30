@@ -5140,15 +5140,17 @@ async function buildSignalField() {
     } // end if (!window.isScreensaverMode)
 
     // ── STARFIELD — subtle night-sky background stars ──
-    const STARFIELD_COUNT = 400;
-    const skySpread = 8000; // spread across a large area
+    const STARFIELD_COUNT = 900; // Rich night sky — like real stars
+    const skySpread = 12000; // wider spread for zoom-out
     for (let i = 0; i < STARFIELD_COUNT; i++) {
         const sx = (Math.random() - 0.5) * skySpread * 2;
         const sy = (Math.random() - 0.5) * skySpread * 2;
         const sz = (Math.random() - 0.5) * 200;
-        const sfScale = 0.10 + Math.random() * 0.18; // small dot scale
-        const sfOpacity = 0.15 + Math.random() * 0.25; // visible dots
-        const sfGlow = 0.15 + Math.random() * 0.35;
+        // Mix of tiny dim stars and occasional brighter ones
+        const isBright = Math.random() < 0.15;
+        const sfScale = isBright ? (0.15 + Math.random() * 0.20) : (0.06 + Math.random() * 0.14);
+        const sfOpacity = isBright ? (0.30 + Math.random() * 0.30) : (0.10 + Math.random() * 0.20);
+        const sfGlow = isBright ? (0.30 + Math.random() * 0.40) : (0.10 + Math.random() * 0.25);
         skyPoints.push({
             x: sx, y: sy, z: sz,
             originalX: sx, originalY: sy, originalZ: sz,
@@ -5897,11 +5899,10 @@ function skyLoop(ts) {
         targetGlobalRotY += 0.0003; // Main constellation: very slow Y-axis auto-rotate (~3.5 min per revolution)
         targetGlobalRotX = Math.sin(targetGlobalRotY * 0.7) * 0.15; // Gentle X-axis wobble for organic 3D feel
         
-        // Smoothly interpolate rotation
-        // Fade out parallax when zoomed out so everything feels like a single layer
-        const parallaxFade = smoothstep(0.3, 0.6, cam.scale);
+        // Smoothly interpolate rotation — always active regardless of zoom level
+        const parallaxFade = Math.max(0.3, smoothstep(0.2, 0.6, cam.scale)); // never fully zero
         globalRotX = lerp(globalRotX, targetGlobalRotX * parallaxFade, 0.05);
-        globalRotY = lerp(globalRotY, targetGlobalRotY * parallaxFade, 0.05);
+        globalRotY = lerp(globalRotY, targetGlobalRotY, 0.05); // Y rotation always full (main spin axis)
     } else {
         // Auto camera drift if not dragging (original behavior)
         if (!isDragging && !window.cameraWanderPath) {
@@ -6529,10 +6530,25 @@ function updatePoint(pt, dt, isClosest) {
         pt.bloomP = clamp(pt.bloomP - dt * 0.5, 0, 1);
     }
 
-    // Hover Pulse
-    // DISABLED in revealed state per user request to prevent bright white connecting glow on zoom in.
+    // Hover Pulse — active in all states for interactivity
     if (window.skyRevealState === 'revealed') {
-        pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
+        const hoverRadius = 120;
+        if (screenDist < hoverRadius && !pt.theme) {
+            const intensity = 1.0 - screenDist / hoverRadius;
+            pt.hoverPulse = lerp(pt.hoverPulse, intensity * 0.6, dt * 3.0); // gentler than pre-reveal
+            // Subtle star displacement — stars nudge away from cursor
+            if (!pt._hoverOffX) pt._hoverOffX = 0;
+            if (!pt._hoverOffY) pt._hoverOffY = 0;
+            const sp = w2s(pt.x, pt.y);
+            const pushAngle = Math.atan2(sp.y - globalMouse.y, sp.x - globalMouse.x);
+            const pushStrength = intensity * 4; // max 4px push
+            pt._hoverOffX = lerp(pt._hoverOffX, Math.cos(pushAngle) * pushStrength / cam.scale, dt * 5);
+            pt._hoverOffY = lerp(pt._hoverOffY, Math.sin(pushAngle) * pushStrength / cam.scale, dt * 5);
+        } else {
+            pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
+            if (pt._hoverOffX) pt._hoverOffX = lerp(pt._hoverOffX, 0, dt * 3);
+            if (pt._hoverOffY) pt._hoverOffY = lerp(pt._hoverOffY, 0, dt * 3);
+        }
     } else {
         const hoverRadius = 100;
         if (screenDist < hoverRadius) {
@@ -6623,8 +6639,8 @@ function updatePoint(pt, dt, isClosest) {
         // Starfield stars: no shockwave displacement — fixed background
         const sDisX = isStarfield ? 0 : shockDisplaceX;
         const sDisY = isStarfield ? 0 : shockDisplaceY;
-        pt.mesh.position.x = sp.x - WW / 2 + parallaxX + sDisX;
-        pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + sDisY;
+        pt.mesh.position.x = sp.x - WW / 2 + parallaxX + sDisX + (pt._hoverOffX || 0);
+        pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + sDisY + (pt._hoverOffY || 0);
         // Appear via OPACITY fade-in (not scale-up) so there is no "zoom in then zoom out" illusion
         // Each star appears at full size immediately and fades in gently
         const finalScale = s; // always full size from the first frame
@@ -7616,6 +7632,102 @@ document.addEventListener('DOMContentLoaded', () => {
             // Hide button
             btnSunrise.classList.remove('visible');
             btnSunrise.style.display = 'none';
+            
+            // ── INJECT PERSONALIZED EPILOGUE CONTENT ──
+            const firstName = (typeof answers !== 'undefined' && answers.name) || '';
+            const rawVision = (typeof answers !== 'undefined' && answers.pareidolia || '').trim();
+            const cleanVision = rawVision.replace(/^ה/, '');
+            
+            // Deep symbolic interpretations — personal discovery through pareidolia
+            const epilogueMap = {
+                'סרטן': {
+                    title: 'השריון הרך.',
+                    body: firstName + ', מי שרואה סרטן בכוכבים נושא בתוכו עולם פנימי עשיר שמוגן בשריון חיצוני. הסרטן אינו חלש — הוא יודע שהרכות שבפנים היא הדבר הכי חזק שיש. הוא בונה בית מתוך עצמו, לא ממתין שמישהו יבנה לו.',
+                    insight: 'ההגנה שבנית סביבך אינה חולשה — היא חוכמה. אבל לפעמים השריון נשאר גם כשאין ממה להתגונן. שאל את עצמך: מה היה קורה אם היית מרשה לרכות לצאת החוצה?'
+                },
+                'פרפר': {
+                    title: 'הכנפיים שנבנו באפלה.',
+                    body: firstName + ', הפרפר הוא הסמל העתיק ביותר לשינוי שמגיע מבפנים. הכנפיים לא ניתנו לו — הן נבנו בחושך הגולם. מי שרואה פרפר בכוכבים עובר כרגע תהליך של התחדשות, גם אם מבחוץ נראה שום דבר לא זז.',
+                    insight: 'התקופה שאתה בה עכשיו דומה לגולם — סגור, חשוך, אבל מלא בבנייה. מה שאתה הולך להפוך אליו גדול ממה שהיית. תן לתהליך את הזמן שלו.'
+                },
+                'עטלף': {
+                    title: 'הרואה בחושך.',
+                    body: firstName + ', העטלף נע בביטחון מוחלט במקום שאחרים לא מסוגלים לראות בו כלום. הוא לא זקוק לאור של אחרים — יש לו מערכת ניווט פנימית. מי שרואה עטלף בכוכבים סומך על אינטואיציה, לא על מה שנראה.',
+                    insight: 'יש לך יכולת לקרוא מצבים ואנשים בדיוק מפתיע. הבעיה: לפעמים אתה לא סומך על מה שאתה יודע כי אף אחד סביבך לא רואה את אותו הדבר. סמוך. אתה צודק יותר ממה שאתה חושב.'
+                },
+                'עש': {
+                    title: 'מי שהולך אל האור.',
+                    body: firstName + ', העש אינו טיפש כשהוא טס לאור — הוא עוקב אחרי מצפן פנימי שלא מוותר. יש בך משיכה למשהו שגדול ממך, גם כשזה כואב, גם כשזה שורף. העש הוא נאמנות לשליחות.',
+                    insight: 'הדבר שמושך אותך חזק — אדם, חלום, מקום — הוא לא אשליה. אבל הגישה צריכה להשתנות. תמשיך ללכת אליו, אבל אל תיתן לו לשרוף אותך. מצא את המרחק הנכון.'
+                },
+                'עקרב': {
+                    title: 'העוצמה השקטה.',
+                    body: firstName + ', העקרב הוא יצור של קיצוניות — מרגיש עמוק, לא מוותר, ויודע לשרוד מקומות שאחרים לא שורדים. מי שרואה עקרב בכוכבים נושא מבט חד שחותך דרך שטחיות.',
+                    insight: 'יש בך נאמנות קיצונית ויכולת לראות מה שאחרים מעדיפים לא לראות. השאלה שהכוכבים שואלים: מה עדיין לא הרשית לעצמך לשחרר — ומה מחכה להיוולד תחתיו?'
+                },
+                'דב': {
+                    title: 'הכוח שלא מוכיח את עצמו.',
+                    body: firstName + ', הדב לא מראה כוח — הוא פשוט חזק. אין בו צורך בהוכחות, אין בו צורך באישור. מי שרואה דב בכוכבים מחזיק בתוכו משאבים אדירים שפועלים בשקט.',
+                    insight: 'אתה לא צריך להוכיח לאף אחד מה שאתה שווה. הכוח שבך אמיתי ועובד גם כשאתה לא שם לב אליו. הגיע הזמן לסמוך עליו — בלי להתנצל, בלי להסביר.'
+                },
+                'סוס': {
+                    title: 'האנרגיה הצבורה.',
+                    body: firstName + ', הסוס רץ לא כי מישהו אמר לו לרוץ — הוא רץ כי זה מה שהוא. יש בך אנרגיה אדירה שצבורה ומחכה לכיוון. לא חסר לך כוח, חסר לך שדה פתוח.',
+                    insight: 'הרגע שבו תדע לאן — תרוץ כמו שלא רצת מעולם. השאלה לא "האם אני מסוגל" אלא "לאן אני רוצה להגיע". ברגע שתענה — שום דבר לא יעצור אותך.'
+                },
+                'דבורה': {
+                    title: 'הבונה בשקט.',
+                    body: firstName + ', הדבורה עובדת ללא הפסקה על משהו שגדול ממנה. היא לא בונה בשביל עצמה — היא בונה מערכת שלמה. מי שרואה דבורה בכוכבים יוצר בעולם יותר ממה שהוא מודע לו.',
+                    insight: 'מה שאתה בונה ביום-יום — המילים, הפעולות, הקשרים — יוצר מבנה שלם שאתה לא רואה עדיין. הוא שם. הוא אמיתי. תמשיך.'
+                },
+                'ציפור': {
+                    title: 'המבט מלמעלה.',
+                    body: firstName + ', הציפור רואה את כל התמונה מגובה שאחרים לא מגיעים אליו. יש בך יכולת לראות דברים מנקודת מבט רחבה, לזהות דפוסים שאחרים מפספסים.',
+                    insight: 'אתה יודע דברים שאתה לא מסביר — פשוט רואה אותם. זה לא דמיון, זו פרספקטיבה. השאלה שלך היא: מה מונע ממך לעוף לשם?'
+                },
+                'צפרדע': {
+                    title: 'בין שני עולמות.',
+                    body: firstName + ', הצפרדע חיה במים וביבשה — בין העולם הנסתר לעולם הגלוי. מי שרואה צפרדע בכוכבים מכיר שני עולמות בו-זמנית ויודע לנוע ביניהם.',
+                    insight: 'הזהות הכפולה שלך — רגשי ושכלי, פנימי וחיצוני, חזק ורך — אינה סתירה. היא המתנה. אתה יכול לחיות בשניהם בלי לבחור.'
+                },
+                'בית': {
+                    title: 'השורשים שלך.',
+                    body: firstName + ', הבית בכוכבים הוא המקום הפנימי ביותר — לא קירות אלא תחושה. מי שרואה בית מחפש שורש, שייכות, מקום שבו אפשר להיות בלי מסכה.',
+                    insight: 'הבית שאתה מחפש לא נמצא במפה — הוא נמצא בתוכך. כשתרגיש בטוח בתוך עצמך, כל מקום יהפוך לבית. התהליך הזה כבר התחיל.'
+                },
+                'אונייה': {
+                    title: 'המסע.',
+                    body: firstName + ', האונייה אינה המטרה — היא הדרך. מי שרואה אונייה בכוכבים מרגיש שהוא באמצע מעבר, בין חוף אחד לשני, עדיין לא הגיע אבל כבר יצא.',
+                    insight: 'אתה בתנועה, גם אם מרגיש שאתה תקוע. האוקיינוס שאתה חוצה עכשיו הוא הפרק שבין מי שהיית למי שאתה הולך להיות. אל תנסה לחזור לחוף — המעבר הזה הכרחי.'
+                },
+                'מטוס': {
+                    title: 'הנמלט.',
+                    body: firstName + ', המטוס הוא חלום של עזיבה מהירה — היכולת להתרומם מעל הכל ברגע. מי שרואה מטוס בכוכבים מרגיש צורך חזק בשחרור, בתנועה, בהתרחקות ממשהו.',
+                    insight: 'השאלה האמיתית: ממה אתה רוצה להתרחק — ולאן אתה רוצה להגיע? לפעמים הבריחה היא לא מהמקום אלא מהתחושה. מצא מה צריך להשתנות — והכל ישתנה.'
+                }
+            };
+            
+            // Get personalized content
+            const entry = epilogueMap[cleanVision] || epilogueMap[rawVision] || null;
+            const contentEl = epilogueScreen.querySelector('.epilogue-content');
+            const titleEl = epilogueScreen.querySelector('.epilogue-title');
+            
+            if (entry && contentEl && titleEl) {
+                titleEl.textContent = entry.title;
+                contentEl.innerHTML = `
+                    <p style="line-height: 1.7; margin-bottom: 1.5rem;">${genderize(entry.body)}</p>
+                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 1.5rem auto; width: 60px;">
+                    <p class="epilogue-punchline" style="line-height: 1.7;">${genderize(entry.insight)}</p>
+                `;
+            } else if (rawVision && contentEl && titleEl) {
+                // Fallback for unknown shapes
+                titleEl.textContent = 'מה שראית.';
+                contentEl.innerHTML = `
+                    <p style="line-height: 1.7; margin-bottom: 1.5rem;">${genderize(firstName + ', הצורה שראית/ת בכוכבים — ' + cleanVision + ' — לא נבחרה במקרה. הנשמה בוחרת סמל מתוך אינסוף האפשרויות, וזה שעלה הוא השיקוף של מה שהכי חי בך ברגע הזה.')}</p>
+                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 1.5rem auto; width: 60px;">
+                    <p class="epilogue-punchline" style="line-height: 1.7;">${genderize('שאל/י את עצמך: מה אומר/ת לך ' + cleanVision + '? התשובה שתעלה — היא המסר שהכוכבים השאירו בשבילך.')}</p>
+                `;
+            }
             
             // Trigger sunrise fade
             dawnOverlay.classList.add('active');
