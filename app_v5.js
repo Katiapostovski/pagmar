@@ -712,6 +712,15 @@ function genderize(text) {
         'שואף/ת':    { male: 'שואף', female: 'שואפת' },
         'שואף/פת':   { male: 'שואף', female: 'שואפת' },
         'מאסטר/ית':  { male: 'מאסטר', female: 'מאסטרית' },
+        'ביתו/ה':    { male: 'ביתו', female: 'ביתה' },
+        'שביתו/ה':   { male: 'שביתו', female: 'שביתה' },
+        'עבר/ה':     { male: 'עבר', female: 'עברה' },
+        'יצא/ה':     { male: 'יצא', female: 'יצאה' },
+        'נמצא/ת':    { male: 'נמצא', female: 'נמצאת' },
+        'מתקרב/ת':   { male: 'מתקרב', female: 'מתקרבת' },
+        'כותב/ת':    { male: 'כותב', female: 'כותבת' },
+        'מבינ/ה':    { male: 'מבין', female: 'מבינה' },
+        'תן/תני':    { male: 'תן', female: 'תני' },
     };
 
     // First pass: replace known full-word patterns (use placeholders to prevent re-processing)
@@ -3101,8 +3110,8 @@ function initConstellationSystem(userVision) {
         {
             nameHe: 'העכביש', nameEn: 'the spider',
             color: 'rgba(255,150,150,',
-            textHe: 'העכביש אורג את עולמו מתוך עצמו.',
-            textEn: 'The spider weaves its world from within.',
+            textHe: 'העכביש אורג את עולמו מתוך עצמו. כל חוט שהוא יוצר הוא גם מלכודת וגם פגיעות. מי שרואה עכביש בכוכבים יודע שהרשת שהוא בונה היא גם מה שמחזיק אותו.',
+            textEn: 'The spider weaves its world from within itself. Every thread it creates is both trap and bridge. Those who see the spider in the stars know that the web they build is also what sustains them.',
             offset: { x: -5800, y: -5000 },
             pts: [ {x:0,y:0}, {x:50,y:-50}, {x:70,y:-20}, {x:70,y:20}, {x:50,y:50}, {x:-50,y:50}, {x:-70,y:20}, {x:-70,y:-20}, {x:-50,y:-50} ],
             lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]]
@@ -3110,8 +3119,8 @@ function initConstellationSystem(userVision) {
         {
             nameHe: 'האריה', nameEn: 'the lion',
             color: 'rgba(255,200,100,',
-            textHe: 'מלך החיות.',
-            textEn: 'King of the beasts.',
+            textHe: 'מלך החיות לא שולט בכוח, אלא בנוכחות. האריה מלמד שהעוצמה האמיתית לא זקוקה לשאגה, היא פשוט קיימת. מי שרואה אריה בכוכבים נושא בתוכו עוצמה שלא דורשת הוכחה.',
+            textEn: 'The king of beasts does not rule by force, but by presence. The lion teaches that true power needs no roar — it simply exists. Those who see the lion in the stars carry a quiet strength within.',
             offset: { x: 7200, y: 2800 },
             pts: [ {x:0,y:0}, {x:40,y:-60}, {x:80,y:-20}, {x:60,y:40}, {x:0,y:80}, {x:-60,y:40}, {x:-80,y:-20}, {x:-40,y:-60} ],
             lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]]
@@ -3397,7 +3406,7 @@ function initConstellationSystem(userVision) {
             const exploreFade = isFocused ? 1.0 : Math.max(zoomOutReveal, panReveal, proximityReveal);
             
             // Age factor: varied brightness — each ghost has its own glow level
-            const ageIntensity = 0.35 + (gi / ghostDefs.length) * 0.65; // 0.35 to 1.0 (was 0.15)
+            const ageIntensity = 0.45 + (gi / ghostDefs.length) * 0.55; // 0.45 to 1.0 (stronger base)
             
             // As you zoom in, they reach full 1.0 color intensity
             const zoomInFactor = smoothstep(0.3, 0.9, cam.scale); 
@@ -3501,9 +3510,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow — boost significantly on hover
-                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.4 + hGlow * 1.5);
+                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.6 + hGlow * 1.5);
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.45 + hGlow * 1.2; // Stronger base glow for visibility
+                mat.uniforms.uGlow.value = 0.55 + hGlow * 1.2; // Strong base glow for clear visibility
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -3634,7 +3643,7 @@ function initConstellationSystem(userVision) {
         });
 
         // ── USER CONSTELLATION LABEL ─────────────────────────────────────
-        if (window.skyRevealState === 'revealed' && window.hasWandered) {
+        if (window.skyRevealState === 'revealed') {
             if (!window.userConstellationLabel) {
                 window.userConstellationLabel = document.createElement('div');
                 window.userConstellationLabel.style.cssText = [
@@ -3686,14 +3695,19 @@ function initConstellationSystem(userVision) {
             
             // Calculate alpha — show label when zoomed out enough to see the full constellation
             const camDist = Math.hypot(cam.x, cam.y);
-            let targetAlpha = (camDist > 800) ? 0.75 : 0.0;
+            // Show by zoom level (always visible when zoomed out) OR by distance (panned away)
+            let targetAlpha = 0;
+            if (cam.scale < 0.55) {
+                targetAlpha = Math.max(targetAlpha, smoothstep(0.55, 0.35, cam.scale) * 0.85);
+            }
+            if (camDist > 800) targetAlpha = Math.max(targetAlpha, 0.75);
             const screenX = (-cam.x) * cam.scale;
             const screenY = (-cam.y) * cam.scale;
             const halfW = window.innerWidth * 0.55;
             const halfH = window.innerHeight * 0.55;
             const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
-            // Show label when zoomed out (scale < 0.6) — like ghost constellation labels
-            const screenAlpha = onScreen ? Math.max(0, 0.75 - cam.scale * 1.1) : 0;
+            // Also show when on screen and zoomed out
+            const screenAlpha = onScreen ? Math.max(0, 0.85 - cam.scale * 1.2) : 0;
             targetAlpha = Math.max(targetAlpha, screenAlpha);
             
             window._userLabelAlpha = (window._userLabelAlpha || 0) + (targetAlpha - (window._userLabelAlpha || 0)) * 0.06;
