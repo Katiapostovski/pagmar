@@ -223,11 +223,15 @@ vec3 spectral(float t) {
     return c * c * 1.8; // boosted — more vivid prismatic colors
 }
 
-// Prismatic blade (type 0) - single long dramatic prism beam per vertex (original)
+// Prismatic blade (type 0) - single long dramatic prism beam per vertex
 float bladeFn(vec2 p) {
-    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 1.5);
-    float core  = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 1.5;
+    // Hover elongation: glow stretches the blade horizontally
+    float hoverStretch = smoothstep(0.3, 2.5, uGlow) * 2.0;
+    float lenVariation = mix(0.5, 1.6, fract(uSeed * 17.3)); // random length
+    float xDecay = (3.0 - hoverStretch) * lenVariation; 
+    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * xDecay);
+    float core  = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
+    return blade + core * 0.4;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
@@ -278,8 +282,8 @@ void main() {
     // Color intensity (rainbow & RGB split) fades when zooming out (less colorful at a distance)
     float zoomColor = mix(0.4, 1.0, smoothstep(0.2, 1.0, uZoom));
     
-    // Uniform brightness — no boost on zoom-out to prevent white blob glare
-    float zoomBright = 1.0;
+    // Overall brightness increases when zooming out (more glowing/bright at a distance)
+    float zoomBright = mix(2.0, 1.0, smoothstep(0.2, 1.2, uZoom));
 
     // Prismatic color active based on zoom
     float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.005;
@@ -305,23 +309,30 @@ void main() {
     vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
     vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
     
-    // Add back the central dot, keeping it very small so it doesn't blob
+    // Add back the central dot, keeping it small but visible
     float r = length(uv);
-    // Removed white core as per user request to remove bright white effect on zoom-in
-    // float coreZoomFade = mix(1.0, 0.0, smoothstep(0.3, 1.2, uZoom));
-    // vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.015, 0.0, r) * (1.5 * coreZoomFade);
+    vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.04, 0.0, r) * 2.2;
     
-    vec3 beamCol = (rgbSplit + spectralGlow) * twinkle * zoomBright;
+    vec3 beamCol = (rgbSplit + spectralGlow + whiteCore) * twinkle * zoomBright;
     vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle * zoomBright;
     vec3 col = mix(beamCol, dotCol, isDotType);
 
     float iCore = max(iR, max(iG, iB));
-    // Natural zoom fade — stars shrink and fade naturally at distance
-    float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
+    // Starfield dots: no zoom fade — always visible at all zoom levels
+    // Beams: minimum 0.5 at zoom-out for strong glow even from far away
+    float zoomFade  = mix(clamp(uZoom * 1.4, 0.5, 1.0), 1.0, isDotType);
     float alpha = iCore * uOpacity * zoomFade;
 
-    // Major star core pulse removed to eliminate white glow artifact on zoom
-
+    // Major star: subtle warm core pulse
+    if (uHasLabel > 0.5) {
+        float discoveryFactor = smoothstep(1.3, 2.0, clamp(uZoom, 0.0, 10.0));
+        float r = length(uv);
+        float pulse = sin(uTime * 2.5) * 0.5 + 0.5;
+        // Make the pulse core extremely tiny so it doesn't blow out the center
+        float coreGlow = exp(-r * 180.0) * pulse; 
+        col += vec3(1.0, 0.95, 0.8) * coreGlow * 1.5 * discoveryFactor;
+        alpha += coreGlow * 0.5 * discoveryFactor;
+    }
 
     // (sweep effects removed — clean single prism only)
 
@@ -3188,8 +3199,8 @@ function initConstellationSystem(userVision) {
         gs.starMeshes = [];
         ghost.pts.forEach((pt, pi) => {
             const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
-            // Use prisms (0.0) for everything so we get the fish/bird aesthetic, not dots (3.0)
-            const beamType = pt.isDistractor ? 0.0 : 0.0;
+            // Use one main prism for the ghost anchor (pi===0), and soft dots for the rest to prevent massive glare
+            const beamType = pt.isDistractor ? 3.0 : (pi === 0 ? 0.0 : 3.0);
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
@@ -3212,7 +3223,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            const baseScale = pt.isDistractor ? (2.0 + Math.random() * 4.0) : (4.0 + Math.random() * 8.0);
+            const baseScale = pt.isDistractor ? (3.0 + Math.random() * 6.0) : (7.0 + Math.random() * 10.0);
             mesh.userData.baseScale = baseScale;
             mesh.scale.set(baseScale, baseScale, 1.0);
             mesh.position.set(pt.x, pt.y, pt.isDistractor ? -20 : 0);
@@ -3405,8 +3416,7 @@ function initConstellationSystem(userVision) {
                 // Ensure ghost sizes match the main constellation logic.
                 // Since gs.group.scale is already cam.scale, child scale only needs to be the base scale * compensation.
                 const BASE_STAR_PX = 450;
-                // Vastly reduced MIN_STAR_PX so ghosts don't become massive white blobs when zooming out
-                const MIN_STAR_PX  = 4;
+                const MIN_STAR_PX  = 80;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
                 let targetScale = 1.2 * compensation; // 1.2 base scale for ghosts
                 
@@ -3426,9 +3436,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.5, a * 1.0 + hGlow * 0.5); // Reduced opacity to prevent blobs
+                mat.uniforms.uOpacity.value = Math.min(2.5, a * 1.2 + hGlow * 0.8); // Cranked up opacity to match main constellation
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.8 + hGlow * 1.0; // Reduced base glow
+                mat.uniforms.uGlow.value = 1.2 + hGlow * 1.5; // High base glow
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -3536,7 +3546,7 @@ function initConstellationSystem(userVision) {
                 const col2 = ghost.color;
                 
                 // Name label
-                if (gs.labelEl.style.display !== 'block') gs.labelEl.style.display = 'block';
+                gs.labelEl.style.display = 'block';
                 gs.labelEl.style.left = s2.x + 'px';
                 gs.labelEl.style.top = (s2.y - 50 * cam.scale) + 'px';
                 gs.labelEl.style.fontSize = Math.round(8 + a * 5) + 'px';
@@ -3548,8 +3558,8 @@ function initConstellationSystem(userVision) {
                 gs.infoEl.style.opacity = '0';
                 gs.infoEl.style.display = 'none';
             } else {
-                if (gs.labelEl.style.display !== 'none') gs.labelEl.style.display = 'none';
-                if (gs.infoEl.style.display !== 'none') gs.infoEl.style.display = 'none';
+                gs.labelEl.style.display = 'none';
+                gs.infoEl.style.display = 'none';
             }
         });
 
@@ -3619,17 +3629,17 @@ function initConstellationSystem(userVision) {
             
             if (window._userLabelAlpha > 0.04) {
                 const s2 = w2s(0, 0); // user constellation is at 0,0
-                if (window.userConstellationLabel.style.display !== 'block') window.userConstellationLabel.style.display = 'block';
+                window.userConstellationLabel.style.display = 'block';
                 window.userConstellationLabel.style.left = s2.x + 'px';
                 window.userConstellationLabel.style.top = (s2.y - 50 * cam.scale) + 'px';
                 window.userConstellationLabel.style.fontSize = Math.round(8 + window._userLabelAlpha * 5) + 'px';
                 window.userConstellationLabel.style.opacity = (window._userLabelAlpha * 0.9).toFixed(2);
                 window.userConstellationLabel.textContent = (window.userConstellationName || window.userVision || '').toUpperCase();
             } else {
-                if (window.userConstellationLabel.style.display !== 'none') window.userConstellationLabel.style.display = 'none';
+                window.userConstellationLabel.style.display = 'none';
             }
         } else if (window.userConstellationLabel) {
-            if (window.userConstellationLabel.style.display !== 'none') window.userConstellationLabel.style.display = 'none';
+            window.userConstellationLabel.style.display = 'none';
             window._userLabelAlpha = 0;
         }
     };
@@ -3809,10 +3819,10 @@ function renderQ() {
 
 
             const skyScreen = document.getElementById('screen-sky');
-            skyScreen.style.transition = 'opacity 1.5s ease-in'; // Set BEFORE active class is added
-            initSky(); // showScreen inside adds 'active' → uses the 1.5s transition set above
+            skyScreen.style.transition = 'opacity 3.0s ease-in'; // Set BEFORE active class is added
+            initSky(); // showScreen inside adds 'active' → uses the 3.0s transition set above
             window.updateGlobalBackButton();
-        }, 700);
+        }, 1800);
         
         return;
     }
@@ -4921,8 +4931,9 @@ async function buildSignalField() {
             
             const isQDrivenStar = isQCoord; // came from questionnaire drawing
             
-            // All stars in the user's constellation use 'halo' to restore the rich prismatic effect
-            const elType = (isQDrivenStar || !isQDriven) ? 'halo' : 'dot';
+            // Vertex/key-corner stars MUST be 'halo' to create the beautiful prismatic blades!
+            // Path stars use simple 'dot' to prevent GPU lag and blinding glare.
+            const elType = isVertexStar ? 'halo' : 'dot';
 
             // Scale hierarchy: vertex are notably bigger but NOT massive
             // ALL Q-shape stars IDENTICAL size — vertex stars must NOT look like a separate shape.
@@ -4930,12 +4941,13 @@ async function buildSignalField() {
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
                 ? (2.2 + rand() * 0.8)     // Restored to thick blades so they are clearly visible
-                : (isVertexStar || isQDrivenStar || !isQDriven)
+                : (isVertexStar || isQDrivenStar)
                     ? (1.2 + rand() * 0.8)   // 1.2-2.0 - visible path
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
 
-            // Don't hide the path stars! Ensure all parts of the user's drawing are fully visible prisms.
-            const meshVisibleOverride = true;
+            // Hide the extra "dot" stars that make up the path. 
+            // We want the WebGL lines to connect them, but the dots themselves shouldn't be visible.
+            const meshVisibleOverride = isQDrivenStar && !isVertexStar ? false : true;
             
             // Use personal hue but allow slight drift for a sparkling effect
             const cOffset = Math.floor(personalHue / 45);
@@ -4958,7 +4970,7 @@ async function buildSignalField() {
                 scale: scaleBase,
                 hue: lobeHue, 
                 isSeed: false, 
-                depthLayer: (isMajorPoint || isQDrivenStar) ? 1.0 : (1.2 + rand() * 0.5),
+                depthLayer: isMajorPoint ? 1.0 : (1.2 + rand() * 0.5),
                 fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: false,
                 pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
@@ -5142,7 +5154,8 @@ async function buildSignalField() {
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
     } // end if (!window.isScreensaverMode)
 
-    // ── STARFIELD (REMOVED) ── white dots caused glare blobs on separate layer
+    // ── STARFIELD (REMOVED) ──
+    // The user requested removing the bright white stars that appear stuck during zoom-out.
 
     // Add text labels to one major point per theme
     for (let t = 0; t < 8; t++) {
@@ -5376,12 +5389,6 @@ async function buildSignalField() {
             // Collect raw points and segments from ALL SVG elements
             const rawPts = [], rawSegs = [];
             
-            const addRawPt = (x, y) => {
-                if (!rawPts.some(p => Math.abs(p.x - x) < 5 && Math.abs(p.y - y) < 5)) {
-                    rawPts.push({x, y});
-                }
-            };
-            
             // Paths (quadratic curves)
             const paths = Array.from(srcSvg.querySelectorAll('path'));
             paths.forEach(p => {
@@ -5393,8 +5400,7 @@ async function buildSignalField() {
                     const y1 = parseFloat(match[2]);
                     const x2 = parseFloat(match[3]);
                     const y2 = parseFloat(match[4]);
-                    addRawPt(x1, y1);
-                    addRawPt(x2, y2);
+                    rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
                     rawSegs.push({x1, y1, x2, y2});
                 }
             });
@@ -5406,8 +5412,7 @@ async function buildSignalField() {
                 const y1 = parseFloat(line.getAttribute('y1'));
                 const x2 = parseFloat(line.getAttribute('x2'));
                 const y2 = parseFloat(line.getAttribute('y2'));
-                addRawPt(x1, y1);
-                addRawPt(x2, y2);
+                rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
                 rawSegs.push({x1, y1, x2, y2});
             });
             
@@ -5417,7 +5422,11 @@ async function buildSignalField() {
                 const cx = parseFloat(c.getAttribute('cx'));
                 const cy = parseFloat(c.getAttribute('cy'));
                 if (!isNaN(cx) && !isNaN(cy)) {
-                    addRawPt(cx, cy);
+                    // Check if this point is already in rawPts (avoid duplicates)
+                    const alreadyExists = rawPts.some(p => Math.abs(p.x - cx) < 5 && Math.abs(p.y - cy) < 5);
+                    if (!alreadyExists) {
+                        rawPts.push({x: cx, y: cy});
+                    }
                 }
             });
             
@@ -5449,9 +5458,37 @@ async function buildSignalField() {
                 const txf = (x) => (x-bcx)*sc, tyf = (y) => (y-bcy)*sc;
                 
                  const drawSide = (flip) => {
-                    // Removed connecting lines/SVG layer entirely per user request: "remove the second layer that connects"
+                    // LINES ONLY: Draw as a single continuous path to prevent DOM freezing (mouse lag)
+                    // We completely remove the individual circle points per user request ("לא אמור להיות בכלל נקודות")
+                    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+                    let d = '';
+                    let totalLen = 0;
+                    rawSegs.forEach(seg => {
+                        const x1 = cx2 + txf(seg.x1)*flip;
+                        const y1 = cy2 + tyf(seg.y1);
+                        const x2 = cx2 + txf(seg.x2)*flip;
+                        const y2 = cy2 + tyf(seg.y2);
+                        d += `M${x1},${y1} L${x2},${y2} `;
+                        totalLen += Math.hypot(x2-x1, y2-y1);
+                    });
+                    
+                    if (d) {
+                        path.setAttribute('d', d);
+                        path.setAttribute('stroke','rgba(255,255,255,0.60)');
+                        path.setAttribute('stroke-width','0.8');
+                        path.setAttribute('stroke-linecap','round');
+                        path.setAttribute('fill','none');
+                        // Use a reasonable cap on dash array for the animation
+                        const dashLen = Math.min(totalLen, 10000);
+                        path.style.strokeDasharray = dashLen;
+                        path.style.strokeDashoffset = dashLen;
+                        path.style.transition = 'stroke-dashoffset 4.5s ease-in-out 0.2s';
+                        dstSvg.appendChild(path);
+                        requestAnimationFrame(() => { path.getBoundingClientRect(); path.style.strokeDashoffset = '0'; });
+                    }
                  };
-                 // Removed drawSide(1); drawSide(-1); and axis line to prevent any white glow/double layer artifacts.
+                 drawSide(1);   // Original constellation side
+                 drawSide(-1);  // Mirror side — creates Rorschach / inkblot bilateral symmetry
                 
                 // --- Serialize for ghost pool saving later ---
                 const uniquePts = [];
@@ -5487,7 +5524,7 @@ async function buildSignalField() {
                         u.uGlow.value    = pt.isMajor ? 0.3 : 0.15;
                     }
                 });
-                if (webglLines) webglLines.visible = true; // Lines ARE requested!
+                if (webglLines) webglLines.visible = false; // User requested: NO connecting lines
             }
         }
         
@@ -5525,11 +5562,9 @@ async function buildSignalField() {
                 // IMMEDIATELY hide ALL recognition UI — no text leaks to prismatic screen
                 const _recogOvl = document.getElementById('recognition-overlay');
                 if (_recogOvl) _recogOvl.style.display = 'none';
-                // Removed clearing of SVG so it can stay aligned and fade smoothly on zoom
+                // *** ROOT CAUSE FIX: clear SVG instantly at t=0 ***
                 const _svgNow = document.getElementById('sky-lineart-svg');
-                if (_svgNow) {
-                    _svgNow.style.transition = 'opacity 0.5s ease';
-                }
+                if (_svgNow) { _svgNow.innerHTML = ''; _svgNow.style.display = 'none'; }
                 // *** SCREEN WIPE: brief opacity=0 to flush any GPU-composited SVG layers ***
                 const _skyScrWipe = document.getElementById('screen-sky');
                 if (_skyScrWipe) {
@@ -5623,7 +5658,7 @@ async function buildSignalField() {
                         }
                         
                         // Restore ALL mesh visibility (recognition mode hid them)
-                        if (webglLines) webglLines.visible = true; // Lines ARE requested!
+                        if (webglLines) webglLines.visible = false; // User requested: NO connecting lines
                         skyPoints.forEach(pt => { 
                             if (pt.mesh && pt._meshVisibleOverride !== false) {
                                 pt.mesh.visible = true; 
@@ -6083,24 +6118,23 @@ function skyLoop(ts) {
     const _isQShapePt = pt.isVertexStar || pt.isQPathStar;
     // Q-shape stars: draw bright connecting lines even in pointillism mode
     // Other stars: only draw lines in non-pointillism mode
-    if (window.skyRevealState === 'revealed' && pt.mesh.visible &&
-        (_isQShapePt || !window.isPointillism)) {
+    if (false) { // DISABLED: user explicitly requested no connecting lines between points
         let linesDrawn = 0;
         for (let i = 0; i < pt.neighborPts.length && linesDrawn < 2; i++) {
             const opt = pt.neighborPts[i];
             if (opt === pt || opt.mesh.visible === false) continue;
             
             const d = Math.hypot(pt.x - opt.x, pt.y - opt.y);
-            const _isQConn = _isQShapePt && (opt.isVertexStar || opt.isQPathStar);
-            if (_isQConn) continue; // Remove bright white double layer; SVG draws the prism lines cleanly
-            
-            const thresh = (250 * pt.assemblyProgress);
+            // Q-shape points connect sequentially, ignore distance threshold
+            const thresh = _isQShapePt ? 99999 : (250 * pt.assemblyProgress);
 
             if (d < thresh) {
                 // Fade line based on appearP of both connected points
                 // FIX: use nullish check, not ||, because 0 || 1.0 = 1.0 in JS
                 const appearFade = (pt.appearP != null ? pt.appearP : 1.0) * (opt.appearP != null ? opt.appearP : 1.0);
-                const lineBase = 0.12; // background connections only
+                // Q-shape connections are bright; background connections are dim
+                const _isQConn = _isQShapePt && (opt.isVertexStar || opt.isQPathStar);
+                const lineBase = _isQConn ? 0.52 : 0.12;
                 const alpha = (1 - d/thresh) * rpEase * lineBase * appearFade;
                 if (alpha > 0.01 && lineIdx + 5 < positions.length && (lineIdx / 6) < 600) {
                     const osp = w2s(opt.x, opt.y);
@@ -6464,21 +6498,21 @@ function updatePoint(pt, dt, isClosest) {
     }
 
     // Hover Pulse
-    // DISABLED in revealed state per user request to prevent bright white connecting glow on zoom in.
-    if (window.skyRevealState === 'revealed') {
-        pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
+    const hoverRadius = 100;
+    if (screenDist < hoverRadius) {
+        pt.hoverPulse = lerp(pt.hoverPulse, 1.0 - screenDist / hoverRadius, dt * 4.0);
     } else {
-        const hoverRadius = 100;
-        if (screenDist < hoverRadius) {
-            pt.hoverPulse = lerp(pt.hoverPulse, 1.0 - screenDist / hoverRadius, dt * 4.0);
-        } else {
-            pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
-        }
+        pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
     }
 
-    // Zoom bloom disabled per user request to prevent bright white glow
+    // Subtle Bloom on zoom
     const bloomZoomThresh = 0.35;
     const isZoomedIn = cam.scale > bloomZoomThresh;
+    const zoomBloom = isZoomedIn ? clamp((cam.scale - bloomZoomThresh) / 0.5, 0, 1) : 0;
+    if (isZoomedIn && screenDist < 350) {
+        const bloomProximity = 1 - screenDist / 350;
+        pt.hoverPulse = Math.max(pt.hoverPulse, bloomProximity * zoomBloom * 0.08);
+    }
 
     // ── GLOBAL BREATHING (only in revealed state) ──
     // Multi-layered breathing: slow deep breath + faster heartbeat + subtle flutter
@@ -6532,18 +6566,18 @@ function updatePoint(pt, dt, isClosest) {
         const pointScale = lerp(skeletonScale, fullScale, sizeFactor);
         let s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
 
-        // Ensure user constellation matches when zoomed out (scattered constellations)
-        // MIN_STAR_PX compensation removed — was causing white blob glare on zoom-out
+        // DISABLED: zoom compensation caused white blobs on zoom out.
+        // Prisms now shrink naturally with camera zoom — no artificial size floor.
 
         // Starfield: allow natural scaling
         if (pt.theme === 'Starfield') {
-            // Give starfield a tiny baseline so it doesn't vanish entirely
-            s = Math.max(s * 1.5, 0.05 * globalBreath); 
+            // Remove the hard MIN_SCALE which causes dots to feel "stuck in place" during zoom
+            s = s * 1.5; 
         }
 
         // Constellation beams: reasonable cap for clean single prisms
         if (!isStarfield) {
-            const maxBeamScale = 4.0; // Allow main constellation to have its signature long blades (increased to 4.0)
+            const maxBeamScale = 2.0; // Allow main constellation to have its signature long blades
             s = Math.min(s, maxBeamScale);
         }
 
@@ -6620,7 +6654,12 @@ function updatePoint(pt, dt, isClosest) {
         let sat   = lerp(0.05, trueSat, Math.min(colorThreshold * 1.8, 1.0));
         let light = lerp(0.38, trueLight, Math.min(colorThreshold * 1.2, 1.0));
         
-        // Keep natural colors at all zoom levels — no white-out on zoom-out
+        // As requested: Stars look white from afar, color is revealed on zoom!
+        const zoomColorFactor = clamp((cam.scale - 0.15) / 0.3, 0, 1);
+        if (window.skyRevealState === 'revealed') {
+            sat = sat * zoomColorFactor;
+            light = lerp(0.95, light, zoomColorFactor); // White when zoomed out
+        }
         
         // Hover: burst of vivid color on proximity
         if (pt.hoverPulse > 0.01) {

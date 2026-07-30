@@ -1,8 +1,7 @@
 /* =====================================================
-   PAGMAR — שמיים שנפתחים  |  build: v0728fix15
+   PAGMAR — שמיים שנפתחים  |  build: 2026-07-27-0348
    Progressive Signal Field Reveal Engine
    ===================================================== */
-
 
 // ======================================================
 // GEMINI API — מנוע פרשנות אישי חכם
@@ -106,14 +105,9 @@ async function generateAllInterpretations(answers) {
     const vision = (answers.pareidolia || '').trim().replace(/^ה/, '');
     const nameMeaning = HEBREW_NAME_MEANINGS[answers.name] || HEBREW_NAME_MEANINGS[firstName] || null;
 
-    const genderLabel = answers.gender === 'female' ? 'נקבה (פני אליה בלשון נקבה)' 
-                       : answers.gender === 'male' ? 'זכר (פנה אליו בלשון זכר)' 
-                       : 'ניטרלי (השתמש בצורת "את/ה", "מרגיש/ה" וכו׳)';
-
     const ctx = [
         `שם מלא: ${answers.name || '—'}`,
         `שם פרטי: ${firstName}`,
-        `לשון פנייה: ${genderLabel}`,
         nameMeaning ? `משמעות השם "${firstName}" (להשתמש בה): ${nameMeaning}` : null,
         answers.dob     ? `תאריך לידה: ${answers.dob}` : null,
         answers.color   ? `הצבע שמשך: ${answers.color}` : null,
@@ -208,7 +202,6 @@ uniform float uState;
 uniform float uZoom;
 uniform float uDepth;
 uniform float uHasLabel;
-uniform float uSeed;
 varying vec2 vUv;
 
 // Prismatic spectrum — smooth warm rainbow like light through real glass/prism
@@ -220,43 +213,40 @@ vec3 spectral(float t) {
     ) * 0.5 + 0.5;
     // Warm tint: prism light is slightly amber/gold, not clinical white
     c *= vec3(1.0, 0.95, 0.88);
-    return c * c * 1.8; // boosted — more vivid prismatic colors
+    return c * c * 1.2; // gentle — stays subordinate to white core
 }
 
-// Prismatic blade (type 0) - single long dramatic prism beam per vertex (original)
+// Prismatic blade (type 0) - long dramatic light streak like Mr. Crab reference
 float bladeFn(vec2 p) {
-    float blade = exp(-abs(p.y) * 120.0) * exp(-abs(p.x) * 1.5);
-    float core  = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
-    return blade + core * 1.5;
+    float blade = exp(-abs(p.y) * 180.0) * exp(-abs(p.x) * 1.2);
+    float core  = smoothstep(0.03, 0.0, abs(p.x) + abs(p.y));
+    return blade + core * 2.0;
 }
 
 // Crystal star (type 1) - 6-pointed sharp facets
 float crystalFn(vec2 p) {
     float r  = length(p);
-    float lVar = mix(30.0, 90.0, fract(uSeed * 23.1));
-    float f1 = exp(-abs(p.x) * lVar);
-    float f2 = exp(-abs(p.x * 0.5 + p.y * 0.866) * lVar);
-    float f3 = exp(-abs(p.x * 0.5 - p.y * 0.866) * lVar);
+    float f1 = exp(-abs(p.x) * 60.0);
+    float f2 = exp(-abs(p.x * 0.5 + p.y * 0.866) * 60.0);
+    float f3 = exp(-abs(p.x * 0.5 - p.y * 0.866) * 60.0);
     vec2  ap = abs(p);
     float hex = max(ap.x * 0.866 + ap.y * 0.5, ap.y);
-    return (f1 + f2 + f3) * exp(-r * 8.0) + smoothstep(0.015, 0.0, hex) * 0.5; // very small visible ray core
+    return (f1 + f2 + f3) * exp(-r * 8.0) + smoothstep(0.07, 0.0, hex) * 1.2; // balanced — short visible rays
 }
 
 // Diagonal shard (type 2) - sharp X cut
 float shardFn(vec2 p) {
     float r   = length(p);
-    float lVar1 = mix(40.0, 120.0, fract(uSeed * 11.7));
-    float lVar2 = mix(80.0, 200.0, fract(uSeed * 31.4));
-    float d1  = exp(-abs(p.x + p.y) * lVar1) * exp(-r * 2.5);
-    float d2  = exp(-abs(p.x - p.y) * lVar2) * exp(-r * 5.0);
-    float core = smoothstep(0.01, 0.0, abs(p.x) + abs(p.y));
-    return d1 + d2 * 0.6 + core * 0.4;
+    float d1  = exp(-abs(p.x + p.y) * 80.0) * exp(-r * 2.5);
+    float d2  = exp(-abs(p.x - p.y) * 150.0) * exp(-r * 5.0);
+    float core = smoothstep(0.04, 0.0, abs(p.x) + abs(p.y));
+    return d1 + d2 * 0.6 + core * 1.5;
 }
 
 // Pointillism dot (type 3) - soft small dot with no rays
 float dotFn(vec2 p) {
     float r = length(p);
-    return exp(-r * 18.0) + smoothstep(0.03, 0.0, r) * 0.8; // visible glow dot
+    return exp(-r * 18.0) + smoothstep(0.05, 0.0, r) * 1.2; // visible glow dot
 }
 
 float getPrismIntensity(vec2 p, float type) {
@@ -271,59 +261,44 @@ float getPrismIntensity(vec2 p, float type) {
 void main() {
     vec2 uv = vUv * 2.0 - 1.0;
 
-    // ── CHROMATIC & SPECTRAL PRISM ──
-    float isDotType = step(2.5, uType); // 1.0 for starfield dots, 0.0 for beams/shards/blades
-    float beamPrism = 1.0 - isDotType;
-
-    // Color intensity (rainbow & RGB split) fades when zooming out (less colorful at a distance)
-    float zoomColor = mix(0.4, 1.0, smoothstep(0.2, 1.0, uZoom));
-    
-    // Uniform brightness — no boost on zoom-out to prevent white blob glare
-    float zoomBright = 1.0;
-
-    // Prismatic color active based on zoom
-    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.005;
-    float shimmer = 0.5 + 0.5 * sin(uTime * 1.5 + atan(uv.y, uv.x) * 3.0);
-    float baseAberr = 0.008 * zoomColor;
-    float aberration = beamPrism * (baseAberr + hoverBoost + shimmer * 0.003);
+    // ── CHROMATIC ABERRATION ──
+    // Real prism splits white light: R/G/B travel at slightly different angles.
+    // We sample the beam shape 3× at offset UVs → colored fringes at edges, white center.
+    float prismGate = smoothstep(0.8, 3.0, clamp(uZoom, 0.0, 10.0));
+    // Base aberration (0.008) + hover boost + rotating SHIMMER (light reflection moving across prism)
+    float hoverBoost = smoothstep(1.0, 2.5, uGlow) * 0.008;
+    float shimmer = 0.5 + 0.5 * sin(uTime * 1.8 + atan(uv.y, uv.x) * 4.0);
+    float aberration = prismGate * (0.008 + hoverBoost + shimmer * 0.006);
 
     // Slowly rotating split direction → organic prismatic feel
-    vec2 abDir = vec2(cos(uTime * 0.12), sin(uTime * 0.12));
+    vec2 abDir = vec2(cos(uTime * 0.15), sin(uTime * 0.15));
 
-    // Three offset samples: R/G/B channel dispersion
+    // Three offset samples: R shifted one way, B the other, G at center
     float iR = getPrismIntensity(uv + abDir * aberration, uType);
     float iG = getPrismIntensity(uv, uType);
     float iB = getPrismIntensity(uv - abDir * aberration, uType);
 
-    // Continuous spectral rainbow gradient along beam length & crystal facets
-    float tSpec = (uv.x * 0.7 + uv.y * 0.35) + uTime * 0.1;
-    vec3 specRainbow = spectral(tSpec);
+    float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.12;
 
-    float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.15;
-
-    // Rich prismatic beam color: smooth RGB split + spectral rainbow glow + minimal white core
-    vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
-    vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
-    
-    // Add back the central dot, keeping it very small so it doesn't blob
-    float r = length(uv);
-    // Removed white core as per user request to remove bright white effect on zoom-in
-    // float coreZoomFade = mix(1.0, 0.0, smoothstep(0.3, 1.2, uZoom));
-    // vec3 whiteCore = vec3(1.0, 0.98, 0.95) * smoothstep(0.015, 0.0, r) * (1.5 * coreZoomFade);
-    
-    vec3 beamCol = (rgbSplit + spectralGlow) * twinkle * zoomBright;
-    vec3 dotCol  = vec3(0.95, 0.95, 1.0) * iG * 4.5 * twinkle * zoomBright;
-    vec3 col = mix(beamCol, dotCol, isDotType);
+    // More color (3.0) vs less white core (2.8) → visible prismatic tint
+    vec3 col = (vec3(iR, iG, iB) * 3.0 + vec3(0.97, 0.97, 1.0) * iG * 2.8) * twinkle;
 
     float iCore = max(iR, max(iG, iB));
-    // Natural zoom fade — stars shrink and fade naturally at distance
-    float zoomFade  = clamp(uZoom * 1.4, 0.25, 1.0);
+    // Starfield dots (type 3): no zoom fade — always visible at all zoom levels
+    // Main constellation beams: fade with zoom for depth
+    float isDotType = step(2.5, uType); // 1.0 for dots, 0.0 for others
+    float zoomFade  = mix(clamp(uZoom * 1.4, 0.25, 1.0), 1.0, isDotType);
     float alpha = iCore * uOpacity * zoomFade;
 
-    // Major star core pulse removed to eliminate white glow artifact on zoom
-
-
-    // (sweep effects removed — clean single prism only)
+    // Major star: subtle warm core pulse
+    if (uHasLabel > 0.5) {
+        float discoveryFactor = smoothstep(1.3, 2.0, clamp(uZoom, 0.0, 10.0));
+        float r = length(uv);
+        float pulse = sin(uTime * 2.5) * 0.5 + 0.5;
+        float coreGlow = exp(-r * 60.0) * pulse;
+        col += vec3(1.0, 0.95, 0.8) * coreGlow * 2.0 * discoveryFactor;
+        alpha += coreGlow * 0.5 * discoveryFactor;
+    }
 
     gl_FragColor = vec4(col, alpha);
 }
@@ -600,7 +575,7 @@ const UI_TEXTS = {
         pareidoliaOpts: ['חיה', 'בית', 'צמח', 'כנף', 'מסלול', 'דמות', 'כלי', 'משהו אחר']
     },
     en: {
-        title: 'How the stars align for you',
+        title: 'The stars don\'t know you',
         subtitle: '',
         tagline: '',
         startBtn: 'Enter',
@@ -615,45 +590,6 @@ const UI_TEXTS = {
         pareidoliaOpts: ['Animal', 'Home', 'Plant', 'Wing', 'Path', 'Figure', 'Vessel', 'Something else']
     }
 };
-
-// ── GENDERED HEBREW TEXT HELPER ──
-// Hebrew slash-notation: word/suffix (e.g. מרגיש/ה, יודע/ת, הולך/ת, שואפ/ת)
-// Convention: base = masculine form, base+suffix = feminine form
-// For pronouns (את/ה): base=את (fem), base+ה=אתה (masc) — exception handled below
-// Special: אתה/את and את/ה patterns handled with specific lookup
-function genderize(text) {
-    const g = (typeof answers !== 'undefined' && answers.gender) || 'other';
-    if (g === 'other') return text; // keep neutral slash form
-
-    // Handle specific full-word replacements first
-    const WORD_MAP = {
-        'את/ה':      { male: 'אתה', female: 'את' },
-        'אתה/את':    { male: 'אתה', female: 'את' },
-        'הוא/היא':   { male: 'הוא', female: 'היא' },
-        'לו/לה':     { male: 'לו', female: 'לה' },
-        'שלו/שלה':   { male: 'שלו', female: 'שלה' },
-        'בו/בה':     { male: 'בו', female: 'בה' },
-        'עצמו/ה':    { male: 'עצמו', female: 'עצמה' },
-        'אותו/ה':    { male: 'אותו', female: 'אותה' },
-    };
-
-    // First pass: replace known full-word patterns
-    let result = text;
-    Object.keys(WORD_MAP).forEach(pattern => {
-        if (result.includes(pattern)) {
-            result = result.split(pattern).join(WORD_MAP[pattern][g] || pattern);
-        }
-    });
-
-    // Second pass: generic verb/adjective slash patterns (מרגיש/ה → male: מרגיש, female: מרגישה)
-    result = result.replace(/(\S+)\/(\S+)/g, function(match, base, suffix) {
-        if (g === 'male') return base;            // masculine = base only
-        if (g === 'female') return base + suffix;  // feminine = base + suffix
-        return match;
-    });
-
-    return result;
-}
 
 const QUESTIONS = [
     {
@@ -838,7 +774,6 @@ let lastMouse = { x: 0, y: 0 };
 let skyPoints = [];
 let majorPoints = [];
 let skyRunning = false;
-let skyLoopId = null;
 let lastTS = 0;
 let skyIntroTime = 0;
 let lastCamX = null;
@@ -967,7 +902,7 @@ function buildDOM() {
     appDiv.innerHTML = `
     <!-- GLOBAL UI -->
     <button id="lang-toggle" class="btn" onclick="toggleLang()" style="position: absolute; top: 1.6rem; left: 1.6rem; z-index: 100; padding: 0.4rem 0.9rem; font-size: 0.72rem; letter-spacing: 0.18em; opacity: 0.6; transition: opacity 0.3s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">EN</button>
-    <button id="btn-global-back" class="btn" onclick="goBack()" style="position: absolute; bottom: 2rem; right: 2rem; z-index: 100; padding: 0.5rem 1rem; border: none; font-size: 0.75rem; letter-spacing: 0.12em; opacity: 0; display: none; pointer-events: none;"></button>
+    <button id="btn-global-back" class="btn" onclick="goBack()" style="position: absolute; top: 2rem; right: 2rem; z-index: 100; padding: 0.5rem 1rem; border: none; font-size: 0.75rem; letter-spacing: 0.12em; opacity: 0; display: none; pointer-events: none;"></button>
     <div id="screen-opening" class="screen active">
         <h1 id="ui-title" style="min-height:1.5em;"></h1>
         <button class="btn" id="btn-start" style="opacity: 0; pointer-events: none;">התחלה</button>
@@ -1013,7 +948,6 @@ function buildDOM() {
         <!-- Sky UI (hint text at the bottom) -->
         <div class="sky-ui">
             <p id="ui-skyguide"></p>
-            <div id="btn-global-back-wrapper" style="pointer-events: auto;"></div>
             <div class="zoom-controls">
                 <button class="btn btn-icon" id="btn-zoom-in">+</button>
                 <button class="btn btn-icon" id="btn-zoom-out">-</button>
@@ -1286,7 +1220,7 @@ window.updateLang = function(lang) {
     if (horTitle) horTitle.innerText = t.horizonTitle;
     const recogOverlay = document.getElementById('recognition-overlay');
     if (recogOverlay) recogOverlay.style.display = 'flex';
-    document.getElementById('recog-question').innerText = genderize(currentLang === 'he' ? 'מה את/ה רואה?' : 'What do you see?');
+    document.getElementById('recog-question').innerText = currentLang === 'he' ? 'מה את/ה רואה?' : 'What do you see?';
 
 
     const toggleBtn = document.getElementById('lang-toggle');
@@ -1307,8 +1241,8 @@ window.goBack = function() {
     // If on the sky screen
     if (skyScreen && skyScreen.classList.contains('active')) {
         if (window.skyRevealState === 'revealed') {
-            // Navigate to end/horizon screen
-            showHorizon();
+            // Act as Restart
+            location.reload();
             return;
         } else if (window.skyRevealState === 'recognition') {
             // Go back to the last question
@@ -1336,48 +1270,41 @@ window.goBack = function() {
 };
 
 window.updateGlobalBackButton = function() {
+    // Navigation is scroll/swipe-based only — no visible shortcut buttons
+    // Only reveal a subtle restart option at the end of the journey
     const btn = document.getElementById('btn-global-back');
     if (!btn) return;
-    const wrapper = document.getElementById('btn-global-back-wrapper');
     const skyScreen = document.getElementById('screen-sky');
     if (skyScreen && skyScreen.classList.contains('active') && window.skyRevealState === 'revealed') {
-        // Move button into sky-ui wrapper (below instructions text)
-        if (wrapper && btn.parentElement !== wrapper) {
-            wrapper.appendChild(btn);
-        }
-        const endLabel = currentLang === 'he' ? 'סיום' : 'End';
         const restartLabel = currentLang === 'he' ? 'להתחיל מחדש' : 'Restart';
-        btn.innerHTML = endLabel;
+        btn.innerHTML = '↺';
         btn.title = restartLabel;
         btn.setAttribute('aria-label', restartLabel);
-        btn.style.position = 'static';
-        btn.style.display = 'inline-flex';
+        btn.style.display = 'flex';
         btn.style.alignItems = 'center';
-        btn.style.justifyContent = 'center';
         btn.style.gap = '6px';
-        btn.style.opacity = '0.55';
-        btn.style.fontSize = '0.72rem';
-        btn.style.letterSpacing = '0.18em';
+        btn.style.opacity = '0.70';
+        btn.style.fontSize = '0.85rem';
+        btn.style.letterSpacing = '0.12em';
         btn.style.pointerEvents = 'auto';
-        btn.style.padding = '5px 18px';
+        btn.style.padding = '6px 14px';
         btn.style.borderRadius = '2px';
-        btn.style.border = '1px solid rgba(255,255,255,0.25)';
-        btn.style.color = 'rgba(255,255,255,0.6)';
+        btn.style.border = '1px solid rgba(255,255,255,0.35)';
+        btn.style.color = 'rgba(255,255,255,0.8)';
         btn.style.background = 'transparent';
         btn.style.cursor = 'pointer';
         btn.style.width = 'auto';
         btn.style.height = 'auto';
-        btn.style.marginTop = '4px';
         btn.style.transition = 'opacity 0.3s ease, color 0.3s ease';
         btn.onmouseenter = () => {
-            btn.style.opacity = '0.9';
+            btn.style.opacity = '1';
             btn.innerHTML = '↺ ' + restartLabel;
-            btn.style.color = 'rgba(255,255,255,0.95)';
+            btn.style.color = 'rgba(255,255,255,1)';
         };
         btn.onmouseleave = () => {
-            btn.style.opacity = '0.55';
-            btn.innerHTML = endLabel;
-            btn.style.color = 'rgba(255,255,255,0.6)';
+            btn.style.opacity = '0.70';
+            btn.innerHTML = '↺';
+            btn.style.color = 'rgba(255,255,255,0.8)';
         };
     } else {
         btn.style.display = 'none';
@@ -1435,21 +1362,7 @@ window.showConstellationInfo = function(title) {
         'כתר': `<strong>הכתר</strong> בכוכבים אינו רק שלטון אלא אחריות. ${fn ? fn + ', ' : ''}יש בך יכולת להוביל ולשאת. הקונסטלציה מגלה: הגיעה שלך דרושה.`,
         'בית': `<strong>הבית</strong> בכוכבים הוא סמל השרשים והשייכות. ${fn ? fn + ', ' : ''}הבית מתחיל בתוכך. הקונסטלציה מגלה: את/ה יודע/ת מהיכן את/ה בא/ה.`,
         'ספר': `<strong>הספר</strong> בכוכבים סמל חכמה שממתינה להעברה. ${fn ? fn + ', ' : ''}יש סיפור שאת/ה צריך/ת לדעת. הקונסטלציה אומרת: את/ה כבר כותב/ת אותו.`,
-        'אדם': `<strong>האדם</strong> בכוכבים — ראית/ת את עצמך מבחוץ. ${fn ? fn + ', ' : ''}היכולת ליצור, לאהוב, לבנות, ולעבור היא הכוח הגדול שיש בתוכך. הקונסטלציה אומרת: ראית/ת את האדם שאת/ה אמור/ה להיות.`,
-        // ── MORE CREATURES ─────────────────────────────────────────────
-        'חיפושית': `<strong>החיפושית</strong> נושאת על גבה כנפיים חבויות — עד שהיא בוחרת לפרוש אותן. ${fn ? fn + ', ' : ''}מי שרואה/ת חיפושית בכוכבים יודע/ת שיש בו/בה משהו שממתין להתגלות. במצרים העתיקה היא סימלה תחייה ושחר חדש. הקונסטלציה מגלה: אתה/את בדיוק ברגע שלפני הפריחה.`,
-        'עכביש': `<strong>העכביש</strong> אורג את עולמו מתוך עצמו — כל חוט הוא החלטה, כל צומת היא בחירה. ${fn ? fn + ', ' : ''}מי שרואה/ת עכביש בכוכבים הוא/היא יוצר/ת של קשרים. הקונסטלציה שואלת: מה הרשת שאת/ה אורג/ת כרגע?`,
-        'מדוזה': `<strong>המדוזה</strong> צפה בין העולמות — שקופה, עדינה, ובלתי ניתנת לתפיסה. ${fn ? fn + ', ' : ''}מי שרואה/ת מדוזה יודע/ת לנוע בחן גם כשהזרם חזק. הקונסטלציה מגלה: העדינות שלך היא הכוח.`,
-        'נשר': `<strong>הנשר</strong> עולה גבוה מכולם — לא כדי להוכיח, אלא כדי לראות. ${fn ? fn + ', ' : ''}מי שרואה/ת נשר בכוכבים נושא/ת ראייה רחבה שאחרים חסרים. הקונסטלציה אומרת: הגובה שלך אינו בדידות, הוא פרספקטיבה.`,
-        'יונה': `<strong>היונה</strong> נושאת שלום בלי מילים — בנוכחותה בלבד. ${fn ? fn + ', ' : ''}יש בך יכולת להרגיע, לחבר, לרפא. הקונסטלציה רומזת: השקט שלך הוא מסר.`,
-        'ארנב': `<strong>הארנב</strong> נע בין פחד לאומץ בקפיצה אחת. ${fn ? fn + ', ' : ''}הזריזות שלך אינה בריחה — היא אינטואיציה. הקונסטלציה מגלה: סמוך/י על התגובה הראשונה.`,
-        'פיל': `<strong>הפיל</strong> זוכר הכל ומוחל בשקט. ${fn ? fn + ', ' : ''}הזיכרון שלך הוא מתנה, גם כשהוא כבד. הקונסטלציה אומרת: הגודל שלך הוא פנימי.`,
-        'דרקון': `<strong>הדרקון</strong> הוא הכוח שמתעורר כשמפסיקים לפחד ממנו. ${fn ? fn + ', ' : ''}יש בך אש שלא צריכה להיות מאולפת — רק מכוונת. הקונסטלציה מגלה: האש שלך היא יצירתית.`,
-        'לביאה': `<strong>הלביאה</strong> ציידת, אם, ומנהיגה — הכל בו זמנית. ${fn ? fn + ', ' : ''}הכוח שלך הוא בשילוב, לא בבחירה בין תפקידים. הקונסטלציה אומרת: את/ה לא צריך/ת לבחור — את/ה הכל.`,
-        'עקרב': `<strong>העקרב</strong> מגן על עצמו בשקט ובדיוק. ${fn ? fn + ', ' : ''}יש בך גבולות שלא צריכים הסבר. הקונסטלציה מגלה: ההגנה שלך היא חכמה.`,
-        'תנין': `<strong>התנין</strong> ממתין בסבלנות אינסופית לרגע הנכון. ${fn ? fn + ', ' : ''}הסבלנות שלך אינה חולשה — היא אסטרטגיה. הקונסטלציה אומרת: הרגע שלך מתקרב.`,
-        'חד-קרן': `<strong>החד-קרן</strong> קיים רק למי שמאמין בו. ${fn ? fn + ', ' : ''}הדמיון שלך הוא לא בריחה — הוא ראייה. הקונסטלציה מגלה: מה שאת/ה רואה/ת, אחרים פשוט עדיין לא.`,
-        'עגור': `<strong>העגור</strong> עובר מרחקים שאין להם שם — ותמיד חוזר. ${fn ? fn + ', ' : ''}הנדידה שלך אינה אובדן כיוון, היא חיפוש. הקונסטלציה אומרת: הבית ממתין, אבל הדרך היא הבית.`
+        'אדם': `<strong>האדם</strong> בכוכבים — ראית/ת את עצמך מבחוץ. ${fn ? fn + ', ' : ''}היכולת ליצור, לאהוב, לבנות, ולעבור היא הכוח הגדול שיש בתוכך. הקונסטלציה אומרת: ראית/ת את האדם שאת/ה אמור/ה להיות.`
     };
 
     // If word not in map — build a dynamic fallback that still feels personal
@@ -1462,7 +1375,7 @@ window.showConstellationInfo = function(title) {
     const specificText = WORD_LORE[cleanWord] || WORD_LORE[rawWord] || buildFallback(cleanWord || rawWord);
 
     if (currentLang === 'he') {
-        textEl.innerHTML = genderize(specificText || `<strong>${title}</strong> נבחרה כקונסטלציה שלך. הקונסטלציה רומזת: יש בעניין הזה משהו שמבקש להיראות.`);
+        textEl.innerHTML = specificText || `<strong>${title}</strong> נבחרה כקונסטלציה שלך. הקונסטלציה רומזת: יש בעניין הזה משהו שמבקש להיראות.`;
     } else {
         textEl.innerHTML = `The constellation <strong>${title}</strong> emerged from your vision. It holds a meaning that is uniquely yours. The constellation asks: what does it reveal about the next chapter of your life?`;
     }
@@ -1566,16 +1479,10 @@ function showInterpretationPanel(userVision) {
                         // Dynamically create a new ghost in the current session
                         const seed = saved.length * 137.5;
                         const angle = seed * (Math.PI / 180);
-                        const dist = 6000 + (seed % 8000); // Massive spread
+                        const dist = 1500 + (seed % 4000);
                         const newGhost = saved[saved.length - 1];
                         newGhost.offset = { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist };
-                        // Only add if not already present (prevent runtime duplicates)
-                        const newClean = (newGhost.nameHe || newGhost.nameEn || '').trim().replace(/^ה/, '').toLowerCase();
-                        const alreadyExists = window.ghostDefs.some(g => {
-                            const gClean = (g.nameHe || g.nameEn || '').trim().replace(/^ה/, '').toLowerCase();
-                            return gClean === newClean;
-                        });
-                        if (!alreadyExists) window.ghostDefs.push(newGhost);
+                        window.ghostDefs.push(newGhost);
                         
                         // We would need to init its ghostState here, but a page reload works too.
                     } catch(e) {
@@ -2503,7 +2410,7 @@ function showInterpretationPanel(userVision) {
     usedMajors.forEach(function(pt, idx) {
         // Labels point TOWARD constellation center — they appear inside the shape
         var angleToCenter = Math.atan2(-pt.originalY, -pt.originalX) + (idx % 2 === 0 ? 0.25 : -0.25);
-        var dist = 40 + (idx % 3) * 16;
+        var dist = 70 + (idx % 3) * 28;
         var offsetX = Math.cos(angleToCenter) * dist;
         var offsetY = Math.sin(angleToCenter) * dist;
 
@@ -2517,26 +2424,81 @@ function showInterpretationPanel(userVision) {
         var isConstellation = false;
         if (idx === 0 && answers.pareidolia) {
             isConstellation = true;
-            var userConstName = answers.pareidolia.trim();
-            if (currentLang === 'he' && !userConstName.startsWith('ה')) {
-                userConstName = 'ה' + userConstName;
-            } else if (currentLang !== 'he' && !userConstName.toLowerCase().startsWith('the ')) {
-                userConstName = 'The ' + userConstName;
-            }
-            category = userConstName;
-        }
+            el.className += ' constellation-label';
+            var rawVal = answers.pareidolia.trim();
+            var displayVal = rawVal;
+            if (isHe && !rawVal.startsWith('ה')) displayVal = 'ה' + rawVal;
+            else if (!isHe && !rawVal.toLowerCase().startsWith('the ')) displayVal = 'The ' + rawVal;
+            el.innerHTML = '<span class="dlabel-category">זיהוי</span><span class="dlabel-snippet">' + displayVal + '</span>';
+            el.style.pointerEvents = 'auto';
+            el.style.cursor = 'pointer';
+            (function(dv) {
+                el.addEventListener('pointerdown', function(e) {
+                    e.stopPropagation();
+                    var title = isHe ? ('קונסטלציית ' + dv) : (dv + ' Constellation');
+                    var desc;
+                    if (isHe) {
+                        // ── Word+color+change personalised constellation text ──────────
+                        var wClean2 = dv.replace(/^\u05d4/, ''); // strip He definite article
+                        var fn2 = firstName || '';
 
-        // Compact annotation-box: keyword / constellation label
-        var catEl = document.createElement('span');
-        catEl.className = 'dlabel-category';
-        catEl.innerText = category;
-        var dotEl = document.createElement('span');
-        dotEl.className = 'dlabel-dot';
-        el.appendChild(catEl);
-        el.appendChild(dotEl);
-        if (isConstellation) {
-            el.classList.add('constellation-label');
-        }
+                        // Openers — keyed by bare word, then change/focus, else default
+                        var WORD_OPENERS = {
+                            '\u05e2\u05d8\u05dc\u05e3': {
+                                '\u05d0\u05d4\u05d1\u05d4': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05d0\u05d4\u05d1\u05d4 — \u05de\u05d9 \u05e9\u05e8\u05d5\u05d0\u05d4 \u05d1\u05d7\u05e9\u05db\u05d4 \u05d9\u05d5\u05d3\u05e2 \u05d2\u05dd \u05dc\u05d0\u05d4\u05d5\u05d1 \u05d1\u05dc\u05d9 \u05e9\u05d4\u05d0\u05d7\u05e8 \u05d9\u05d3\u05dc\u05d9\u05e7 \u05d0\u05d5\u05e8.',
+                                '\u05d7\u05d5\u05e4\u05e9': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05d7\u05d5\u05e4\u05e9 — \u05d4\u05d9\u05db\u05d5\u05dc\u05ea \u05dc\u05e0\u05d5\u05d5\u05d8 \u05dc\u05d1\u05d3 \u05d1\u05d7\u05e9\u05db\u05d4 \u05d1\u05dc\u05d9 \u05de\u05e4\u05d4. \u05d6\u05d4 \u05dc\u05d0 \u05d1\u05d3\u05d9\u05d3\u05d5\u05ea; \u05d6\u05d5 \u05e2\u05e6\u05de\u05d0\u05d9\u05d5\u05ea.',
+                                'default': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05d7\u05e9\u05db\u05ea \u05d4\u05db\u05d5\u05db\u05d1\u05d9\u05dd — \u05d4\u05d5\u05d0 \u05e0\u05d5\u05d5\u05d8 \u05dc\u05d0 \u05d1\u05e2\u05d9\u05e0\u05d9\u05d9\u05dd \u05d0\u05dc\u05d0 \u05d1\u05e7\u05d5\u05dc \u05d4\u05e4\u05e0\u05d9\u05de\u05d9. \u05d4\u05d7\u05e9\u05db\u05d4 \u05e9\u05de\u05e1\u05d1\u05d9\u05d1 \u05d0\u05d9\u05e0\u05d4 \u05d1\u05e2\u05d9\u05d4 \u05d0\u05dc\u05d0 \u05de\u05d2\u05e8\u05e9 \u05d4\u05de\u05e9\u05d7\u05e7\u05d9\u05dd \u05e9\u05dc\u05da.'
+                            },
+                            '\u05d7\u05ea\u05d5\u05dc': {
+                                'default': fn2 + ', \u05d7\u05ea\u05d5\u05dc \u05d7\u05d9 \u05d1\u05e9\u05e0\u05d9 \u05e2\u05d5\u05dc\u05de\u05d5\u05ea — \u05e0\u05d5\u05db\u05d7 \u05dc\u05d7\u05dc\u05d5\u05d8\u05d9\u05df \u05d5\u05d1\u05e8\u05d2\u05e2 \u05d4\u05d1\u05d0 \u05e7\u05d5\u05e4\u05e5 \u05dc\u05ea\u05d5\u05da \u05e2\u05e6\u05de\u05d0\u05d9\u05d5\u05ea\u05d5. \u05d9\u05e9 \u05d1\u05da \u05d0\u05d5\u05ea\u05d4 \u05d2\u05de\u05d9\u05e9\u05d5\u05ea \u05e9\u05d4\u05d5\u05dc\u05db\u05ea \u05d1\u05d4.'
+                            },
+                            '\u05db\u05dc\u05d1': {
+                                'default': fn2 + ', \u05db\u05dc\u05d1 \u05d1\u05d7\u05e8 \u05d1\u05d1\u05e0\u05d9 \u05d0\u05d3\u05dd \u05e1\u05e4\u05d5\u05e0\u05d8\u05e0\u05d9\u05ea — \u05dc\u05d0 \u05d4\u05d5\u05d0 \u05d0\u05e9\u05e8 \u05de\u05d2\u05dc\u05d4 \u05db\u05dc\u05d5\u05dd \u05d1\u05e2\u05d6\u05d9\u05d1\u05ea\u05d5. \u05d9\u05e9 \u05d1\u05da \u05d0\u05d5\u05ea\u05d4 \u05e0\u05d0\u05de\u05e0\u05d5\u05ea \u05e9\u05d4\u05d5\u05dc\u05db\u05ea \u05d1\u05d4.'
+                            },
+                            '\u05e6\u05d9\u05e4\u05d5\u05e8': {
+                                '\u05d7\u05d5\u05e4\u05e9': fn2 + ', \u05e6\u05d9\u05e4\u05d5\u05e8 \u05d5\u05d7\u05d5\u05e4\u05e9 — \u05d4\u05db\u05e0\u05e4\u05d9\u05d9\u05dd \u05db\u05d1\u05e8 \u05e9\u05dc\u05da, \u05e8\u05e7 \u05e6\u05e8\u05d9\u05da \u05dc\u05e7\u05e4\u05d5\u05e5.',
+                                'default': fn2 + ', \u05e6\u05d9\u05e4\u05d5\u05e8 \u05e9\u05e8\u05d4 \u05de\u05d4\u05de\u05e7\u05d5\u05dd \u05e9\u05d1\u05d5 \u05d4\u05d9\u05d0 \u05e0\u05de\u05e6\u05d0\u05ea — \u05d0\u05d9\u05df \u05d6\u05d4 \u05d2\u05d1\u05d5\u05dc. \u05d9\u05e9 \u05de\u05e7\u05d5\u05dd \u05e9\u05d0\u05ea \u05e9\u05d9\u05d9\u05da \u05dc\u05d4\u05d2\u05d9\u05e2 \u05d0\u05dc\u05d9\u05d5.'
+                            },
+                            '\u05e4\u05e8\u05e4\u05e8': { 'default': fn2 + ', \u05e4\u05e8\u05e4\u05e8 \u05d0\u05d9\u05e0\u05d5 \u05d1\u05d5\u05e8\u05d7 \u05de\u05d4\u05d6\u05d7\u05dc \u05d0\u05dc\u05d0 \u05e0\u05d5\u05dc\u05d3 \u05de\u05d7\u05d3\u05e9 \u05de\u05ea\u05d5\u05db\u05d5. \u05d4\u05db\u05e0\u05e4\u05d9\u05d9\u05dd \u05db\u05d1\u05e8 \u05e9\u05dc\u05da.' },
+                            '\u05d0\u05e8\u05d9\u05d4': { 'default': fn2 + ', \u05d0\u05e8\u05d9\u05d4 \u05dc\u05d0 \u05de\u05d5\u05db\u05d9\u05d7 \u05d0\u05ea \u05e2\u05e6\u05de\u05d5 — \u05d4\u05d5\u05d0 \u05e4\u05e9\u05d5\u05d8 \u05d4\u05d5\u05dc\u05da. \u05d9\u05e9 \u05d1\u05da \u05db\u05d5\u05d7 \u05e9\u05dc\u05d0 \u05d3\u05d5\u05e8\u05e9 \u05d0\u05d9\u05e9\u05d5\u05e8.' },
+                            '\u05e0\u05d7\u05e9': { 'default': fn2 + ', \u05e0\u05d7\u05e9 \u05d1\u05d5\u05d7\u05e8 \u05ea\u05de\u05d9\u05d3 \u05dc\u05d4\u05ea\u05d7\u05d3\u05e9. \u05e9\u05dc\u05d1 \u05d4\u05e9\u05d9\u05dc\u05d5\u05dc \u05db\u05d1\u05e8 \u05e7\u05e8\u05d4 — \u05d0\u05dc \u05ea\u05e4\u05d7\u05d3/\u05d9 \u05de\u05d4\u05e9\u05d9\u05e0\u05d5\u05d9.' },
+                            '\u05e1\u05d5\u05e1': { 'default': fn2 + ', \u05e1\u05d5\u05e1 \u05e8\u05e5 \u05dc\u05dc\u05d0 \u05e9\u05d4\u05d5\u05db\u05d9\u05d7 \u05e9\u05d4\u05d5\u05d0 \u05e8\u05e5 — \u05d4\u05ea\u05e0\u05d5\u05e2\u05d4 \u05d4\u05d9\u05d0 \u05d7\u05d9\u05d5\u05ea\u05d5. \u05d4\u05e8\u05d2\u05e2 \u05db\u05d1\u05e8 \u05db\u05d0\u05df.' }
+                        };
+
+                        // Closers — keyed by bare word + color
+                        var WORD_CLOSERS = {
+                            '\u05e2\u05d8\u05dc\u05e3': {
+                                '\u05e9\u05d7\u05d5\u05e8': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d5\u05e9\u05d7\u05d5\u05e8 — \u05e9\u05e0\u05d9\u05d4\u05dd \u05d1\u05d5\u05d7\u05e8\u05d9\u05dd \u05d0\u05ea \u05d4\u05d7\u05e9\u05db\u05d4. \u05de\u05d4 \u05e9\u05e8\u05d5\u05d0\u05d9\u05dd \u05e9\u05dd \u05d4\u05d5\u05d0 \u05dc\u05d0 \u05e4\u05d7\u05d5\u05ea \u05d0\u05de\u05d9\u05ea\u05d9 \u05de\u05de\u05d4 \u05e9\u05e8\u05d5\u05d0\u05d9\u05dd \u05d1\u05d0\u05d5\u05e8.',
+                                '\u05db\u05d7\u05d5\u05dc': fn2 + ', \u05e2\u05d8\u05dc\u05e3 \u05d1\u05db\u05d7\u05d5\u05dc — \u05e0\u05d9\u05d5\u05d5\u05d8 \u05d5\u05e2\u05d5\u05de\u05e7 \u05e8\u05d2\u05e9\u05d9. \u05d4\u05e7\u05e9\u05d1 \u05e9\u05dc\u05da \u05dc\u05d0\u05d7\u05e8\u05d9\u05dd \u05d4\u05d5\u05d0 \u05db\u05d5\u05d7, \u05dc\u05d0 \u05d7\u05d5\u05dc\u05e9\u05d4.',
+                                'default': fn2 + ', \u05d4' + wClean2 + ' \u05de\u05de\u05e9\u05d9\u05da/\u05ea \u05dc\u05d3\u05d1\u05e8 \u05d0\u05dc\u05d9\u05da. \u05e9\u05de\u05e2/\u05d9.'
+                            },
+                            'default': {
+                                'default': fn2 + ', \u05d4' + wClean2 + ' \u05d5\u05d4' + (aColor||'\u05d2\u05d5\u05d5\u05df') + ' \u05e9\u05d1\u05d7\u05e8\u05ea/\u05ea \u05de\u05e6\u05d1\u05d9\u05e2\u05d9\u05dd \u05d9\u05d7\u05d3 \u05d0\u05ea \u05d0\u05d5\u05ea\u05d5 \u05db\u05d9\u05d5\u05d5\u05df — \u05d9\u05e9 \u05d1\u05da \u05de\u05e9\u05d4\u05d5 \u05e9\u05de\u05d1\u05e7\u05e9 \u05dc\u05d4\u05ea\u05d2\u05dc\u05d5\u05ea.'
+                            }
+                        };
+
+                        var openerMap = WORD_OPENERS[wClean2] || {};
+                        var opener = openerMap[aChange] || openerMap['default'] || (fn2 + ', ' + dv + ' \u05d4\u05d5\u05e4\u05d9\u05e2/\u05d4 \u05d1\u05db\u05d5\u05db\u05d1\u05d9\u05dd \u05e9\u05dc\u05da \u05dc\u05d0 \u05d1\u05de\u05e7\u05e8\u05d4.');
+                        var closerMap = WORD_CLOSERS[wClean2] || WORD_CLOSERS['default'] || {};
+                        var closer = closerMap[aColor] || closerMap['default'] || (fn2 + ', \u05d4' + wClean2 + ' \u05de\u05de\u05e9\u05d9\u05da/\u05ea \u05dc\u05d3\u05d1\u05e8 \u05d0\u05dc\u05d9\u05da. \u05e9\u05de\u05e2/\u05d9.');
+
+                        desc = opener + '\n\n' + colorMsgHe + '\n\n' + closer;
+                    } else {
+                        desc = dv + '\n\n' + colorMsgEn;
+                    }
+                    window.openConstellationModal(title, desc);
+
+                });
+            })(displayVal);
+        } else {
+            // Compact annotation-box: just the keyword label
+            var catEl = document.createElement('span');
+            catEl.className = 'dlabel-category';
+            catEl.innerText = category;
+            var dotEl = document.createElement('span');
+            dotEl.className = 'dlabel-dot';
+            el.appendChild(catEl);
+            el.appendChild(dotEl);
 
             // Click opens a fixed side panel with word-by-word reveal
             (function(cat, ft, fk) {
@@ -2592,10 +2554,10 @@ function showInterpretationPanel(userVision) {
 
                     if (cachedText) {
                         // Gemini מוכן — הצג ישירות
-                        revealText(genderize(cachedText), 80);
+                        revealText(cachedText, 80);
                     } else {
                         // הצג טקסט סטטי
-                        revealText(genderize(ft), 150);
+                        revealText(ft, 150);
 
                         // רשום callback לכשה-Gemini יחזור
                         window._pagmarPanelUpdateFn = function(result) {
@@ -2606,7 +2568,7 @@ function showInterpretationPanel(userVision) {
                                 textDiv.style.opacity = '0';
                                 setTimeout(function() {
                                     if (!panel.isConnected) return;
-                                    revealText(genderize(liveText), 0);
+                                    revealText(liveText, 0);
                                     textDiv.style.opacity = '1';
                                 }, 650);
                             }
@@ -2626,6 +2588,7 @@ function showInterpretationPanel(userVision) {
             })(category, fullText, pool[idx][2] || '');
 
             el.style.cursor = 'pointer';
+        }
 
         overlay.appendChild(el);
 
@@ -2666,8 +2629,8 @@ function showInterpretationPanel(userVision) {
         return Math.hypot(a.pt.x, a.pt.y) - Math.hypot(b.pt.x, b.pt.y);
     });
     window.labelDataSorted.forEach(function(item, i) {
-        // Constellation / major labels appear smoothly starting at zoom 0.25
-        item.zoomThreshold = 0.25 + i * 0.08;
+        // First label appears at zoom 0.75 (almost default), each next requires slightly more zoom
+        item.zoomThreshold = 0.75 + i * 0.15; // 0.75, 0.90, 1.05, 1.20, 1.35...
     });
 
     // ── UPDATE LOOP — Proximity & Zoom reveal ──────────────
@@ -2675,8 +2638,8 @@ function showInterpretationPanel(userVision) {
 
 
     window.updateDataLabels = function() {
-        // HIDE LABELS DURING INITIAL BUILD-UP (first 1.5 seconds after reveal)
-        if (typeof skyIntroTime !== 'undefined' && skyIntroTime < 1.5) {
+        // HIDE LABELS DURING INITIAL BUILD-UP (first 3 seconds after reveal)
+        if (typeof skyIntroTime !== 'undefined' && skyIntroTime < 3.0) {
             labelData.forEach(function(item) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2693,8 +2656,8 @@ function showInterpretationPanel(userVision) {
             window._labelStaggerStart = null; // reset stagger so re-reveal is fresh after drag
             return;
         }
-        // HIDE ALL LABELS ONLY AT EXTREME DEEP SPACE ZOOM (< 0.20)
-        if (cam.scale < 0.20) {
+        // HIDE ALL LABELS IN GALAXY VIEW — labels only show when at or above default zoom
+        if (cam.scale < 0.65) {
             labelData.forEach(function(item, idx) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2806,11 +2769,8 @@ function showInterpretationPanel(userVision) {
                 return;
             }
 
-            // Scale offsets by zoom so labels stay near their stars at all zoom levels
-            var scaledOffX = offsetX * Math.min(cam.scale, 1.5);
-            var scaledOffY = offsetY * Math.min(cam.scale, 1.5);
-            var lx = sx + scaledOffX;
-            var ly = sy + scaledOffY;
+            var lx = sx + offsetX;
+            var ly = sy + offsetY;
 
             el.style.opacity = a;
             if (!isExpanded) {
@@ -2853,21 +2813,21 @@ function showGhostInfoPanel(ghost, clickX, clickY) {
         left: 50%; top: 50%;
         transform: translate(-50%, -50%) scale(0.92);
         width: min(420px, 88vw);
-        background: rgba(4, 4, 10, 0.93);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0;
+        background: rgba(5, 5, 18, 0.88);
+        border: 1px solid ${col}0.25);
+        border-radius: 4px;
         padding: 36px 32px 28px;
         font-family: 'SimplerMono', 'Courier New', monospace;
         color: rgba(220, 220, 235, 0.9);
         z-index: 2000;
         pointer-events: auto;
-        backdrop-filter: blur(16px) saturate(1.3);
-        -webkit-backdrop-filter: blur(16px) saturate(1.3);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         text-align: ${isHe ? 'right' : 'left'};
         direction: ${isHe ? 'rtl' : 'ltr'};
         opacity: 0;
         transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2,0.8,0.2,1);
-        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+        box-shadow: 0 0 60px ${col}0.12), inset 0 0 30px ${col}0.04);
     `;
 
     panel.innerHTML = `
@@ -2948,11 +2908,61 @@ function initConstellationSystem(userVision) {
 
     const ghostDefs = [
         {
+            nameHe: 'הדג',   nameEn: 'the fish',
+            color: 'rgba(140,200,255,',
+            textHe: 'גבולות מטושטשים בין הידוע לנסתר — מי שנמשך לדגים שוחה בין עולמות. הים הוא רק התחלה.',
+            textEn: 'Between the known and the hidden, the fish swims through both. The ocean is just the beginning.',
+            offset: { x: 7200, y: -4800 },
+            pts: [ {x:0,y:0},{x:60,y:-20},{x:130,y:0},{x:60,y:20},{x:0,y:0},
+                   {x:130,y:0},{x:180,y:-35},{x:180,y:35} ],
+            lines: [[0,1],[1,2],[2,3],[3,0],[2,4],[4,5],[5,6],[5,7]]
+        },
+        {
+            nameHe: 'העטלף', nameEn: 'the bat',
+            color: 'rgba(200,140,255,',
+            textHe: 'רואה בחושך — מנווט בלי אור. מי שמזהה את קונסטלציית העטלף נושא בתוכו ידע שאינו זקוק לשמש.',
+            textEn: 'Seeing in darkness — navigating without light. Whoever finds this shape carries knowledge that needs no sun.',
+            offset: { x: -9500, y: -6200 },
+            pts: [ {x:0,y:0},{x:-80,y:-30},{x:-150,y:-80},{x:-120,y:-10},
+                   {x:80,y:-30},{x:150,y:-80},{x:120,y:-10},{x:0,y:50} ],
+            lines: [[0,1],[1,2],[1,3],[0,4],[4,5],[4,6],[0,7],[3,7],[6,7]]
+        },
+        {
+            nameHe: 'הסוס',  nameEn: 'the horse',
+            color: 'rgba(255,210,120,',
+            textHe: 'כח שמחכה לאות — אנרגיה צבורה לפרק הבא. הסוס לא רץ לאין מקום; הוא בוחר את הרגע.',
+            textEn: 'Power waiting for a signal. The horse does not run aimlessly — it chooses its moment.',
+            offset: { x: 5800, y: -11000 },
+            pts: [ {x:0,y:0},{x:30,y:-80},{x:60,y:-140},{x:20,y:-160},
+                   {x:-30,y:-120},{x:-60,y:-40},{x:-40,y:40},{x:0,y:80} ],
+            lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]]
+        },
+        {
+            nameHe: 'הנשר',  nameEn: 'the eagle',
+            color: 'rgba(255,180,130,',
+            textHe: 'הגובה אינו בריחה — הוא פרספקטיבה. הנשר יודע מה קטן ומה גדול כי ראה את שניהם.',
+            textEn: 'Height is not escape — it is perspective. The eagle knows what is small and what is vast, because it has seen both.',
+            offset: { x: -8800, y: 9500 },
+            pts: [ {x:0,y:0},{x:-100,y:-40},{x:-170,y:-10},{x:-90,y:20},
+                   {x:100,y:-40},{x:170,y:-10},{x:90,y:20},{x:0,y:70} ],
+            lines: [[0,1],[1,2],[1,3],[0,4],[4,5],[4,6],[0,7]]
+        },
+        {
+            nameHe: 'הלב',   nameEn: 'the heart',
+            color: 'rgba(255,130,160,',
+            textHe: 'מה שנסגר לא נשבר — הוא שומר. הלב בשמיים זוכר כל מה שנאמר בשקט ולא נשמע.',
+            textEn: 'What closes does not break — it protects. The heart in the sky remembers all that was spoken in silence.',
+            offset: { x: 12500, y: 6800 },
+            pts: [ {x:-40,y:-40},{x:0,y:-70},{x:40,y:-40},{x:50,y:0},
+                   {x:0,y:50},{x:-50,y:0} ],
+            lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]
+        },
+        {
             nameHe: 'הירח',  nameEn: 'the moon',
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -4200, y: -3400 },
+            offset: { x: -5500, y: -13500 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -2962,7 +2972,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -6100, y: 4200 },
+            offset: { x: -6200, y: 4500 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -2972,7 +2982,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 5500, y: 3500 },
+            offset: { x: 14000, y: 11500 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -2983,7 +2993,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,255,',
             textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
             textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -3500, y: 4400 },
+            offset: { x: -16000, y: 8500 },
             pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
                    {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
             lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
@@ -2993,7 +3003,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 4400, y: -3700 },
+            offset: { x: 10500, y: -9000 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3003,7 +3013,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: 6300, y: -2700 },
+            offset: { x: -12500, y: -11000 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3014,117 +3024,42 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: 2700, y: 4600 },
+            offset: { x: -15000, y: 15000 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
-        },
-        {
-            nameHe: 'העכביש', nameEn: 'the spider',
-            color: 'rgba(255,150,150,',
-            textHe: 'העכביש אורג את עולמו מתוך עצמו.',
-            textEn: 'The spider weaves its world from within.',
-            offset: { x: 0, y: 0 },
-            pts: [ {x:0,y:0}, {x:50,y:-50}, {x:70,y:-20}, {x:70,y:20}, {x:50,y:50}, {x:-50,y:50}, {x:-70,y:20}, {x:-70,y:-20}, {x:-50,y:-50} ],
-            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]]
-        },
-        {
-            nameHe: 'האריה', nameEn: 'the lion',
-            color: 'rgba(255,200,100,',
-            textHe: 'מלך החיות.',
-            textEn: 'King of the beasts.',
-            offset: { x: 0, y: 0 },
-            pts: [ {x:0,y:0}, {x:40,y:-60}, {x:80,y:-20}, {x:60,y:40}, {x:0,y:80}, {x:-60,y:40}, {x:-80,y:-20}, {x:-40,y:-60} ],
-            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]]
-        },
-        {
-            nameHe: 'הציפור', nameEn: 'the bird',
-            color: 'rgba(150,200,255,',
-            textHe: 'מעוף אל הלא נודע.',
-            textEn: 'Flight into the unknown.',
-            offset: { x: 0, y: 0 },
-            pts: [ {x:0,y:20}, {x:100,y:-40}, {x:40,y:-10}, {x:0,y:-60}, {x:-40,y:-10}, {x:-100,y:-40} ],
-            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[4,5],[2,3],[3,4]]
         }
     ];
 
-    // Filter hardcoded ghosts: remove any that match the user's own constellation name
-    const currentVision = (userVision || '').trim().replace(/^ה/, '');
-    if (currentVision) {
-        for (let i = ghostDefs.length - 1; i >= 0; i--) {
-            const gName = (ghostDefs[i].nameHe || ghostDefs[i].nameEn || '').trim().replace(/^ה/, '');
-            if (gName.toLowerCase() === currentVision.toLowerCase()) {
-                ghostDefs.splice(i, 1);
-            }
-        }
-    }
-
     try {
-        if (!window.isScreensaverMode) {
-            // Collect names already in hardcoded ghostDefs to prevent duplicates
-            const existingNames = new Set(ghostDefs.map(g => 
-                (g.nameHe || g.nameEn || '').trim().replace(/^ה/, '').toLowerCase()
-            ));
-            const seenNames = new Set(); // Track names we've already added from saved
-            const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
-                .filter(g => {
-                    const name = (g.nameHe || g.nameEn || '').trim();
-                    const cleanName = name.replace(/^ה/, '');
-                    const lowerName = cleanName.toLowerCase();
-            const blocklist = [
-                'חתול', 'cat',
-                'יהלום', 'diamond',
-                'פרה', 'cow',
-                'שועל', 'שועל ראשון', 'fox',
-                'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
-            ];
-                    // Skip if same as current user's constellation
-                    if (currentVision && lowerName === currentVision.toLowerCase()) return false;
-                    // Skip if already exists in hardcoded ghostDefs
-                    if (existingNames.has(lowerName)) return false;
-                    // Skip if we already saw this name (deduplicate)
-                    if (seenNames.has(lowerName)) return false;
-                    seenNames.add(lowerName);
-                    return !blocklist.some(b => cleanName.toLowerCase() === b.toLowerCase() || name.toLowerCase() === b.toLowerCase());
-                });
-            // Persist cleaned (deduplicated) list permanently
-            try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
-            saved.forEach((g, i) => {
-                const seed = (i + 1) * 137.5;
-                const angle = seed * (Math.PI / 180);
-                const dist = 3000 + (seed % 10000); // spread (3000 to 13000)
-                g.offset = {
-                    x: Math.cos(angle) * dist,
-                    y: Math.sin(angle) * dist
-                };
-                ghostDefs.push(g);
+        const saved = JSON.parse(localStorage.getItem('pagmar_saved_constellations') || '[]')
+            .filter(g => {
+                const name = (g.nameHe || g.nameEn || '').trim();
+        const blocklist = [
+            'חתול', 'cat',
+            'יהלום', 'diamond',
+            'פרה', 'cow',
+            'שועל', 'שועל ראשון', 'fox',
+            'ג\'וק', 'jouk', 'גוק', 'cockroach', 'beetle'
+        ];
+                return !blocklist.some(b => name.toLowerCase() === b.toLowerCase());
             });
-        }
-    } catch(e) {}
-    
-    // SCREENSAVER MODE SPREAD
-    if (window.isScreensaverMode) {
-        // Arrange the shapes beautifully in a wide circle
-        const radius = 6000;
-        ghostDefs.forEach((g, i) => {
-            const angle = (i / ghostDefs.length) * Math.PI * 2;
+        // Persist cleaned list permanently
+        try { localStorage.setItem('pagmar_saved_constellations', JSON.stringify(saved)); } catch(e2) {}
+        saved.forEach((g, i) => {
+            const seed = (i + 1) * 137.5;
+            const angle = seed * (Math.PI / 180);
+            // Position user-saved constellations CLOSE: 1200-4000 units.
+            // They become visible when the user zooms out past cam.scale≈0.42
+            // (the same moment the personal title fades away).
+            const dist = 1200 + (seed % 2800);
             g.offset = {
-                x: Math.cos(angle) * radius,
-                y: Math.sin(angle) * radius
+                x: Math.cos(angle) * dist,
+                y: Math.sin(angle) * dist
             };
+            ghostDefs.push(g);
         });
-        
-        // Also put a central star?
-        // Add a purely decorative central point
-        ghostDefs.push({
-            nameHe: 'PAGMAR', nameEn: 'PAGMAR',
-            color: 'rgba(255,255,255,',
-            textHe: '', textEn: '',
-            offset: { x: 0, y: 0 },
-            pts: [{x:0,y:0}],
-            lines: []
-        });
-    }
+    } catch(e) {}
 
     // ── WEBGL GHOST GEOMETRY ─────────────────────────────────────────
     const ghostPlaneGeo = new THREE.PlaneGeometry(200, 200);
@@ -3141,8 +3076,8 @@ function initConstellationSystem(userVision) {
         if (match && match.length >= 3) {
             c = new THREE.Color(parseInt(match[0])/255, parseInt(match[1])/255, parseInt(match[2])/255);
         }
-        // Soften the color slightly — keep prismatic tint
-        c.lerp(new THREE.Color(1, 1, 1), 0.40);
+        // Soften the color so it's not a harsh saturated RGB dot
+        c.lerp(new THREE.Color(1, 1, 1), 0.65);
 
         const lineGeo = new THREE.BufferGeometry();
         const linePos = [];
@@ -3153,57 +3088,28 @@ function initConstellationSystem(userVision) {
         lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
         
         gs.lineMat = ghostLineMat.clone();
-        gs.lineMat.color = new THREE.Color(1, 1, 1);
+        gs.lineMat.color = new THREE.Color(1, 1, 1); // white lines — same as user's constellation
         const lineMesh = new THREE.LineSegments(lineGeo, gs.lineMat);
-        gs.lineMesh = lineMesh; // store reference
-        if (window.isScreensaverMode) {
-            gs.group.add(lineMesh); // Add lines back for the screensaver mode so it matches the screenshot!
-        }
-
-        // Calculate angles for ghost points based on their lines so beams align structurally
-        const ptAngles = new Array(ghost.pts.length).fill(null);
-        ghost.lines.forEach(([a, b]) => {
-            if (!ghost.pts[a] || !ghost.pts[b]) return;
-            const dx = ghost.pts[b].x - ghost.pts[a].x;
-            const dy = ghost.pts[b].y - ghost.pts[a].y;
-            const ang = Math.atan2(dy, dx);
-            ptAngles[a] = ang;
-            ptAngles[b] = ang;
-        });
-
-        // Add some random distractor stars around the ghost constellation so it feels like a real starry patch
-        const numDist = 12 + Math.floor(Math.random() * 8);
-        for (let i = 0; i < numDist; i++) {
-            const minR2 = Math.random() * 450;
-            const minA = Math.random() * Math.PI * 2;
-            ghost.pts.push({
-                x: Math.cos(minA) * minR2,
-                y: Math.sin(minA) * minR2,
-                isDistractor: true
-            });
-            ptAngles.push(Math.random() * Math.PI * 2);
-        }
+        gs.lineMesh = lineMesh; // store reference for dynamic updates
+        gs.group.add(lineMesh);
 
         // Create Points — store mesh references for animation
         gs.starMeshes = [];
-        ghost.pts.forEach((pt, pi) => {
-            const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
-            // Use prisms (0.0) for everything so we get the fish/bird aesthetic, not dots (3.0)
-            const beamType = pt.isDistractor ? 0.0 : 0.0;
+        ghost.pts.forEach(pt => {
+            const gAngle = Math.random() * Math.PI; // unique beam direction per ghost star
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
                 uniforms: {
                     uTime: { value: Math.random() * 100 },
                     uColor: { value: c },
-                    uType: { value: beamType },
+                    uType: { value: 0.0 },
                     uOpacity: { value: 0.0 },
-                    uGlow: { value: 1.8 },
+                    uGlow: { value: 0.45 },
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 },
                     uDepth: { value: 0.6 },
-                    uHasLabel: { value: 0.0 },
-                    uSeed: { value: Math.random() }
+                    uHasLabel: { value: 0.0 }
                 },
                 transparent: true,
                 blending: THREE.AdditiveBlending,
@@ -3212,10 +3118,8 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            const baseScale = pt.isDistractor ? (2.0 + Math.random() * 4.0) : (4.0 + Math.random() * 8.0);
-            mesh.userData.baseScale = baseScale;
-            mesh.scale.set(baseScale, baseScale, 1.0);
-            mesh.position.set(pt.x, pt.y, pt.isDistractor ? -20 : 0);
+            mesh.scale.set(1.4, 1.4, 1);
+            mesh.position.set(pt.x, pt.y, 0);
             gs.starMeshes.push(mesh);
             gs.group.add(mesh);
         });
@@ -3229,9 +3133,9 @@ function initConstellationSystem(userVision) {
     titleEl.id = 'user-constellation-title';
     titleEl.style.cssText = `
         position:absolute;
-        top: 32px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%) scale(1.0);
+        transform: translate(-50%, -50%) scale(0.8);
         font-family: 'Hadassah', serif;
         font-size: clamp(1.4rem, 2.8vw, 2rem);
         letter-spacing: 0.45em;
@@ -3243,7 +3147,7 @@ function initConstellationSystem(userVision) {
         text-align: center;
         white-space: nowrap;
         text-shadow: 0 0 30px rgba(255,255,255,0.8);
-        transition: opacity 2s ease, filter 2s ease;
+        transition: all 4s cubic-bezier(0.2, 0.8, 0.2, 1);
         opacity: 0;
         filter: blur(8px);
         border-bottom: 1px solid rgba(255,255,255,0.0);
@@ -3273,6 +3177,7 @@ function initConstellationSystem(userVision) {
     requestAnimationFrame(() => {
         titleEl.style.opacity = '1';
         titleEl.style.filter = 'blur(0px)';
+        titleEl.style.transform = 'translate(-50%, -40vh) scale(1.0)';
     });
 
     // ── EXPLORATION RADIUS: how close camera must be to see ghost ──
@@ -3284,8 +3189,6 @@ function initConstellationSystem(userVision) {
     // ── UPDATE FUNCTION ─────────────────────────────────────────────
     window.updateConstellations = function() {
         if (!window.ghostDefs || !window.ghostState) return;
-        
-        const nowSec = performance.now() / 1000;
         
         // 10-second delay requirement
         const timeMet = (typeof skyIntroTime !== 'undefined' && skyIntroTime > 10.0);
@@ -3299,43 +3202,36 @@ function initConstellationSystem(userVision) {
             const gs = ghostState[gi];
 
             // Distance from camera center to ghost center (world space)
+            const camDist = Math.hypot(cam.x - ghost.offset.x, cam.y - ghost.offset.y);
+            const proximity = Math.max(0, 1 - camDist / GHOST_REVEAL_WORLD);
+            
+            // ── Screen-based reveal when zoomed out ─────────────────────
+            // When cam.scale < 0.35, ghosts that appear on screen should
+            // become visible — giving the galaxy exploration experience
             const screenX = (ghost.offset.x - cam.x) * cam.scale;
             const screenY = (ghost.offset.y - cam.y) * cam.scale;
-            const halfW = window.innerWidth * 0.7; // slight overscan
-            const halfH = window.innerHeight * 0.7;
+            const halfW = window.innerWidth * 0.55;
+            const halfH = window.innerHeight * 0.55;
             const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
+            // Ghost reveal: start as title disappears (cam.scale≈0.42), fully visible at cam.scale=0.20
+            const screenAlpha = onScreen ? Math.max(0, 0.65 - cam.scale * 1.55) : 0;
             
-            // Random delay for initial appearance
-            const randomDelay = Math.abs((Math.sin(gi * 12.9898) * 43758.5453) % 1); 
-            const appearStart = 0.45 - (randomDelay * 0.15); 
-            const appearEnd = appearStart - 0.15;
-            
-            // Visible if zoomed out enough
-            const zoomOutReveal = smoothstep(appearStart, appearEnd, cam.scale);
-            
-            // Visible if panned away from the main constellation (which is at 0,0)
-            const distFromCenter = Math.hypot(cam.x, cam.y);
-            const panReveal = smoothstep(200, 800, distFromCenter);
-            
-            const exploreFade = Math.max(zoomOutReveal, panReveal);
-            
-            // Age factor: older (low gi) = weaker glow, newer (high gi) = brighter glow
-            const ageIntensity = 0.15 + (gi / ghostDefs.length) * 0.85; // 0.15 to 1.0
-            
-            // As you zoom in, they reach full 1.0 color intensity
-            const zoomInFactor = smoothstep(0.3, 0.9, cam.scale); 
-            const intensity = window.isScreensaverMode ? 1.0 : lerp(ageIntensity, 1.0, zoomInFactor);
-            
-            // Overall target alpha
-            let targetAlpha = 0;
-            if (window.isScreensaverMode) {
-                targetAlpha = intensity; // Always visible in screensaver
-            } else if (onScreen) {
-                targetAlpha = exploreFade * intensity;
+            // Check if user has wandered far enough from the starting center (0,0) to start revealing ghosts
+            if (!window.hasWandered && Math.hypot(cam.x, cam.y) > 800) {
+                window.hasWandered = true;
             }
             
+            // Galaxy zoom-out reveal: screen-based alpha when zoomed out
+            // Screen ghosts should always show when visible (no wander needed)
+            const screenTargetAlpha = screenAlpha;
+            
+            let targetAlpha = window.hasWandered ? (proximity * proximity * 0.75) : 0.0;
+            // Screen-based reveal is independent of hasWandered — just zoom out to see them
+            targetAlpha = Math.max(targetAlpha, screenTargetAlpha);
+            
             // Apply restrictions
-            if (!timeMet) targetAlpha = Math.max(0, targetAlpha);
+            if (!timeMet) targetAlpha = Math.max(0, targetAlpha); // timeMet restriction only for pan-based
+            targetAlpha *= zoomFactor;
 
             // Smooth alpha
             gs.alpha += (targetAlpha - gs.alpha) * 0.06;
@@ -3344,45 +3240,27 @@ function initConstellationSystem(userVision) {
 
             // Update WebGL uniforms and position
             if (gs.group) {
-                // Ghost stays at its FIXED world position
+                // Ghost stays at its FIXED world position (no orbital movement)
                 const rp = { x: ghost.offset.x, y: ghost.offset.y, z: 0 };
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
 
                 // Self-rotation: faster + X-axis wobble for organic 3D feel
                 if (gs.selfRotY === undefined) gs.selfRotY = gi * 0.42;
-                gs.selfRotY += 0.006; 
-                // Removed gs.group.rotation.y and .x so they don't turn edge-on and vanish!
-                gs.group.rotation.y = 0;
-                gs.group.rotation.x = 0;
-                gs.group.rotation.z = 0; 
+                gs.selfRotY += 0.006; // much faster than before
+                gs.group.rotation.y = gs.selfRotY;
+                gs.group.rotation.x = Math.sin(gs.selfRotY * 0.31 + gi * 0.7) * 0.4;
                 gs.group.scale.set(cam.scale, cam.scale, 1);
 
                 // ── Animate star positions within the constellation ────────
                 if (gs.starMeshes && gs.starMeshes.length > 0) {
-                    const rotY = gs.selfRotY + globalRotY;
-                    const rotX = Math.sin(gs.selfRotY * 0.31 + gi * 0.7) * 0.4 + globalRotX;
                     const t = gs.selfRotY;
                     gs.starMeshes.forEach((mesh, si) => {
                         const origPt = ghost.pts[si];
                         if (!origPt) return;
-                        
-                        // Apply 3D rotation to the points so the constellation rotates in 3D
-                        // but the planes themselves always face the camera (billboarding)
-                        // Rotate around Y axis
-                        let x = origPt.x * Math.cos(rotY);
-                        let z = origPt.x * Math.sin(rotY);
-                        
-                        // Rotate around X axis
-                        let y = origPt.y * Math.cos(rotX) - z * Math.sin(rotX);
-                        z = origPt.y * Math.sin(rotX) + z * Math.cos(rotX);
-                        
-                        // Add organic wobble
                         const phase = si * 1.618 + gi * 2.3;
-                        x += Math.sin(t * 0.45 + phase) * 7;
-                        y += Math.cos(t * 0.33 + phase) * 7;
-                        
-                        mesh.position.set(x, y, z);
+                        mesh.position.x = origPt.x + Math.sin(t * 0.45 + phase) * 7;
+                        mesh.position.y = origPt.y + Math.cos(t * 0.33 + phase) * 7;
                     });
                     // Update line geometry to follow animated star positions
                     if (gs.lineMesh) {
@@ -3402,33 +3280,21 @@ function initConstellationSystem(userVision) {
                 }
 
                 // ── STAR SIZE COMPENSATION ────────────────────────────────
-                // Ensure ghost sizes match the main constellation logic.
-                // Since gs.group.scale is already cam.scale, child scale only needs to be the base scale * compensation.
-                const BASE_STAR_PX = 450;
-                // Vastly reduced MIN_STAR_PX so ghosts don't become massive white blobs when zooming out
-                const MIN_STAR_PX  = 4;
+                const BASE_STAR_PX = 200 * 1.4;
+                const MIN_STAR_PX  = 72;
                 const compensation = Math.max(1.0, MIN_STAR_PX / (BASE_STAR_PX * Math.max(0.05, cam.scale)));
-                let targetScale = 1.2 * compensation; // 1.2 base scale for ghosts
-                
-                // Keep them reasonably bounded
-                const maxAllowedChildScale = 25.0 / Math.max(0.01, cam.scale);
-                
                 gs.group.children.forEach(child => {
-                    if (child.isMesh && child.userData.baseScale) {
-                        let targetScale = child.userData.baseScale * compensation;
-                        targetScale = Math.min(targetScale, maxAllowedChildScale);
-                        child.scale.set(targetScale, targetScale, 1);
-                    }
+                    if (child.isMesh) child.scale.set(1.4 * compensation, 1.4 * compensation, 1);
                 });
             }
-            // Match ghost brightness exactly to user constellation
+            // Boost ghost brightness in galaxy view so they're clearly visible
+            const galaxyBoost = cam.scale < 0.5 ? 1.0 + (0.5 - cam.scale) * 4.0 : 1.0;
+            const lineBoost = Math.min(1.0, Math.max(0.22, 0.65 - cam.scale * 0.8) * galaxyBoost);
             const hGlow = gs._hoverGlow || 0;
-            if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
+            if (gs.lineMat) gs.lineMat.opacity = Math.min(1.0, a * lineBoost + hGlow * 0.55);
             gs.pointMats.forEach(mat => {
-                // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.5, a * 1.0 + hGlow * 0.5); // Reduced opacity to prevent blobs
-                mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.8 + hGlow * 1.0; // Reduced base glow
+                mat.uniforms.uOpacity.value = Math.min(1.0, (a * 2.5 + hGlow * 1.8) * galaxyBoost);
+                mat.uniforms.uZoom.value = Math.max(0.35, cam.scale);
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -3468,21 +3334,6 @@ function initConstellationSystem(userVision) {
                         gs.group.rotation.y = 0;
                         gs.group.rotation.x = 0;
                     }
-                    // Hide wireframe lines — show only prismatic star beams
-                    if (gs.lineMesh) gs.lineMesh.visible = false;
-                    // Mark as focused ghost
-                    window._focusedGhostIndex = gi;
-                    // Update the top title to show this constellation's name
-                    const titleEl = document.getElementById('user-constellation-title');
-                    if (titleEl) {
-                        const ghostName = (currentLang === 'he') ? ghost.nameHe : ghost.nameEn;
-                        titleEl.textContent = '— ' + ghostName + ' —';
-                        titleEl.style.opacity = '1';
-                        // Store original user name for when they return
-                        if (!window._originalConstellationTitle) {
-                            window._originalConstellationTitle = window.userConstellationName || userVision || '';
-                        }
-                    }
                 });
                 gs.labelEl.addEventListener('mouseover', () => {
                     gs.isHovered = true;
@@ -3516,15 +3367,8 @@ function initConstellationSystem(userVision) {
                     'pointer-events: none',
                     'z-index: 11',
                     'transform: translate(-50%, 20px)',
-                    'transition: opacity 1.2s ease, transform 0.8s ease',
-                    'direction: rtl',
-                    'background: rgba(4, 4, 10, 0.7)',
-                    'padding: 24px',
-                    'border: 1px solid rgba(255,255,255,0.15)',
-                    'border-radius: 16px',
-                    'backdrop-filter: blur(20px) saturate(1.2)',
-                    '-webkit-backdrop-filter: blur(20px) saturate(1.2)',
-                    'box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4)'
+                    'transition: opacity 1.2s ease',
+                    'direction: rtl'
                 ].join(';');
                 skyScreen.appendChild(gs.infoEl);
             }
@@ -3536,7 +3380,7 @@ function initConstellationSystem(userVision) {
                 const col2 = ghost.color;
                 
                 // Name label
-                if (gs.labelEl.style.display !== 'block') gs.labelEl.style.display = 'block';
+                gs.labelEl.style.display = 'block';
                 gs.labelEl.style.left = s2.x + 'px';
                 gs.labelEl.style.top = (s2.y - 50 * cam.scale) + 'px';
                 gs.labelEl.style.fontSize = Math.round(8 + a * 5) + 'px';
@@ -3548,90 +3392,10 @@ function initConstellationSystem(userVision) {
                 gs.infoEl.style.opacity = '0';
                 gs.infoEl.style.display = 'none';
             } else {
-                if (gs.labelEl.style.display !== 'none') gs.labelEl.style.display = 'none';
-                if (gs.infoEl.style.display !== 'none') gs.infoEl.style.display = 'none';
+                gs.labelEl.style.display = 'none';
+                gs.infoEl.style.display = 'none';
             }
         });
-
-        // ── USER CONSTELLATION LABEL ─────────────────────────────────────
-        if (window.skyRevealState === 'revealed' && window.hasWandered) {
-            if (!window.userConstellationLabel) {
-                window.userConstellationLabel = document.createElement('div');
-                window.userConstellationLabel.style.cssText = [
-                    'position: absolute',
-                    'font-family: SimplerMono, Courier New, monospace',
-                    'letter-spacing: 0.18em',
-                    'text-align: center',
-                    'white-space: nowrap',
-                    'pointer-events: auto',
-                    'cursor: pointer',
-                    'z-index: 10',
-                    'transform: translate(-50%, -100%)',
-                    'transition: opacity 0.8s ease, transform 0.3s ease',
-                    'color: rgba(255,255,255,0.92)'
-                ].join(';');
-                
-                // Click to return home
-                window.userConstellationLabel.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    targetCam.x = 0;
-                    targetCam.y = 0;
-                    targetCam.scale = 1.2;
-                    window._focusedGhostIndex = -1; // back to user
-                    
-                    const titleEl = document.getElementById('user-constellation-title');
-                    if (titleEl) {
-                        const name = window.userConstellationName || window.userVision || '';
-                        titleEl.textContent = '— ' + name + ' —';
-                        titleEl.style.opacity = '1';
-                    }
-                });
-                
-                // Hover effect
-                window.userConstellationLabel.addEventListener('mouseover', () => {
-                    window.userConstellationLabel.style.textDecoration = 'underline';
-                    window.userConstellationLabel.style.textUnderlineOffset = '4px';
-                    window.userConstellationLabel.style.textShadow = '0 0 14px rgba(255,255,255,0.7), 0 0 30px rgba(255,255,255,0.3)';
-                    window.userConstellationLabel.style.letterSpacing = '0.26em';
-                });
-                window.userConstellationLabel.addEventListener('mouseout', () => {
-                    window.userConstellationLabel.style.textDecoration = 'none';
-                    window.userConstellationLabel.style.textShadow = 'none';
-                    window.userConstellationLabel.style.letterSpacing = '0.18em';
-                });
-                
-                const skyScreen = document.getElementById('sky-ui');
-                if (skyScreen) skyScreen.appendChild(window.userConstellationLabel);
-            }
-            
-            // Calculate alpha similar to ghosts
-            const camDist = Math.hypot(cam.x, cam.y);
-            let targetAlpha = (camDist > 800) ? 0.75 : 0.0;
-            const screenX = (-cam.x) * cam.scale;
-            const screenY = (-cam.y) * cam.scale;
-            const halfW = window.innerWidth * 0.55;
-            const halfH = window.innerHeight * 0.55;
-            const onScreen = Math.abs(screenX) < halfW && Math.abs(screenY) < halfH;
-            const screenAlpha = onScreen ? Math.max(0, 0.65 - cam.scale * 1.55) : 0;
-            targetAlpha = Math.max(targetAlpha, screenAlpha);
-            
-            window._userLabelAlpha = (window._userLabelAlpha || 0) + (targetAlpha - (window._userLabelAlpha || 0)) * 0.06;
-            
-            if (window._userLabelAlpha > 0.04) {
-                const s2 = w2s(0, 0); // user constellation is at 0,0
-                if (window.userConstellationLabel.style.display !== 'block') window.userConstellationLabel.style.display = 'block';
-                window.userConstellationLabel.style.left = s2.x + 'px';
-                window.userConstellationLabel.style.top = (s2.y - 50 * cam.scale) + 'px';
-                window.userConstellationLabel.style.fontSize = Math.round(8 + window._userLabelAlpha * 5) + 'px';
-                window.userConstellationLabel.style.opacity = (window._userLabelAlpha * 0.9).toFixed(2);
-                window.userConstellationLabel.textContent = (window.userConstellationName || window.userVision || '').toUpperCase();
-            } else {
-                if (window.userConstellationLabel.style.display !== 'none') window.userConstellationLabel.style.display = 'none';
-            }
-        } else if (window.userConstellationLabel) {
-            if (window.userConstellationLabel.style.display !== 'none') window.userConstellationLabel.style.display = 'none';
-            window._userLabelAlpha = 0;
-        }
     };
 }
 
@@ -3722,7 +3486,6 @@ function renderQ() {
         // Go directly to sky in recognition mode
         window.skyRevealState = 'recognition';
         window.revelationProgress = 0;
-        console.log('[PAGMAR DEBUG] Questionnaire complete! skyRevealState:', window.skyRevealState, '_qDrawingPoints:', window._qDrawingPoints ? window._qDrawingPoints.length : 'null');
         
         // Gradual Transition: Fade out questionnaire quickly so sky screen has no overlap
         const qScreen = document.getElementById('screen-questionnaire');
@@ -3806,13 +3569,11 @@ function renderQ() {
 
         // Wait for questionnaire to fully fade, then fade in the sky (smooth reveal)
         setTimeout(() => {
-
-
             const skyScreen = document.getElementById('screen-sky');
-            skyScreen.style.transition = 'opacity 1.5s ease-in'; // Set BEFORE active class is added
-            initSky(); // showScreen inside adds 'active' → uses the 1.5s transition set above
+            skyScreen.style.transition = 'opacity 3.0s ease-in'; // Set BEFORE active class is added
+            initSky(); // showScreen inside adds 'active' → uses the 3.0s transition set above
             window.updateGlobalBackButton();
-        }, 700);
+        }, 1800);
         
         return;
     }
@@ -3854,7 +3615,7 @@ function renderQ() {
     }
 
     // Split text into words to fade them in one by one — speedy but still graceful
-    const words = genderize(q.text).split(' ');
+    const words = q.text.split(' ');
     words.forEach((w, i) => {
         const span = document.createElement('span');
         span.innerText = w + ' ';
@@ -3877,7 +3638,7 @@ function renderQ() {
 
     // Sub-text
     if (q.sub) {
-        const subWords = genderize(q.sub).split(' ');
+        const subWords = q.sub.split(' ');
         subWords.forEach((w, i) => {
             const span = document.createElement('span');
             span.innerText = w + ' ';
@@ -3913,7 +3674,7 @@ function renderQ() {
         q.options.forEach((opt, idx) => {
             const b = document.createElement('button');
             b.className = 'q-opt'; 
-            b.innerText = genderize(opt);
+            b.innerText = opt;
             const normalizedAns = qData.en.options[idx]; 
             
             // Check existing lines to avoid overlaps
@@ -3930,6 +3691,7 @@ function renderQ() {
             const maxX = window.innerWidth - paddingX;
             const minY = paddingY;
             const maxY = window.innerHeight - paddingY;
+            
             // Question text bounding box (center of screen, roughly 760×400px)
             const qExclLeft   = centerX - 390;
             const qExclRight  = centerX + 390;
@@ -4173,62 +3935,6 @@ function renderQ() {
         const inputHolder = document.createElement('div');
         inputHolder.style.cssText = 'position:absolute; top:52%; left:50%; transform:translateX(-50%); width:85%; max-width:400px; opacity:0; transition:opacity 1.2s ease; text-align:center;';
         inputHolder.appendChild(inp);
-
-        // ── GENDER SELECTOR (only for name question) ──
-        if (qData.id === 'name') {
-            const genderWrap = document.createElement('div');
-            genderWrap.id = 'gender-selector';
-            genderWrap.style.cssText = 'margin-top: 24px; display: flex; justify-content: center; gap: 12px; direction: rtl;';
-
-            const genderLabel = document.createElement('span');
-            genderLabel.style.cssText = 'display: block; width: 100%; text-align: center; margin-bottom: 10px; font-family: "SimplerPro", sans-serif; font-size: 0.85rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em;';
-            genderLabel.textContent = currentLang === 'he' ? 'לשון פנייה' : 'Pronoun';
-            genderWrap.appendChild(genderLabel);
-
-            const genderOptions = currentLang === 'he'
-                ? [{ val: 'female', label: 'נקבה' }, { val: 'male', label: 'זכר' }, { val: 'other', label: 'אחר' }]
-                : [{ val: 'female', label: 'She' }, { val: 'male', label: 'He' }, { val: 'other', label: 'They' }];
-
-            genderOptions.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'btn gender-btn';
-                btn.textContent = opt.label;
-                btn.style.cssText = 'padding: 6px 18px; font-size: 0.82rem; letter-spacing: 0.1em; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.5); border-radius: 2px; cursor: pointer; transition: all 0.3s ease; font-family: "SimplerPro", sans-serif;';
-                btn.addEventListener('pointerdown', (e) => {
-                    e.stopPropagation();
-                    answers.gender = opt.val;
-                    // Highlight selected
-                    genderWrap.querySelectorAll('.gender-btn').forEach(b => {
-                        b.style.borderColor = 'rgba(255,255,255,0.15)';
-                        b.style.color = 'rgba(255,255,255,0.5)';
-                        b.style.background = 'transparent';
-                    });
-                    btn.style.borderColor = 'rgba(255,255,255,0.5)';
-                    btn.style.color = 'rgba(255,255,255,0.95)';
-                    btn.style.background = 'rgba(255,255,255,0.08)';
-                });
-                genderWrap.appendChild(btn);
-            });
-
-            // Default to 'other' if nothing selected
-            if (!answers.gender) answers.gender = 'other';
-
-            inputHolder.appendChild(genderWrap);
-
-            // Pre-select the current gender button after render
-            setTimeout(() => {
-                const currentGender = answers.gender || 'other';
-                genderWrap.querySelectorAll('.gender-btn').forEach(b => {
-                    const matchOpt = genderOptions.find(o => o.label === b.textContent);
-                    if (matchOpt && matchOpt.val === currentGender) {
-                        b.style.borderColor = 'rgba(255,255,255,0.5)';
-                        b.style.color = 'rgba(255,255,255,0.95)';
-                        b.style.background = 'rgba(255,255,255,0.08)';
-                    }
-                });
-            }, 50);
-        }
-
         // yearPreview intentionally omitted (removed by design)
         inputArea.appendChild(inputHolder);
         
@@ -4676,12 +4382,7 @@ function initDiscoverySystem() {
     };
 }
 
-async function initSky() {
-    if (skyLoopId) {
-        cancelAnimationFrame(skyLoopId);
-        skyLoopId = null;
-    }
-    
+function initSky() {
     showScreen('screen-sky');
     
     // Initialize globalMouse to screen center so mouse reveal works immediately even before move
@@ -4689,14 +4390,8 @@ async function initSky() {
 
     // Remove the 2D canvas from DOM if it exists and replace with Three.js
     const oldCanvas = document.getElementById('sky-canvas');
-    if (oldCanvas) {
-        if (typeof renderer !== 'undefined' && renderer) {
-            renderer.dispose();
-        }
-        oldCanvas.remove();
-    }
-
-    const container = document.getElementById('screen-sky');
+    const container = oldCanvas ? oldCanvas.parentElement : document.getElementById('screen-sky');
+    if (oldCanvas) oldCanvas.remove();
 
     W = window.innerWidth;
     H = window.innerHeight;
@@ -4716,7 +4411,7 @@ async function initSky() {
     cam.x = vp.camStartX; cam.y = vp.camStartY; cam.scale = vp.startScale;
     targetCam.x = vp.camStartX; targetCam.y = vp.camStartY; targetCam.scale = vp.startScale;
 
-    await buildSignalField();
+    buildSignalField();
 
     initCameraEvents();
     // Show constellation title immediately with the image
@@ -4745,7 +4440,7 @@ async function initSky() {
     // DISCOVERY SYSTEM — aurora, glimmers, breadcrumbs, secrets, position text
     initDiscoverySystem();
 
-    skyLoopId = requestAnimationFrame(skyLoop);
+    requestAnimationFrame(skyLoop);
 
     // Resume AudioContext (Chrome requires user gesture)
     const resumeAudio = () => {
@@ -4758,7 +4453,6 @@ async function initSky() {
     };
     document.addEventListener('mousemove', resumeAudio, { once: true });
     document.addEventListener('click', resumeAudio, { once: true });
-
 }
 
 
@@ -4774,10 +4468,6 @@ async function buildSignalField() {
     }
     skyPoints = [];
     majorPoints = [];
-    
-    // In screensaver mode, we ONLY want the ghost constellations, not the main user one
-    if (window.isScreensaverMode) return;
-    
     const { rand, texts, dominantElement, topology, personalHue } = vp;
     const labelsDiv = document.getElementById('sky-labels');
     if (labelsDiv) labelsDiv.innerHTML = '';
@@ -4852,8 +4542,6 @@ async function buildSignalField() {
     
     // coreNum determines the number of primary lobes (between 5 and 8)
     const numLobes = 5 + (vp.coreNum % 4); 
-    
-    let isQDriven = false;
 
     if (shapeCoords) {
         // ── DYNAMIC PAREIDOLIA SHAPE GEOMETRY (POINTILLISM) ──────────────
@@ -4861,54 +4549,30 @@ async function buildSignalField() {
         
         // shapeCoords is now an array of [x, y] coordinates sampled from a canvas
         // There could be 500-2000 points.
-        // ── PERFORMANCE: SUBSAMPLE TO AVOID THOUSANDS OF MESHES ──
-        const MAX_POINTS = 150;
-        let finalShapeCoords = [];
-        isQDriven = !!(window._qDrawingPoints && window._qDrawingPoints === shapeCoords);
         
-        if (isQDriven && shapeCoords.length > MAX_POINTS) {
-            const vertices = [];
-            const pathPts = [];
-            shapeCoords.forEach((c, i) => {
-                if (c.length === 3 && c[2] === 1) vertices.push({c, i});
-                else pathPts.push({c, i});
-            });
-            const neededPathPts = Math.max(0, MAX_POINTS - vertices.length);
-            const step = Math.max(1, Math.floor(pathPts.length / neededPathPts));
-            const sampledPathPts = pathPts.filter((_, idx) => idx % step === 0).slice(0, neededPathPts);
-            
-            // Recombine and sort back to original order
-            const combined = [...vertices, ...sampledPathPts].sort((a,b) => a.i - b.i);
-            
-            // Re-map and update vertex indices
-            window._qVertexIndices = new Set();
-            combined.forEach((item, newIdx) => {
-                if (item.c.length === 3 && item.c[2] === 1) window._qVertexIndices.add(newIdx);
-                finalShapeCoords.push(item.c);
-            });
-        } else {
-            finalShapeCoords = shapeCoords;
-        }
-
         // We need exactly 8 major points for the text labels.
+        // When using questionnaire drawing, spread them evenly. Otherwise, random pick.
+        const isQDriven = !!(window._qDrawingPoints && window._qDrawingPoints === shapeCoords);
         const majorIndices = new Set();
         if (isQDriven && window._qVertexIndices && window._qVertexIndices.size >= 3) {
+            // Use actual questionnaire vertex dots as major (labeled) stars
             window._qVertexIndices.forEach(idx => {
                 if (majorIndices.size < 8) majorIndices.add(idx);
             });
-            const step = Math.max(1, Math.floor(finalShapeCoords.length / (8 - majorIndices.size + 1)));
-            for (let si = 0; majorIndices.size < 8 && si < finalShapeCoords.length; si += step) {
+            // Fill remaining slots evenly if fewer than 8 vertices
+            const step = Math.max(1, Math.floor(shapeCoords.length / (8 - majorIndices.size + 1)));
+            for (let si = 0; majorIndices.size < 8 && si < shapeCoords.length; si += step) {
                 majorIndices.add(si);
             }
         } else {
-            while (majorIndices.size < 8 && majorIndices.size < finalShapeCoords.length) {
-                majorIndices.add(Math.floor(rand() * finalShapeCoords.length));
+            while (majorIndices.size < 8 && majorIndices.size < shapeCoords.length) {
+                majorIndices.add(Math.floor(rand() * shapeCoords.length));
             }
         }
         
         let majorIdx = 0;
         
-        finalShapeCoords.forEach((coord, i) => {
+        shapeCoords.forEach((coord, i) => {
             // Questionnaire-driven: coord[2] holds isVertex flag (1=vertex, 0=path point)
             // Use vertex = large labeled star, path points = clearly visible medium stars
             const isQCoord = Array.isArray(coord) && coord.length === 3;
@@ -4919,23 +4583,21 @@ async function buildSignalField() {
             const clusterY = coord[1] * shapeRadius * -1; // flip Y (THREE.js convention)
             const clusterZ = (rand() - 0.5) * 30; 
             
+            // Vertex/key-corner stars use 'halo' (crystal) — tight 6-point star, no huge streaks
             const isQDrivenStar = isQCoord; // came from questionnaire drawing
-            
-            // All stars in the user's constellation use 'halo' to restore the rich prismatic effect
-            const elType = (isQDrivenStar || !isQDriven) ? 'halo' : 'dot';
+            // All Q-shape stars use the same crystal type — unified prismatic look
+            // Only background dust uses the simple dot type
+            const elType = (isVertexStar || isQDrivenStar) ? 'halo' : 'dot';
 
             // Scale hierarchy: vertex are notably bigger but NOT massive
             // ALL Q-shape stars IDENTICAL size — vertex stars must NOT look like a separate shape.
             // Questionnaire button positions (vertex) can be far from central cluster,
             // so making them larger creates "isolated dots" = the "second image" illusion.
             const scaleBase = isMajorPoint
-                ? (2.2 + rand() * 0.8)     // Restored to thick blades so they are clearly visible
-                : (isVertexStar || isQDrivenStar || !isQDriven)
-                    ? (1.2 + rand() * 0.8)   // 1.2-2.0 - visible path
+                ? (1.5 + rand() * 0.5)     // 1.5–2.0 — labeled stars: long dramatic beams
+                : (isVertexStar || isQDrivenStar)
+                    ? (0.95 + rand() * 0.45)  // 0.95–1.40 — Q-shape stars: vivid beams
                     : (0.02 + rand() * 0.02);  // 0.02–0.04 — distractors: nearly invisible
-
-            // Don't hide the path stars! Ensure all parts of the user's drawing are fully visible prisms.
-            const meshVisibleOverride = true;
             
             // Use personal hue but allow slight drift for a sparkling effect
             const cOffset = Math.floor(personalHue / 45);
@@ -4958,28 +4620,19 @@ async function buildSignalField() {
                 scale: scaleBase,
                 hue: lobeHue, 
                 isSeed: false, 
-                depthLayer: (isMajorPoint || isQDrivenStar) ? 1.0 : (1.2 + rand() * 0.5),
+                depthLayer: isMajorPoint ? 1.0 : (1.2 + rand() * 0.5),
                 fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: false,
                 pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 0, neighborPts: [],
                 isVertexStar: isVertexStar,           // key corner point of questionnaire shape
-                isQPathStar: isQDrivenStar && !isVertexStar, // path/edge point between vertices
-                _meshVisibleOverride: meshVisibleOverride // used later when creating mesh
+                isQPathStar: isQDrivenStar && !isVertexStar // path/edge point between vertices
             };
             
             skyPoints.push(pt);
             if (isMajorPoint) {
                 majorPoints.push(pt);
                 majorIdx++;
-            }
-            
-            // EXACT TRACING: Connect lineart stars sequentially in the order drawn!
-            if (isQDrivenStar && i > 0) {
-                const prevPt = skyPoints[skyPoints.length - 2];
-                if (prevPt && (prevPt.isVertexStar || prevPt.isQPathStar)) {
-                    pt.neighborPts.push(prevPt);
-                }
             }
         });
         
@@ -4995,7 +4648,7 @@ async function buildSignalField() {
             const minorR = {
                 x: mrX, y: mrY, z: minZ, originalX: mrX, originalY: mrY, originalZ: minZ, targetX: mrX, targetY: mrY, targetZ: minZ,
                 starX: mrX, starY: mrY,
-                anchorIdx: Math.floor(rand()*8), isMajor: false, elementType: 'dot', theme: 'Pareidolia',
+                anchorIdx: Math.floor(rand()*8), isMajor: false, elementType: 'flare', theme: 'Pareidolia',
                 text: null, isBlurred: true, baseAngle: rand() * Math.PI * 2, scale: rand() * 1.5,
                 hue: personalHue, isSeed: false, depthLayer: 1.0 + rand() * 0.5,
                 fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: false,
@@ -5007,20 +4660,17 @@ async function buildSignalField() {
             };
             skyPoints.push(minorR);
         }
-    }
-
-    // ── BACKGROUND CONSTELLATIONS (Only if NO user shape is drawn!) ──
-    if (!isQDriven && !window.isScreensaverMode) {
+    } else {
         // Arrange lobes in distinct angular sectors so color clusters are spatially separated
         for (let lobe = 0; lobe < numLobes; lobe++) {
-            // Spread lobes evenly around the full circle so clusters don't overlap
+        // Spread lobes evenly around the full circle so clusters don't overlap
         const sectorAngle = (Math.PI * 2 / numLobes) * lobe + rand() * 0.3;
         const radius = 80 + rand() * 220; 
         const clusterX = Math.cos(sectorAngle) * radius;
         const clusterY = Math.sin(sectorAngle) * radius * 0.9;
         
         const elType = elementTypes[Math.floor(rand() * elementTypes.length)];
-        const scaleBase = 1.8 + rand() * 2.5; // Rorschach major star scale
+        const scaleBase = 1.8 + rand() * 2.5;
         const baseAngleRight = rand() * Math.PI * 2;
         
         // Base hue for this lobe (strictly separated blocks of color)
@@ -5063,15 +4713,15 @@ async function buildSignalField() {
         majorPoints.push(ptRight, ptLeft);
         
         // Balanced: more minor stars for richer visual density
-        const numMinors = 22 + Math.floor(rand() * 18);
+        const numMinors = 15 + Math.floor(rand() * 15);
         for (let i = 0; i < numMinors; i++) {
             const minR2 = 10 + rand() * 150;
             const minA = rand() * Math.PI * 2;
             const mrX = clusterX + Math.cos(minA) * minR2;
             const mrY = clusterY + Math.sin(minA) * minR2;
             
-            const minorType = elementTypes[i % elementTypes.length]; // Background stars use prismatic blades/crystals, NOT simple dots
-            const minScale = scaleBase * (0.4 + rand() * 0.4);
+            const minorType = rand() > 0.4 ? elType : 'flare';
+            const minScale = scaleBase * (0.3 + rand() * 0.5);
             const minBaseA = rand() * Math.PI * 2;
             
             const minorHueRight = lobeHue;
@@ -5089,8 +4739,8 @@ async function buildSignalField() {
                 pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 0, neighborPts: [],
-                isVertexStar: false,           // key corner point of questionnaire shape
-                isQPathStar: false // path/edge point between vertices
+                isVertexStar: isVertexStar,           // key corner point of questionnaire shape
+                isQPathStar: isQDrivenStar && !isVertexStar // path/edge point between vertices
             };
             const minorL = {
                 ...minorR,
@@ -5118,7 +4768,7 @@ async function buildSignalField() {
                 originalX: mcX, originalY: mcY, originalZ: mcZ,
                 targetX: mcX, targetY: mcY, targetZ: mcZ,
                 starX: mcX, starY: mcY,
-                anchorIdx: lobe % 8, isMajor: false, elementType: 'dot', theme: 'Micro',
+                anchorIdx: lobe % 8, isMajor: false, elementType: 'flare', theme: 'Micro',
                 text: null, isBlurred: false, baseAngle: rand() * Math.PI * 2, scale: scaleBase * 0.15,
                 // Lower zoom threshold so they start appearing earlier (from scale 0.8 up to 2.5)
                 hue: lobeHue, isSeed: false, depthLayer: 1.0, isMicro: true, zoomThreshold: 0.8 + rand() * 1.7,
@@ -5126,8 +4776,8 @@ async function buildSignalField() {
                 pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
                 revealProgress: 0, hasBeenRevealed: false, assemblyProgress: 0, isAssembling: false,
                 totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 0, neighborPts: [],
-                isVertexStar: false,           // key corner point of questionnaire shape
-                isQPathStar: false // path/edge point between vertices
+                isVertexStar: isVertexStar,           // key corner point of questionnaire shape
+                isQPathStar: isQDrivenStar && !isVertexStar // path/edge point between vertices
             };
             
             const microLeft = {
@@ -5140,9 +4790,52 @@ async function buildSignalField() {
         }
         
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
-    } // end if (!window.isScreensaverMode)
+    } // end else (bilateral shape fallback)
 
-    // ── STARFIELD (REMOVED) ── white dots caused glare blobs on separate layer
+    // ── STARFIELD — tiny prismatic points filling the ENTIRE sky ──
+    // dot-type (3.0) = soft point light, not 6-ray star or beam line
+    // Spread across huge radius so they appear everywhere during exploration
+    {
+        const STAR_COUNT    = 600;
+        const FIELD_RADIUS  = 4000;  // fills entire explorable space
+        const CENTER_CLEAR  = 100;   // keep user constellation zone clear
+
+        for (let si = 0; si < STAR_COUNT; si++) {
+            const sfAngle = rand() * Math.PI * 2;
+            const sfR  = CENTER_CLEAR + rand() * FIELD_RADIUS;
+            const sfX  = Math.cos(sfAngle) * sfR;
+            const sfY  = Math.sin(sfAngle) * sfR * 0.72;
+            const sfZ  = (rand() - 0.5) * 800;
+            // Most stars are very faint tiny dots; ~8% are slightly brighter
+            const bright      = rand() < 0.15;
+            const sfScale     = bright ? (0.15 + rand() * 0.12) : (0.08 + rand() * 0.10);
+            const sfOpacity   = bright ? (0.35 + rand() * 0.25) : (0.12 + rand() * 0.18);
+            const sfGlow      = bright ? (0.45 + rand() * 0.35) : (0.15 + rand() * 0.25);
+            skyPoints.push({
+                x: sfX, y: sfY, z: sfZ,
+                originalX: sfX, originalY: sfY, originalZ: sfZ,
+                targetX: sfX, targetY: sfY, targetZ: sfZ,
+                starX: sfX, starY: sfY,
+                isMajor: false,
+                elementType: 'dot',   // soft point — not crystal or blade
+                theme: 'Starfield',
+                text: null, isBlurred: false,
+                baseAngle: rand() * Math.PI * 2,
+                scale: sfScale, hue: rand() * 360,
+                isSeed: false, depthLayer: 2.0 + rand() * 1.5,
+                fogRevealed: 0.8, hoverPulse: 0, permanentlyRevealed: false,
+                pulseClock: Math.random() * Math.PI * 2,
+                state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
+                revealProgress: 0, hasBeenRevealed: false,
+                assemblyProgress: 0, isAssembling: false,
+                totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0,
+                maxRevealProgress: 0, neighborPts: [],
+                isVertexStar: false, isQPathStar: false,
+                starfieldOpacity: sfOpacity,
+                starfieldGlow: sfGlow
+            });
+        }
+    }
 
     // Add text labels to one major point per theme
     for (let t = 0; t < 8; t++) {
@@ -5168,9 +4861,10 @@ async function buildSignalField() {
         pt.starY = pt.originalY;
         pt.x = pt.starX;
         pt.y = pt.starY;
-        // No breathing movement — stars stay perfectly still at their positions
-        pt.targetX = pt.originalX;
-        pt.targetY = pt.originalY;
+        const breatheDist = pt.isMajor ? 5 : 20;
+        const breatheAngle = rand() * Math.PI * 2;
+        pt.targetX = pt.originalX + Math.cos(breatheAngle) * breatheDist;
+        pt.targetY = pt.originalY + Math.sin(breatheAngle) * breatheDist;
         // Staggered reveal: point starts invisible and fades in after its delay
         pt.appearP = 0;
     });
@@ -5184,25 +4878,26 @@ async function buildSignalField() {
     const otherMajors = skyPoints.filter(p => p.isMajor && !p.isVertexStar && !p.isQPathStar);
     const nonMajorPts = skyPoints.filter(p => !p.isMajor && !p.isVertexStar && !p.isQPathStar);
 
-    // All Q-shape stars: appear together quickly — no star-by-star stagger
-    let qDelay = 0.3;
+    // All Q-shape stars: sequential drawing order — ONE unified reveal
+    // ~5s total: each star pops in one after another, building the prism shape gradually
+    let qDelay = 0.4; // brief pause before first star
     allQPts.forEach((pt) => {
         pt.revealDelay = qDelay;
-        if (pt.isVertexStar) pt.isFirstWave = true;
-        qDelay += 0.02; // nearly simultaneous
+        if (pt.isVertexStar) pt.isFirstWave = true; // vertex stars chime
+        qDelay += 0.12 + rand() * 0.06; // 0.12–0.18s per star → ~5s for 35 stars
     });
     const qTotal = qDelay;
 
-    // Other major labeled stars: appear right after
-    let nextMajorDelay = qTotal + 0.5;
+    // Other major labeled stars: appear after constellation is ~complete
+    let nextMajorDelay = qTotal + 2.0;
     otherMajors.forEach((pt, i) => {
         pt.revealDelay = nextMajorDelay;
         if (i < 3) { pt.isFirstWave = true; }
-        nextMajorDelay += 0.3 + rand() * 0.3;
+        nextMajorDelay += 1.0 + rand() * 1.0;
     });
 
     // Minor ambient background stars: very last, barely visible
-    let nextMinorDelay = Math.max(4.0, nextMajorDelay + 1.0);
+    let nextMinorDelay = Math.max(40.0, nextMajorDelay + 3.0);
     nonMajorPts.forEach(pt => {
         if (pt.theme === 'Starfield') {
             // Starfield stars appear IMMEDIATELY — no staggered delay
@@ -5220,14 +4915,8 @@ async function buildSignalField() {
         pt.neighborPts = [];
         
         // Pointillism shapes should NOT draw a tangled web between their dense minor stars
-        if (pt.theme === 'Pareidolia' && (pt.isQPathStar || pt.isVertexStar)) {
-            continue; // Lineart points are already connected sequentially!
-        }
-        if (pt.theme === 'Pareidolia' && !pt.isMajor && !pt.isQPathStar) {
+        if (pt.theme === 'Pareidolia' && !pt.isMajor) {
             continue; // Skip line drawing for dense minor dots
-        }
-        if (pt.theme === 'Starfield') {
-            continue; // Skip line drawing for background starfield
         }
         
         // Find nearest neighbors based on TARGET ASSEMBLED position, not random star position
@@ -5236,8 +4925,7 @@ async function buildSignalField() {
             const otherPt = skyPoints[j];
             
             // Don't connect to minor pareidolia dots either
-            if (otherPt.theme === 'Pareidolia' && !otherPt.isMajor && !otherPt.isQPathStar) continue;
-            if (otherPt.theme === 'Starfield') continue;
+            if (otherPt.theme === 'Pareidolia' && !otherPt.isMajor) continue;
             
             // Must use originalX/Y so the mesh looks structured
             const d = Math.hypot(pt.originalX - otherPt.originalX, pt.originalY - otherPt.originalY);
@@ -5276,20 +4964,16 @@ async function buildSignalField() {
     webglLineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
     webglLineGeo.setAttribute('color', new THREE.BufferAttribute(lineCol, 3));
     webglLines = new THREE.LineSegments(webglLineGeo, lineMat);
-    // scene.add(webglLines); // Removed to satisfy: "there are some lines between the points remove them"
+    scene.add(webglLines); // Added back so we can see the crystal connections form!
 
     // Nodes
     skyMeshes = [];
     skyPoints.forEach(pt => {
         // Prismatic language: bladeFn (0) = single beam, crystalFn (1) = 6-ray sparkle, dotFn (3) = soft dot
         let typeVal = 0.0; // blade — single dramatic prism beam (used for main constellation)
-        if (pt.elementType === 'halo')    typeVal = 0.0; // halo — single prism beam
-        if (pt.elementType === 'flare')   typeVal = 0.0; // flare — single prism beam
         if (pt.elementType === 'dot')     typeVal = 3.0; // soft micro dot
         if (pt.elementType === 'crystal') typeVal = 1.0; // 6-ray sparkle — used for starfield
         if (pt.elementType === 'shard')   typeVal = 2.0; // X-cut shard
-        
-        // ALL constellation points use blade prisms — no dots. Non-majors get lower glow via updatePoint.
 
         const ptColor = new THREE.Color().setHSL(pt.hue / 360, pt.theme === 'Unresolved' ? 0.4 : 1.0, 0.65);
 
@@ -5305,8 +4989,7 @@ async function buildSignalField() {
                 uState: { value: 1.0 },
                 uZoom: { value: 0.65 },
                 uDepth: { value: pt.isMajor ? 1.0 : (pt.isMicro ? 0.0 : 0.4) },
-                uHasLabel: { value: 0.0 },
-                uSeed: { value: Math.random() }
+                uHasLabel: { value: 0.0 }
             },
             transparent: true,
             blending: THREE.AdditiveBlending,
@@ -5316,11 +4999,6 @@ async function buildSignalField() {
         const mesh = new THREE.Mesh(planeGeo, mat);
         // Rotate each star's blade to its own angle → unique prism direction per star
         mesh.rotation.z = pt.baseAngle || 0;
-        // Apply override if this point should be invisible (e.g. path points)
-        if (pt._meshVisibleOverride === false) {
-            mesh.visible = false;
-        }
-
         scene.add(mesh);
         skyMeshes.push(mesh);
         pt.mesh = mesh;
@@ -5329,7 +5007,6 @@ async function buildSignalField() {
     // ══════════════════════════════════════════════════════
     // RECOGNITION MODE SETUP
     // ══════════════════════════════════════════════════════
-    console.log('[PAGMAR DEBUG] buildSignalField done. skyRevealState:', window.skyRevealState, 'skyPoints:', skyPoints.length);
     if (window.skyRevealState === 'recognition') {
         // All points are placed at their assembled positions and fully visible
         // so the user can see the shape and name it.
@@ -5365,79 +5042,37 @@ async function buildSignalField() {
         // 3. Draw questionnaire SVG lines on the sky overlay
         const srcSvg = document.getElementById('q-svg');
         const dstSvg = document.getElementById('sky-lineart-svg');
-        console.log('[PAGMAR DEBUG] Recognition mode entered. srcSvg:', !!srcSvg, 'dstSvg:', !!dstSvg);
-        if (srcSvg) console.log('[PAGMAR DEBUG] q-svg children:', srcSvg.children.length, 'lines:', srcSvg.querySelectorAll('line').length, 'paths:', srcSvg.querySelectorAll('path').length, 'circles:', srcSvg.querySelectorAll('circle').length);
         if (srcSvg && dstSvg) {
             dstSvg.innerHTML = '';
             const lines = srcSvg.querySelectorAll('line, path');
-            const circles = srcSvg.querySelectorAll('circle');
-            console.log('[PAGMAR DEBUG] Total lines+paths found:', lines.length, 'circles:', circles.length);
-            
-            // Collect raw points and segments from ALL SVG elements
-            const rawPts = [], rawSegs = [];
-            
-            const addRawPt = (x, y) => {
-                if (!rawPts.some(p => Math.abs(p.x - x) < 5 && Math.abs(p.y - y) < 5)) {
-                    rawPts.push({x, y});
-                }
-            };
-            
-            // Paths (quadratic curves)
-            const paths = Array.from(srcSvg.querySelectorAll('path'));
-            paths.forEach(p => {
-                const d = p.getAttribute('d');
-                // Format: M x1 y1 Q cx cy x2 y2
-                const match = d.match(/M\s+([-\d.]+)\s+([-\d.]+)\s+Q\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)\s+([-\d.]+)/);
-                if (match) {
-                    const x1 = parseFloat(match[1]);
-                    const y1 = parseFloat(match[2]);
-                    const x2 = parseFloat(match[3]);
-                    const y2 = parseFloat(match[4]);
-                    addRawPt(x1, y1);
-                    addRawPt(x2, y2);
-                    rawSegs.push({x1, y1, x2, y2});
-                }
-            });
-            
-            // Straight lines
-            const svgLines = Array.from(srcSvg.querySelectorAll('line'));
-            svgLines.forEach(line => {
-                const x1 = parseFloat(line.getAttribute('x1'));
-                const y1 = parseFloat(line.getAttribute('y1'));
-                const x2 = parseFloat(line.getAttribute('x2'));
-                const y2 = parseFloat(line.getAttribute('y2'));
-                addRawPt(x1, y1);
-                addRawPt(x2, y2);
-                rawSegs.push({x1, y1, x2, y2});
-            });
-            
-            // Also collect circle positions as standalone points  
-            const svgCircles = Array.from(srcSvg.querySelectorAll('circle'));
-            svgCircles.forEach(c => {
-                const cx = parseFloat(c.getAttribute('cx'));
-                const cy = parseFloat(c.getAttribute('cy'));
-                if (!isNaN(cx) && !isNaN(cy)) {
-                    addRawPt(cx, cy);
-                }
-            });
-            
-            // If we have circles but no lines, create segments connecting adjacent circles
-            if (rawSegs.length === 0 && svgCircles.length >= 2) {
-                console.log('[PAGMAR DEBUG] No lines/paths but found circles, creating connecting segments');
-                for (let i = 0; i < svgCircles.length - 1; i++) {
-                    const cx1 = parseFloat(svgCircles[i].getAttribute('cx'));
-                    const cy1 = parseFloat(svgCircles[i].getAttribute('cy'));
-                    const cx2 = parseFloat(svgCircles[i+1].getAttribute('cx'));
-                    const cy2 = parseFloat(svgCircles[i+1].getAttribute('cy'));
-                    if (!isNaN(cx1) && !isNaN(cy1) && !isNaN(cx2) && !isNaN(cy2)) {
-                        rawSegs.push({x1: cx1, y1: cy1, x2: cx2, y2: cy2});
+            if (lines.length > 0) {
+                const rawPts = [], rawSegs = [];
+                // We now use paths (curves) instead of straight lines in the questionnaire
+                const paths = Array.from(srcSvg.querySelectorAll('path'));
+                paths.forEach(p => {
+                    const d = p.getAttribute('d');
+                    // Format: M x1 y1 Q cx cy x2 y2
+                    const match = d.match(/M\s+([-\d.]+)\s+([-\d.]+)\s+Q\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)\s+([-\d.]+)/);
+                    if (match) {
+                        const x1 = parseFloat(match[1]);
+                        const y1 = parseFloat(match[2]);
+                        const x2 = parseFloat(match[3]);
+                        const y2 = parseFloat(match[4]);
+                        rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
+                        rawSegs.push({x1, y1, x2, y2});
                     }
-                }
-            }
-            
-            console.log('[PAGMAR DEBUG] After collection: rawPts:', rawPts.length, 'rawSegs:', rawSegs.length);
-            
-            if (rawPts.length > 0) {
+                });
+                
+                // Fallback for lines just in case
+                const lines = Array.from(srcSvg.querySelectorAll('line'));
+                lines.forEach(line => {
+                    const x1 = parseFloat(line.getAttribute('x1'));
+                    const y1 = parseFloat(line.getAttribute('y1'));
+                    const x2 = parseFloat(line.getAttribute('x2'));
+                    const y2 = parseFloat(line.getAttribute('y2'));
+                    rawPts.push({x: x1, y: y1}, {x: x2, y: y2});
+                    rawSegs.push({x1, y1, x2, y2});
+                });
                 let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
                 rawPts.forEach(p => { minX = Math.min(minX,p.x); maxX = Math.max(maxX,p.x); minY = Math.min(minY,p.y); maxY = Math.max(maxY,p.y); });
                 const bw = maxX - minX || 1, bh = maxY - minY || 1;
@@ -5449,9 +5084,46 @@ async function buildSignalField() {
                 const txf = (x) => (x-bcx)*sc, tyf = (y) => (y-bcy)*sc;
                 
                  const drawSide = (flip) => {
-                    // Removed connecting lines/SVG layer entirely per user request: "remove the second layer that connects"
+                    // DOTS APPEAR FIRST: immediately visible, define the shape
+                    rawPts.forEach(p => {
+                        const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                        c.setAttribute('cx', cx2 + txf(p.x)*flip);
+                        c.setAttribute('cy', cy2 + tyf(p.y));
+                        c.setAttribute('r','1.8');
+                        c.setAttribute('fill','rgba(255,255,255,0.88)');
+                        c.style.opacity = '0';
+                        c.style.transition = 'opacity 1.0s ease-in-out';
+                        dstSvg.appendChild(c);
+                        requestAnimationFrame(() => { c.getBoundingClientRect(); c.style.opacity = '1'; });
+                    });
+                    // LINES CONNECT AFTER (1.5s delay so dots are already visible first)
+                    rawSegs.forEach(seg => {
+                        const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+                        l.setAttribute('x1', cx2 + txf(seg.x1)*flip);
+                        l.setAttribute('y1', cy2 + tyf(seg.y1));
+                        l.setAttribute('x2', cx2 + txf(seg.x2)*flip);
+                        l.setAttribute('y2', cy2 + tyf(seg.y2));
+                        l.setAttribute('stroke','rgba(255,255,255,0.60)');
+                        l.setAttribute('stroke-width','0.8');
+                        l.setAttribute('stroke-linecap','round');
+                        const len = Math.hypot(txf(seg.x2)*flip - txf(seg.x1)*flip, tyf(seg.y2) - tyf(seg.y1));
+                        l.style.strokeDasharray = len;
+                        l.style.strokeDashoffset = len;
+                        l.style.transition = 'stroke-dashoffset 7s ease-in-out 1.5s';
+                        dstSvg.appendChild(l);
+                        requestAnimationFrame(() => { l.getBoundingClientRect(); l.style.strokeDashoffset = '0'; });
+                    });
                  };
-                 // Removed drawSide(1); drawSide(-1); and axis line to prevent any white glow/double layer artifacts.
+                 drawSide(1);   // Original constellation side
+                 drawSide(-1);  // Mirror side — creates Rorschach / inkblot bilateral symmetry
+                 // Subtle vertical center axis line to reinforce the Rorschach fold
+                 const axis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                 axis.setAttribute('x1', cx2); axis.setAttribute('y1', cy2 - H2 * 0.35);
+                 axis.setAttribute('x2', cx2); axis.setAttribute('y2', cy2 + H2 * 0.35);
+                 axis.setAttribute('stroke', 'rgba(255,255,255,0.00)');
+                 axis.setAttribute('stroke-width', '0.5');
+                 axis.setAttribute('stroke-dasharray', '4 8');
+                 dstSvg.appendChild(axis);
                 
                 // --- Serialize for ghost pool saving later ---
                 const uniquePts = [];
@@ -5476,18 +5148,6 @@ async function buildSignalField() {
                 });
                 
                 window.lastUserConstellation = { pts: uniquePts, lines: linesArr };
-            } else {
-                console.log('[PAGMAR DEBUG] No SVG data at all in q-svg! Showing constellation points directly.');
-                // Fallback: make the WebGL constellation points visible so user sees something
-                skyPoints.forEach(pt => {
-                    if (pt.mesh && pt._meshVisibleOverride !== false) {
-                        pt.mesh.visible = true;
-                        const u = pt.mesh.material.uniforms;
-                        u.uOpacity.value = pt.isMajor ? 0.8 : 0.5;
-                        u.uGlow.value    = pt.isMajor ? 0.3 : 0.15;
-                    }
-                });
-                if (webglLines) webglLines.visible = true; // Lines ARE requested!
             }
         }
         
@@ -5525,11 +5185,9 @@ async function buildSignalField() {
                 // IMMEDIATELY hide ALL recognition UI — no text leaks to prismatic screen
                 const _recogOvl = document.getElementById('recognition-overlay');
                 if (_recogOvl) _recogOvl.style.display = 'none';
-                // Removed clearing of SVG so it can stay aligned and fade smoothly on zoom
+                // *** ROOT CAUSE FIX: clear SVG instantly at t=0 ***
                 const _svgNow = document.getElementById('sky-lineart-svg');
-                if (_svgNow) {
-                    _svgNow.style.transition = 'opacity 0.5s ease';
-                }
+                if (_svgNow) { _svgNow.innerHTML = ''; _svgNow.style.display = 'none'; }
                 // *** SCREEN WIPE: brief opacity=0 to flush any GPU-composited SVG layers ***
                 const _skyScrWipe = document.getElementById('screen-sky');
                 if (_skyScrWipe) {
@@ -5586,13 +5244,12 @@ async function buildSignalField() {
                         skyIntroTime = 0;
                         // CRITICAL: Reset all appearP values so the staggered reveal starts fresh
                         skyPoints.forEach(pt => {
-                            // Starfield stars stay visible — don't reset them
-                            if (pt.theme === 'Starfield') return;
                             pt.appearP = 0;
                             pt._chimePlayedOnAppear = false;
+                            // Also reset scale and opacity so no ghost image appears on first visible frame
                             if (pt.mesh) {
                                 pt.mesh.scale.set(0, 0, 1);
-                                if (pt.mesh && pt.mesh.material && pt.mesh.material.uniforms) {
+                                if (pt.mesh.material && pt.mesh.material.uniforms) {
                                     pt.mesh.material.uniforms.uOpacity.value = 0;
                                 }
                             }
@@ -5608,7 +5265,7 @@ async function buildSignalField() {
                         // to the normal calm baseGlow (0.55). Without this, bloomProgress=0 forever
                         // → glowValue stays at 3.55 creating a huge diffuse "ghost" image.
                         window.isBloomTriggered = true;
-                        window.bloomProgress = 0.92;  // Start nearly complete — NO initial glow surge
+                        window.bloomProgress = 0.28;  // Skip violent Phase-1 inhale — start directly at gentle expansion
                         window.bloomShockwave = null;  // No shockwave jump
                         window.userConstellationName = userVision;
                         
@@ -5623,12 +5280,8 @@ async function buildSignalField() {
                         }
                         
                         // Restore ALL mesh visibility (recognition mode hid them)
-                        if (webglLines) webglLines.visible = true; // Lines ARE requested!
-                        skyPoints.forEach(pt => { 
-                            if (pt.mesh && pt._meshVisibleOverride !== false) {
-                                pt.mesh.visible = true; 
-                            }
-                        });
+                        if (webglLines) webglLines.visible = true;
+                        skyPoints.forEach(pt => { if (pt.mesh) pt.mesh.visible = true; });
 
                         // The camera will not move or zoom here per user request, 
                         // allowing the stars to build up peacefully in their place.
@@ -5739,7 +5392,7 @@ async function buildSignalField() {
 // ======================================================
 function skyLoop(ts) {
     if (!skyRunning) return;
-    skyLoopId = requestAnimationFrame(skyLoop);
+    requestAnimationFrame(skyLoop);
     
     // Fix: ts is undefined on the manual first call, preventing NaN cascade
     const now = performance.now();
@@ -5792,13 +5445,11 @@ function skyLoop(ts) {
         }
         window.bloomProgress = Math.min(1.0, window.bloomProgress + dt * bloomSpeed);
         
-        // Shockwave ripple during bloom — only in recognition mode, NOT on direct reveal
-        if (window.skyRevealState !== 'revealed') {
-            if (!window.bloomShockwave) window.bloomShockwave = { radius: 0, strength: 2.5 };
-            if (window.bloomShockwave.radius < 3000) {
-                window.bloomShockwave.radius += dt * 400;
-                window.bloomShockwave.strength = Math.max(0, 1.0 - window.bloomShockwave.radius / 3000);
-            }
+        // Shockwave ripple during bloom
+        if (!window.bloomShockwave) window.bloomShockwave = { radius: 0, strength: 2.5 };
+        if (window.bloomShockwave.radius < 3000) {
+            window.bloomShockwave.radius += dt * 400;
+            window.bloomShockwave.strength = Math.max(0, 1.0 - window.bloomShockwave.radius / 3000);
         }
         
         // When bloom finishes, reveal the title and zoom out!
@@ -5829,27 +5480,25 @@ function skyLoop(ts) {
     }
 
     if (window.skyRevealState === 'revealed') {
-        // Do not auto-rotate the user prism (keep it perfectly flat/2D)
+        // Auto drift the 3D object rotation instead of panning the camera
+        if (!isDragging) {
+            targetGlobalRotY += 0.0005; // Very slow continuous auto-rotation for user prism
+        }
         ghostRotY += 0.00035; // Ghost constellations rotate independently at their own pace
         
         // Smoothly interpolate rotation
-        // Fade out parallax when zoomed out so everything feels like a single layer
-        const parallaxFade = smoothstep(0.3, 0.6, cam.scale);
-        globalRotX = lerp(globalRotX, targetGlobalRotX * parallaxFade, 0.05);
-        globalRotY = lerp(globalRotY, targetGlobalRotY * parallaxFade, 0.05);
+        globalRotX = lerp(globalRotX, targetGlobalRotX, 0.05);
+        globalRotY = lerp(globalRotY, targetGlobalRotY, 0.05);
+        
+        // Do NOT auto-pull back to center — let the user wander freely in the galaxy.
+        // (Removed: targetCam.x lerp to 0, targetCam.y lerp to 0)
+        // No auto-zoom-out — user controls zoom freely.
     } else {
         // Auto camera drift if not dragging (original behavior)
         if (!isDragging && !window.cameraWanderPath) {
             targetCam.x = Math.sin(animClock * 0.2) * 50;
             targetCam.y = Math.cos(animClock * 0.15) * 50;
         }
-    }
-    
-    if (window.isScreensaverMode && !isDragging) {
-        // Slow majestic drift across the galaxy
-        targetCam.x = Math.sin(animClock * 0.05) * 1200;
-        targetCam.y = Math.cos(animClock * 0.03) * 1200;
-        targetCam.scale = 0.08; // Keep it zoomed out
     }
 
     cam.x     = lerp(cam.x,     targetCam.x,     0.04);
@@ -5862,22 +5511,12 @@ function skyLoop(ts) {
     {
         const userTitleEl = document.getElementById('user-constellation-title');
         const interpPanel = document.getElementById('sky-interpretation-panel');
-        // At cam.scale < 0.25 → fade out; above 0.45 → fade in (so it appears immediately upon reveal)
-        const userAlpha = smoothstep(0.25, 0.45, cam.scale);
+        // At cam.scale < 0.48 → fade out; above 0.58 → fade in
+        const userAlpha = smoothstep(0.42, 0.60, cam.scale);
         if (userTitleEl && userTitleEl.style.opacity !== undefined) {
             // Only override if not in the initial 0-opacity state (before it was revealed)
             if (parseFloat(userTitleEl.style.opacity) > 0.01 || userAlpha > 0.01) {
                 userTitleEl.style.opacity = userAlpha.toFixed(3);
-            }
-            // Restore original user title when zooming out away from ghost
-            if (cam.scale < 0.48 && window._focusedGhostIndex !== undefined) {
-                window._focusedGhostIndex = undefined;
-                if (window._originalConstellationTitle) {
-                    const origName = window._originalConstellationTitle;
-                    let fmtTitle = origName.trim();
-                    if (currentLang === 'he' && !fmtTitle.startsWith('ה')) fmtTitle = 'ה' + fmtTitle;
-                    userTitleEl.textContent = '— ' + fmtTitle + ' —';
-                }
             }
         }
         if (interpPanel) {
@@ -6044,12 +5683,8 @@ function skyLoop(ts) {
     });
 
     // Update lines geometry
-    let positions = null;
-    let colors = null;
-    if (typeof webglLineGeo !== 'undefined' && webglLineGeo) {
-        positions = webglLineGeo.attributes.position.array;
-        colors = webglLineGeo.attributes.color.array;
-    }
+    const positions = webglLineGeo.attributes.position.array;
+    const colors = webglLineGeo.attributes.color.array;
     let lineIdx = 0;
     let colorIdx = 0;
 
@@ -6091,16 +5726,15 @@ function skyLoop(ts) {
             if (opt === pt || opt.mesh.visible === false) continue;
             
             const d = Math.hypot(pt.x - opt.x, pt.y - opt.y);
-            const _isQConn = _isQShapePt && (opt.isVertexStar || opt.isQPathStar);
-            if (_isQConn) continue; // Remove bright white double layer; SVG draws the prism lines cleanly
-            
-            const thresh = (250 * pt.assemblyProgress);
+            const thresh = 250 * pt.assemblyProgress;
 
             if (d < thresh) {
                 // Fade line based on appearP of both connected points
                 // FIX: use nullish check, not ||, because 0 || 1.0 = 1.0 in JS
                 const appearFade = (pt.appearP != null ? pt.appearP : 1.0) * (opt.appearP != null ? opt.appearP : 1.0);
-                const lineBase = 0.12; // background connections only
+                // Q-shape connections are bright; background connections are dim
+                const _isQConn = _isQShapePt && (opt.isVertexStar || opt.isQPathStar);
+                const lineBase = _isQConn ? 0.52 : 0.12;
                 const alpha = (1 - d/thresh) * rpEase * lineBase * appearFade;
                 if (alpha > 0.01 && lineIdx + 5 < positions.length && (lineIdx / 6) < 600) {
                     const osp = w2s(opt.x, opt.y);
@@ -6135,11 +5769,9 @@ function skyLoop(ts) {
     });
 
     // Use setDrawRange to only render written lines (no need to zero the rest)
-    if (typeof webglLineGeo !== 'undefined' && webglLineGeo) {
-        webglLineGeo.setDrawRange(0, lineIdx / 3);
-        webglLineGeo.attributes.position.needsUpdate = true;
-        webglLineGeo.attributes.color.needsUpdate = true;
-    }
+    webglLineGeo.setDrawRange(0, lineIdx / 3);
+    webglLineGeo.attributes.position.needsUpdate = true;
+    webglLineGeo.attributes.color.needsUpdate = true;
 
     renderer.render(scene, threeCam);
 
@@ -6346,44 +5978,34 @@ function updatePoint(pt, dt, isClosest) {
     // Physical Movement: stars drift from scattered positions -> Rorschach formation
     const ease = pt.assemblyProgress * pt.assemblyProgress * (3 - 2 * pt.assemblyProgress);
     
-    // Starfield stars are FIXED background — no movement, no rotation
-    const isStarfield = (pt.theme === 'Starfield');
+    // Alive / Pulsing effect: blend between original position and target position
+    const breathe = Math.sin(pt.pulseClock * 0.5) * 0.5 + 0.5; 
+    const curDestX = lerp(pt.originalX, pt.targetX, breathe);
+    const curDestY = lerp(pt.originalY, pt.targetY, breathe);
+
+    let finalX = lerp(pt.starX, curDestX, ease);
+    let finalY = lerp(pt.starY, curDestY, ease);
+
+    // Wait, let's make sure pt has starZ. If not, use originalZ.
+    let finalZ = lerp(pt.starZ || pt.originalZ || 0, pt.targetZ || pt.originalZ || 0, ease);
+
+    // ── ORGANIC 3D ROTATION ──
+    const cosY = Math.cos(globalRotY);
+    const sinY = Math.sin(globalRotY);
+    const cosX = Math.cos(globalRotX);
+    const sinX = Math.sin(globalRotX);
+
+    // Rotate around Y axis
+    let rx = finalX * cosY - finalZ * sinY;
+    let rz = finalX * sinY + finalZ * cosY;
+
+    // Rotate around X axis
+    let ry = finalY * cosX - rz * sinX;
+    rz = finalY * sinX + rz * cosX;
     
-    if (isStarfield) {
-        // Starfield dots stay at their original position — no assembly, no breathing, no rotation
-        pt.x = pt.originalX;
-        pt.y = pt.originalY;
-        pt.renderZ = pt.originalZ || 0;
-    } else {
-        // Alive / Pulsing effect: blend between original position and target position
-        const breathe = Math.sin(pt.pulseClock * 0.5) * 0.5 + 0.5; 
-        const curDestX = lerp(pt.originalX, pt.targetX, breathe);
-        const curDestY = lerp(pt.originalY, pt.targetY, breathe);
-
-        let finalX = lerp(pt.starX, curDestX, ease);
-        let finalY = lerp(pt.starY, curDestY, ease);
-
-        // Wait, let's make sure pt has starZ. If not, use originalZ.
-        let finalZ = lerp(pt.starZ || pt.originalZ || 0, pt.targetZ || pt.originalZ || 0, ease);
-
-        // ── ORGANIC 3D ROTATION ──
-        const cosY = Math.cos(globalRotY);
-        const sinY = Math.sin(globalRotY);
-        const cosX = Math.cos(globalRotX);
-        const sinX = Math.sin(globalRotX);
-
-        // Rotate around Y axis
-        let rx = finalX * cosY - finalZ * sinY;
-        let rz = finalX * sinY + finalZ * cosY;
-
-        // Rotate around X axis
-        let ry = finalY * cosX - rz * sinX;
-        rz = finalY * sinX + rz * cosX;
-        
-        pt.x = rx;
-        pt.y = ry;
-        pt.renderZ = rz; // For depth sorting or scale
-    }
+    pt.x = rx;
+    pt.y = ry;
+    pt.renderZ = rz; // For depth sorting or scale 
 
     // Calculate screen position after physics
     const sp = w2s(pt.x, pt.y);
@@ -6464,21 +6086,21 @@ function updatePoint(pt, dt, isClosest) {
     }
 
     // Hover Pulse
-    // DISABLED in revealed state per user request to prevent bright white connecting glow on zoom in.
-    if (window.skyRevealState === 'revealed') {
-        pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
+    const hoverRadius = 100;
+    if (screenDist < hoverRadius) {
+        pt.hoverPulse = lerp(pt.hoverPulse, 1.0 - screenDist / hoverRadius, dt * 4.0);
     } else {
-        const hoverRadius = 100;
-        if (screenDist < hoverRadius) {
-            pt.hoverPulse = lerp(pt.hoverPulse, 1.0 - screenDist / hoverRadius, dt * 4.0);
-        } else {
-            pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
-        }
+        pt.hoverPulse = lerp(pt.hoverPulse, 0, dt * 2.0);
     }
 
-    // Zoom bloom disabled per user request to prevent bright white glow
+    // Subtle Bloom on zoom
     const bloomZoomThresh = 0.35;
     const isZoomedIn = cam.scale > bloomZoomThresh;
+    const zoomBloom = isZoomedIn ? clamp((cam.scale - bloomZoomThresh) / 0.5, 0, 1) : 0;
+    if (isZoomedIn && screenDist < 350) {
+        const bloomProximity = 1 - screenDist / 350;
+        pt.hoverPulse = Math.max(pt.hoverPulse, bloomProximity * zoomBloom * 0.08);
+    }
 
     // ── GLOBAL BREATHING (only in revealed state) ──
     // Multi-layered breathing: slow deep breath + faster heartbeat + subtle flutter
@@ -6517,7 +6139,7 @@ function updatePoint(pt, dt, isClosest) {
         const rpEase = rp * rp * (3 - 2 * rp);
         const pulseDampen = clamp((cam.scale - 0.30) / 1.0, 0.05, 1.0);
         const pulse = Math.sin(pt.pulseClock) * 0.12 * pulseDampen + (1.0 - 0.12 * pulseDampen);
-        const hoverScale = 1.0 + pt.hoverPulse * 0.25 * pulseDampen;
+        const hoverScale = 1.0 + pt.hoverPulse * 0.12 * pulseDampen;
         const skeletonScale = 0.10;
         const fullScale = pt.scale;
 
@@ -6532,38 +6154,29 @@ function updatePoint(pt, dt, isClosest) {
         const pointScale = lerp(skeletonScale, fullScale, sizeFactor);
         let s = pointScale * cam.scale * pulse * hoverScale * globalBreath;
 
-        // Ensure user constellation matches when zoomed out (scattered constellations)
-        // MIN_STAR_PX compensation removed — was causing white blob glare on zoom-out
-
-        // Starfield: allow natural scaling
+        // Starfield: maintain minimum visible size at any zoom level
         if (pt.theme === 'Starfield') {
-            // Give starfield a tiny baseline so it doesn't vanish entirely
-            s = Math.max(s * 1.5, 0.05 * globalBreath); 
-        }
-
-        // Constellation beams: reasonable cap for clean single prisms
-        if (!isStarfield) {
-            const maxBeamScale = 4.0; // Allow main constellation to have its signature long blades (increased to 4.0)
-            s = Math.min(s, maxBeamScale);
+            // Zoom compensation: at extreme zoom-out, boost scale so dots stay visible
+            const minScreenSize = 0.025; // minimum visible scale
+            s = Math.max(s, minScreenSize * globalBreath);
         }
 
         // POSITION
         const WW = window.innerWidth;
         const HH = window.innerHeight;
-        // The user explicitly requested to remove the "weird parallax when scrolling"
-        const parallaxX = 0;
-        const parallaxY = 0;
+        // Depth opens gradually: starts flat (z=0), deepens over 10s for a "rising from flat" feel
+        const depthOpenFactor = (window.skyRevealState === 'revealed') ? Math.min(skyIntroTime / 10.0, 1.0) : 0.0;
+        const parallaxStrength = 0.15 * rpEase * depthOpenFactor;
+        const depthOffset = (pt.depthLayer - 1.0) * parallaxStrength;
+        const parallaxX = (sp.x - WW / 2) * depthOffset;
+        const parallaxY = (sp.y - HH / 2) * depthOffset;
 
-        // Starfield stars: no shockwave displacement — fixed background
-        const sDisX = isStarfield ? 0 : shockDisplaceX;
-        const sDisY = isStarfield ? 0 : shockDisplaceY;
-        pt.mesh.position.x = sp.x - WW / 2 + parallaxX + sDisX;
-        pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + sDisY;
+        pt.mesh.position.x = sp.x - WW / 2 + parallaxX + shockDisplaceX;
+        pt.mesh.position.y = -(sp.y - HH / 2 + parallaxY) + shockDisplaceY;
         // Appear via OPACITY fade-in (not scale-up) so there is no "zoom in then zoom out" illusion
         // Each star appears at full size immediately and fades in gently
         const finalScale = s; // always full size from the first frame
         pt.mesh.scale.set(finalScale, finalScale, 1);
-        // Restore organic rotation based on baseAngle so prisms flow naturally
         pt.mesh.rotation.z = -(pt.baseAngle + skyIntroTime * 0.015 * (vp.motionSpeed || 1.0) * rpEase);
 
         // illum
@@ -6579,13 +6192,13 @@ function updatePoint(pt, dt, isClosest) {
         // ── OPACITY ──
         let opacity;
         if (pt.isSeed) {
-            opacity = lerp(0.5, 1.2, lanternSoft);
-            if (pt.isMajor) opacity = Math.max(opacity, 0.8);
+            opacity = lerp(0.35, 0.90, lanternSoft);
+            if (pt.isMajor) opacity = Math.max(opacity, 0.45);
         } else if (pt.permanentlyRevealed) {
-            const baseOp = pt.isMajor ? 1.8 : 1.2;
-            const litOp  = pt.isMajor ? 2.5 : 1.8;
+            const baseOp = pt.isMajor ? 0.75 : 0.60;
+            const litOp  = pt.isMajor ? 1.00 : 0.85;
             opacity = lerp(baseOp, litOp, lanternSoft);
-            opacity += pt.hoverPulse * 0.4 * pulseDampen;
+            opacity += pt.hoverPulse * 0.05 * pulseDampen;
             // Breathing glow in revealed state
             if (window.skyRevealState === 'revealed') {
                 opacity += (globalBreath - 1.0) * 1.2;
@@ -6595,15 +6208,13 @@ function updatePoint(pt, dt, isClosest) {
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
             } else if (pt.theme === 'Starfield') {
-                // Starfield always visible — very dim at zoom-in, bright at zoom-out
+                // Starfield always visible — dim at zoom-in, bright at zoom-out
                 let sfOp = pt.starfieldOpacity || 0.18;
-                // Aggressively dim when zoomed into main shape
-                if (cam.scale > 0.8) {
-                    sfOp *= clamp(1.0 - (cam.scale - 0.8) * 1.2, 0.08, 1.0);
+                // Dim when zoomed into main shape to not distract
+                if (cam.scale > 1.0) {
+                    sfOp *= clamp(1.0 - (cam.scale - 1.0) * 0.5, 0.15, 1.0);
                 }
-                // Gentle Twinkling
-                const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
-                opacity = sfOp * (0.4 + twinkle * 0.6);
+                opacity = sfOp;
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
@@ -6620,12 +6231,11 @@ function updatePoint(pt, dt, isClosest) {
         let sat   = lerp(0.05, trueSat, Math.min(colorThreshold * 1.8, 1.0));
         let light = lerp(0.38, trueLight, Math.min(colorThreshold * 1.2, 1.0));
         
-        // Keep natural colors at all zoom levels — no white-out on zoom-out
-        
-        // Hover: burst of vivid color on proximity
-        if (pt.hoverPulse > 0.01) {
-            sat = lerp(sat, 1.0, pt.hoverPulse);
-            light = lerp(light, 0.65, pt.hoverPulse * 0.5);
+        // As requested: Stars look white from afar, color is revealed on zoom!
+        const zoomColorFactor = clamp((cam.scale - 0.15) / 0.3, 0, 1);
+        if (window.skyRevealState === 'revealed') {
+            sat = sat * zoomColorFactor;
+            light = lerp(0.95, light, zoomColorFactor); // White when zoomed out
         }
         
         pt.mesh.material.uniforms.uColor.value.setHSL(hue, sat, light);
@@ -6633,8 +6243,8 @@ function updatePoint(pt, dt, isClosest) {
         // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
-            const baseGlow = 0.4; // Uniform glow — no blinding hot spots
-            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 0.8) * lanternSoft;
+            const baseGlow = pt.isMajor ? 2.5 : 1.4; // Vibrant prismatic glow — dramatic beams
+            glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 0.5) * lanternSoft;
             
             if (window.skyRevealState === 'revealed') {
                 // Breathing glow
@@ -6642,7 +6252,7 @@ function updatePoint(pt, dt, isClosest) {
                 
                 // During bloom: gentle glow surge
                 if (window.bloomProgress < 1.0) {
-                    glowValue += Math.pow((1.0 - window.bloomProgress), 2.0) * 0.3;
+                    glowValue += Math.pow((1.0 - window.bloomProgress), 2.0) * 3.0;
                 }
                 
                 // Individual sparkle: each point has its own tiny twinkle
@@ -6654,13 +6264,10 @@ function updatePoint(pt, dt, isClosest) {
         } else {
             // Background constellations (Rorschach/Pareidolia): glow in prism state
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
-                glowValue = 0.45; // Uniform glow for all background constellation prisms
+                glowValue = pt.isMajor ? 1.5 : 0.8;
             } else if (pt.theme === 'Starfield') {
                 // Starfield glow always active — visible during exploration too
-                glowValue = pt.starfieldGlow || 0.5;
-                // Gentle Twinkling Glow
-                const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
-                glowValue += twinkle * 0.6;
+                glowValue = pt.starfieldGlow || 0.25;
             } else {
                 glowValue = (pt.glowP + pt.hoverPulse * 0.4) * lanternSoft;
             }
@@ -6672,10 +6279,8 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.isQPathStar) {
             opacity = Math.max(opacity, 0.58); // Path outline — clearly visible
         } else if (!pt.isMajor && !pt.isVertexStar && !pt.isQPathStar) {
-            if (pt.theme === 'Starfield') {
-                opacity = Math.max(opacity, 0.45); // Starfield — bright night-sky dots
-            } else if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia') {
-                opacity = Math.max(opacity, 0.22); // Background stars — moderately visible
+            if (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia' || pt.theme === 'Starfield') {
+                opacity = Math.max(opacity, 0.12); // Background & starfield — preserve their set opacity
             } else {
                 opacity *= 0.15; // Pure ambient dust — barely visible
             }
@@ -6696,7 +6301,7 @@ function updatePoint(pt, dt, isClosest) {
                 revealedBase += (globalBreath - 1.0) * 0.5;
                 // During bloom: moderate crystal vividity
                 if (window.bloomProgress < 1.0) {
-                    revealedBase += Math.pow((1.0 - window.bloomProgress), 2.0) * 0.1;
+                    revealedBase += Math.pow((1.0 - window.bloomProgress), 2.0) * 0.6;
                 }
             }
             state = Math.min(lerp(revealedBase, 2.0, lanternSoft), 2.0);
@@ -6716,8 +6321,6 @@ function updatePoint(pt, dt, isClosest) {
         } else if (pt.appearP !== undefined && pt.appearP < 0.01) {
             pt.mesh.visible = false;
         } else if (!pt.permanentlyRevealed && !pt.isSeed && pt.theme !== 'Starfield' && lanternSoft < 0.01) {
-            pt.mesh.visible = false;
-        } else if (pt._meshVisibleOverride === false) {
             pt.mesh.visible = false;
         } else {
             pt.mesh.visible = true;
@@ -6893,15 +6496,11 @@ function showPareidoliaPrompt() {
         window._dwellLastMove = performance.now();
         const zf = e.deltaY < 0 ? 1.022 : 0.978; // Smooth, controllable zoom
         const newScale = clamp(targetCam.scale * zf, 0.18, 12.0);
-        
-        if (newScale !== targetCam.scale) {
-            // Use targetCam to calculate world position to avoid jumpy panning during fast scrolls
-            const mwx = (e.clientX - W * 0.5) / targetCam.scale + targetCam.x;
-            const mwy = (e.clientY - H * 0.5) / targetCam.scale + targetCam.y;
-            targetCam.x = mwx - (e.clientX - W * 0.5) / newScale;
-            targetCam.y = mwy - (e.clientY - H * 0.5) / newScale;
-            targetCam.scale = newScale;
-        }
+        const mwx = (e.clientX - W * 0.5) / cam.scale + cam.x;
+        const mwy = (e.clientY - H * 0.5) / cam.scale + cam.y;
+        targetCam.x = mwx - (e.clientX - W * 0.5) / newScale;
+        targetCam.y = mwy - (e.clientY - H * 0.5) / newScale;
+        targetCam.scale = newScale;
     }, { passive: false });
 
     // Reset dwell timer on pointer/mouse move
@@ -7301,23 +6900,17 @@ function showHorizon() {
     const change  = answers.change  || '';
     const observation = window.selectedPareidolia || '';
 
-    // Title — focused on what the user identified
+    // Title
     const titleEl = document.getElementById('ui-horizontitle');
-    if (titleEl) titleEl.innerText = isHe 
-        ? `מה שזיהית בדימוי` 
-        : `What You Identified`;
+    if (titleEl) titleEl.innerText = isHe ? `מפת האופק של ${name}` : `${name}'s Horizon Map`;
 
     // "What you saw" label
     const obsLabel = document.getElementById('horizon-obs-label');
-    if (obsLabel) obsLabel.innerText = isHe ? 'בתוך הנקודות, ראית:' : 'In the points, you saw:';
+    if (obsLabel) obsLabel.innerText = isHe ? 'מה שראית בדימוי:' : 'What you saw in the image:';
 
-    // User's observation (verbatim) — the star of the show
+    // User's observation (verbatim)
     const symbolEl = document.getElementById('horizon-symbol');
-    if (symbolEl) {
-        symbolEl.innerText = observation || (isHe ? '—' : '—');
-        symbolEl.style.fontSize = 'clamp(1.6rem, 4vw, 2.4rem)';
-        symbolEl.style.color = 'rgba(255,255,255,0.95)';
-    }
+    if (symbolEl) symbolEl.innerText = observation || (isHe ? '—' : '—');
 
     // Dream block
     const dreamRow = document.getElementById('horizon-dream-row');
@@ -7331,14 +6924,11 @@ function showHorizon() {
         if (!isHe && dreamRow) dreamRow.style.textAlign = 'left';
     }
 
-    // Poetic reflection — centered on the identification
+    // Poetic reflection
     const descEl = document.getElementById('horizon-desc');
     if (descEl) {
         if (observation) {
-            const identityReflection = isHe
-                ? `מתוך אלפי נקודות אור, זיהית ${observation}. הצורה הזו לא הייתה בדימוי — היא הייתה בך. מה שאנחנו רואים בתוך הכאוס הוא תמיד השיקוף הכי כנה של מה שמתרחש בפנים.`
-                : `Out of thousands of points of light, you identified ${observation}. That shape wasn't in the image — it was in you. What we see in chaos is always the most honest reflection of what's happening inside.`;
-            descEl.innerText = identityReflection;
+            descEl.innerText = buildPoeticReflection(observation, dream, req, change, isHe);
         } else {
             descEl.innerText = isHe
                 ? 'הדימוי נולד מהנקודות שמסרת. המשמעות שלו מתחילה במה שתראי בתוכו.'
@@ -7468,47 +7058,6 @@ window.toggleLegend = toggleLegend; // expose globally for onclick
 buildDOM();
 updateLang('he'); // Initialize text and default to Hebrew
 
-// --- Screensaver Mode Check ---
-if (window.location.hash === '#screensaver') {
-    window.location.href = window.location.pathname; // clear hash and reload
-}
-if (false) { // Screensaver disabled
-    
-    // Hide opening screen completely
-    const scrOpen = document.getElementById('screen-opening');
-    if (scrOpen) scrOpen.style.display = 'none';
-    
-    // Setup for 3D
-    answers = {};
-    buildVisualParams();
-    window.skyRevealState = 'revealed';
-    
-    initSky();
-    
-    setTimeout(() => {
-        cam.targetScale = 0.08;
-        cam.targetX = 0;
-        cam.targetY = 0;
-    }, 100);
-    
-    const exitScreensaver = () => {
-        sessionStorage.removeItem('pagmar_screensaver');
-        if (window.location.hash === '#screensaver') {
-            window.location.hash = '';
-        }
-        window.location.reload();
-    };
-    
-    setTimeout(() => {
-        document.addEventListener('pointerdown', exitScreensaver, {once:true});
-        document.addEventListener('keydown', exitScreensaver, {once:true});
-    }, 1000);
-} else {
-    // Show opening screen only if NOT in screensaver mode
-    const scrOpen = document.getElementById('screen-opening');
-    if (scrOpen) scrOpen.classList.add('active');
-}
-
 // ── GLOBAL LIGHT-POINT CURSOR (all screens) ──
 (function initGlobalCursor() {
     document.body.style.cursor = 'none'; // hide native cursor everywhere
@@ -7558,168 +7107,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-// ══════════════════════════════════════════════════════════
-// ── SCREENSAVER / INACTIVITY RESET ───────────────────────
-// After 2 minutes of no interaction → ask "still here?"
-// After 5 more seconds → reload (fresh questionnaire)
-// ══════════════════════════════════════════════════════════
-(function() {
-    const IDLE_TIMEOUT_MS  = 2 * 60 * 1000; // 2 minutes
-    const PROMPT_TIMEOUT_MS = 5 * 1000;       // 5 seconds to respond
-    let idleTimer    = null;
-    let promptTimer  = null;
-    let promptOverlay = null;
-
-    // ── Reset the idle clock on ANY user activity ──
-    function resetIdleTimer() {
-        // If prompt is showing and user interacts, dismiss it
-        if (promptOverlay) {
-            dismissPrompt();
-        }
-        clearTimeout(idleTimer);
-        clearTimeout(promptTimer);
-        idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
-    }
-
-    // ── Show "still here?" overlay ──
-    function showIdlePrompt() {
-        if (promptOverlay) return; // already showing
-
-        promptOverlay = document.createElement('div');
-        promptOverlay.id = 'idle-prompt-overlay';
-        promptOverlay.style.cssText = `
-            position: fixed;
-            inset: 0;
-            z-index: 99999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            opacity: 0;
-            transition: opacity 0.6s ease;
-            cursor: pointer;
-        `;
-
-        const card = document.createElement('div');
-        card.dir = 'rtl';
-        card.style.cssText = `
-            background: rgba(10, 10, 15, 0.85);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 2.2rem 2.4rem 2rem;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            transform: scale(0.9);
-            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-            max-width: 380px;
-            direction: rtl;
-            color: #eee;
-        `;
-
-        const question = document.createElement('h2');
-        question.dir = 'rtl';
-        question.style.cssText = `
-            font-family: 'Hadassah', serif;
-            font-weight: 300;
-            font-size: clamp(1.4rem, 2.5vw, 1.8rem);
-            color: rgba(255, 255, 255, 0.9);
-            margin: 0 0 12px 0;
-            letter-spacing: 0.08em;
-            direction: rtl;
-        `;
-        question.textContent = 'עדיין כאן?';
-
-        const subtitle = document.createElement('p');
-        subtitle.style.cssText = `
-            font-family: var(--font-mono, "SimplerMono", monospace);
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.4);
-            margin: 0 0 24px 0;
-            letter-spacing: 0.05em;
-        `;
-        subtitle.textContent = 'לחצו כדי להמשיך';
-
-        // Countdown bar
-        const barWrap = document.createElement('div');
-        barWrap.style.cssText = `
-            width: 100%;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 2px;
-            overflow: hidden;
-        `;
-        const barFill = document.createElement('div');
-        barFill.style.cssText = `
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, rgba(180, 160, 255, 0.6), rgba(255, 200, 150, 0.6));
-            transition: width ${PROMPT_TIMEOUT_MS}ms linear;
-            border-radius: 2px;
-        `;
-        barWrap.appendChild(barFill);
-
-        card.appendChild(question);
-        card.appendChild(subtitle);
-        card.appendChild(barWrap);
-        promptOverlay.appendChild(card);
-        document.body.appendChild(promptOverlay);
-
-        // Animate in
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                promptOverlay.style.opacity = '1';
-                card.style.transform = 'scale(1)';
-                // Start countdown bar
-                barFill.style.width = '0%';
-            });
-        });
-
-        // Click anywhere → dismiss and continue
-        promptOverlay.addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
-            dismissPrompt();
-        });
-
-        // Start the 5-second countdown → return to main page
-        promptTimer = setTimeout(() => {
-            // Fade to black then reload to initial state
-            if (promptOverlay) {
-                promptOverlay.style.transition = 'opacity 1s ease';
-                promptOverlay.style.opacity = '0';
-                promptOverlay.style.background = 'rgba(0, 0, 0, 1)';
-                promptOverlay.style.opacity = '1';
-            }
-            setTimeout(() => {
-                sessionStorage.removeItem('pagmar_screensaver');
-                window.location.href = window.location.pathname;
-            }, 1200);
-        }, PROMPT_TIMEOUT_MS);
-    }
-
-    // ── Dismiss the prompt and reset idle timer ──
-    function dismissPrompt() {
-        clearTimeout(promptTimer);
-        if (promptOverlay) {
-            promptOverlay.style.opacity = '0';
-            const el = promptOverlay;
-            setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 700);
-            promptOverlay = null;
-        }
-        // Restart idle monitoring
-        idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
-    }
-
-    // ── Listen for all user activity events ──
-    const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'pointerdown'];
-    ACTIVITY_EVENTS.forEach(evt => {
-        document.addEventListener(evt, resetIdleTimer, { passive: true });
-    });
-
-    // ── Start the idle timer ──
-    idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
-})();
