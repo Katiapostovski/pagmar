@@ -4552,7 +4552,8 @@ function initDiscoverySystem() {
             'text-align:center;direction:rtl;',
             'opacity:0;transition:opacity 1.8s ease;',
             'text-shadow:0 0 18px rgba(100,140,255,0.45);',
-            'white-space:nowrap;'
+            'white-space:nowrap;',
+            'display:none;' // Hidden per user request
         ].join('');
         skyEl.appendChild(posText);
     }
@@ -7834,7 +7835,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleEl.textContent = entry.title;
                 contentEl.innerHTML = `
                     <p style="line-height: 1.7; margin-bottom: 1.5rem;">${genderize(entry.body)}</p>
-                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 1.5rem auto; width: 60px;">
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1.5rem auto; width: 60px;">
                     <p class="epilogue-punchline" style="line-height: 1.7;">${genderize(entry.insight)}</p>
                 `;
             } else if (rawVision && contentEl && titleEl) {
@@ -7842,7 +7843,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleEl.textContent = genderize('מה שראית.');
                 contentEl.innerHTML = `
                     <p style="line-height: 1.7; margin-bottom: 1.5rem;">${genderize(firstName + ', הצורה שראית בכוכבים, ' + cleanVision + ', לא נבחרה במקרה. הנשמה בוחרת סמל מתוך אינסוף האפשרויות, וזה שעלה הוא השיקוף של מה שהכי חי בך ברגע הזה.')}</p>
-                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 1.5rem auto; width: 60px;">
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1.5rem auto; width: 60px;">
                     <p class="epilogue-punchline" style="line-height: 1.7;">${genderize('שאל/י את עצמך: מה אומר/ת לך ' + cleanVision + '? התשובה שתעלה היא המסר שהכוכבים השאירו בשבילך.')}</p>
                 `;
             }
