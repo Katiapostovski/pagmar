@@ -5229,17 +5229,33 @@ async function buildSignalField() {
     } // end if (!window.isScreensaverMode)
 
     // ── STARFIELD — subtle night-sky background stars ──
-    const STARFIELD_COUNT = 2000; // Dense night sky — real starfield
+    const STARFIELD_COUNT = 3000; // Very dense night sky — thousands of visible stars
     const skySpread = 18000; // very wide spread for zoom-out
     for (let i = 0; i < STARFIELD_COUNT; i++) {
         const sx = (Math.random() - 0.5) * skySpread * 2;
         const sy = (Math.random() - 0.5) * skySpread * 2;
         const sz = (Math.random() - 0.5) * 200;
-        // Mix of tiny dim stars and occasional brighter ones
-        const isBright = Math.random() < 0.15;
-        const sfScale = isBright ? (0.15 + Math.random() * 0.20) : (0.06 + Math.random() * 0.14);
-        const sfOpacity = isBright ? (0.30 + Math.random() * 0.30) : (0.10 + Math.random() * 0.20);
-        const sfGlow = isBright ? (0.30 + Math.random() * 0.40) : (0.10 + Math.random() * 0.25);
+        // Rich variety: extra-bright stars, bright stars, medium stars, and dim twinklers
+        const roll = Math.random();
+        const isExtraBright = roll < 0.05; // 5% — real eye-catchers
+        const isBright = roll < 0.20; // 20% total — clearly visible
+        let sfScale, sfOpacity, sfGlow, sfHue;
+        if (isExtraBright) {
+            sfScale = 0.35 + Math.random() * 0.30; // big sparkling stars
+            sfOpacity = 0.65 + Math.random() * 0.35; // very bright
+            sfGlow = 0.70 + Math.random() * 0.30; // strong glow
+            sfHue = Math.random() < 0.3 ? (30 + Math.random() * 30) : (200 + Math.random() * 60); // warm gold or cool blue
+        } else if (isBright) {
+            sfScale = 0.20 + Math.random() * 0.20;
+            sfOpacity = 0.45 + Math.random() * 0.30;
+            sfGlow = 0.40 + Math.random() * 0.30;
+            sfHue = 200 + Math.random() * 80; // blue-white-purple range
+        } else {
+            sfScale = 0.08 + Math.random() * 0.15;
+            sfOpacity = 0.20 + Math.random() * 0.25;
+            sfGlow = 0.15 + Math.random() * 0.25;
+            sfHue = 200 + Math.random() * 60; // cool blue-white
+        }
         skyPoints.push({
             x: sx, y: sy, z: sz,
             originalX: sx, originalY: sy, originalZ: sz,
@@ -5248,7 +5264,7 @@ async function buildSignalField() {
             anchorIdx: 0, isMajor: false, elementType: 'dot', theme: 'Starfield',
             text: null, isBlurred: false, baseAngle: Math.random() * Math.PI * 2,
             scale: sfScale,
-            hue: 200 + Math.random() * 60, // cool blue-white tones
+            hue: sfHue,
             isSeed: false, depthLayer: 2.0 + Math.random(),
             fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: true,
             pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
@@ -6775,10 +6791,10 @@ function updatePoint(pt, dt, isClosest) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
             } else if (pt.theme === 'Starfield') {
                 // Starfield always visible — subtle night sky dots
-                let sfOp = pt.starfieldOpacity || 0.25;
+                let sfOp = pt.starfieldOpacity || 0.35;
                 // Slightly dim when zoomed in very close, but stay visible
-                if (cam.scale > 1.5) {
-                    sfOp *= clamp(1.0 - (cam.scale - 1.5) * 0.3, 0.3, 1.0);
+                if (cam.scale > 2.0) {
+                    sfOp *= clamp(1.0 - (cam.scale - 2.0) * 0.15, 0.5, 1.0);
                 }
                 // Layered organic twinkling — each star shimmers at its own pace
                 const phase = pt.baseAngle * 10;
@@ -6786,7 +6802,7 @@ function updatePoint(pt, dt, isClosest) {
                 const med   = Math.sin(now * 0.003 + phase * 1.7) * 0.5 + 0.5;  // medium (~2s)
                 const fast  = Math.sin(now * 0.012 + phase * 3.1) * 0.5 + 0.5;  // fast flicker
                 const twinkle = slow * 0.5 + med * 0.35 + fast * 0.15;
-                opacity = sfOp * (0.3 + twinkle * 0.7);
+                opacity = sfOp * (0.5 + twinkle * 0.5);
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
