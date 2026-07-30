@@ -3396,8 +3396,8 @@ function initConstellationSystem(userVision) {
             
             const exploreFade = isFocused ? 1.0 : Math.max(zoomOutReveal, panReveal, proximityReveal);
             
-            // Age factor: older (low gi) = weaker glow, newer (high gi) = brighter glow
-            const ageIntensity = 0.15 + (gi / ghostDefs.length) * 0.85; // 0.15 to 1.0
+            // Age factor: varied brightness — each ghost has its own glow level
+            const ageIntensity = 0.35 + (gi / ghostDefs.length) * 0.65; // 0.35 to 1.0 (was 0.15)
             
             // As you zoom in, they reach full 1.0 color intensity
             const zoomInFactor = smoothstep(0.3, 0.9, cam.scale); 
@@ -3501,9 +3501,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow — boost significantly on hover
-                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.0 + hGlow * 1.5);
+                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.4 + hGlow * 1.5);
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.3 + hGlow * 1.2; // Strong glow boost on hover
+                mat.uniforms.uGlow.value = 0.45 + hGlow * 1.2; // Stronger base glow for visibility
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -6730,10 +6730,12 @@ function updatePoint(pt, dt, isClosest) {
         // Ensure user constellation matches when zoomed out (scattered constellations)
         // MIN_STAR_PX compensation removed — was causing white blob glare on zoom-out
 
-        // Starfield: allow natural scaling
+        // Starfield: compensate for camera zoom so stars remain visible at all zoom levels
         if (pt.theme === 'Starfield') {
-            // Give starfield a tiny baseline so it doesn't vanish entirely
-            s = Math.max(s * 1.5, 0.08 * globalBreath); 
+            // At zoom-out (cam.scale ~0.2), stars shrink to nothing. Compensate.
+            // At zoom=0.2: zoomCompensate = ~3.5x; at zoom=1.0: zoomCompensate = 1.0x
+            const zoomCompensate = Math.max(1.0, 1.0 / Math.pow(cam.scale, 0.45));
+            s = Math.max(s * zoomCompensate, 0.4 * globalBreath); // floor = 0.4px so always visible
         }
 
         // Constellation beams: reasonable cap for clean single prisms
@@ -6792,9 +6794,9 @@ function updatePoint(pt, dt, isClosest) {
             } else if (pt.theme === 'Starfield') {
                 // Starfield always visible — subtle night sky dots
                 let sfOp = pt.starfieldOpacity || 0.35;
-                // Slightly dim when zoomed in very close, but stay visible
-                if (cam.scale > 2.0) {
-                    sfOp *= clamp(1.0 - (cam.scale - 2.0) * 0.15, 0.5, 1.0);
+                // Stay fully visible at all zoom levels — only dim when extremely close
+                if (cam.scale > 3.0) {
+                    sfOp *= clamp(1.0 - (cam.scale - 3.0) * 0.1, 0.5, 1.0);
                 }
                 // Layered organic twinkling — each star shimmers at its own pace
                 const phase = pt.baseAngle * 10;
@@ -6802,7 +6804,7 @@ function updatePoint(pt, dt, isClosest) {
                 const med   = Math.sin(now * 0.003 + phase * 1.7) * 0.5 + 0.5;  // medium (~2s)
                 const fast  = Math.sin(now * 0.012 + phase * 3.1) * 0.5 + 0.5;  // fast flicker
                 const twinkle = slow * 0.5 + med * 0.35 + fast * 0.15;
-                opacity = sfOp * (0.5 + twinkle * 0.5);
+                opacity = sfOp * (0.55 + twinkle * 0.45);
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
