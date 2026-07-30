@@ -2615,13 +2615,8 @@ function showInterpretationPanel(userVision) {
         var isConstellation = false;
         if (idx === 0 && answers.pareidolia) {
             isConstellation = true;
-            var userConstName = answers.pareidolia.trim();
-            if (currentLang === 'he' && !userConstName.startsWith('ה')) {
-                userConstName = 'ה' + userConstName;
-            } else if (currentLang !== 'he' && !userConstName.toLowerCase().startsWith('the ')) {
-                userConstName = 'The ' + userConstName;
-            }
-            category = userConstName;
+            // Keep the original category from the pool (e.g., 'גוון', 'HUE')
+            // Don't override with constellation name — user requested meaningful category titles
         }
 
         // Compact annotation-box: keyword / constellation label
@@ -2732,18 +2727,12 @@ function showInterpretationPanel(userVision) {
         anchorDot.className = 'sky-dlabel-anchor-dot';
         overlay.appendChild(anchorDot);
 
+        // SVG connector lines and circles — hidden per user request
         var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.style.opacity = '0';
+        g.style.display = 'none'; // fully hidden
         var hudLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        hudLine.setAttribute('stroke', 'rgba(255,255,255,0.55)');
-        hudLine.setAttribute('stroke-width', '0.75');
-        hudLine.setAttribute('fill', 'none');
-        // Small hollow circle at the star end
         var dotCirc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dotCirc.setAttribute('r', '2.5');
-        dotCirc.setAttribute('fill', 'none');
-        dotCirc.setAttribute('stroke', 'rgba(255,255,255,0.6)');
-        dotCirc.setAttribute('stroke-width', '0.75');
         g.appendChild(hudLine);
         g.appendChild(dotCirc);
         svg.appendChild(g);
@@ -2764,8 +2753,8 @@ function showInterpretationPanel(userVision) {
         return Math.hypot(a.pt.x, a.pt.y) - Math.hypot(b.pt.x, b.pt.y);
     });
     window.labelDataSorted.forEach(function(item, i) {
-        // Constellation / major labels appear smoothly starting at zoom 0.25
-        item.zoomThreshold = 0.25 + i * 0.08;
+        // Labels only appear when zoomed in close (scale > 0.8+)
+        item.zoomThreshold = 0.80 + i * 0.12;
     });
 
     // ── UPDATE LOOP — Proximity & Zoom reveal ──────────────
@@ -2791,8 +2780,8 @@ function showInterpretationPanel(userVision) {
             window._labelStaggerStart = null; // reset stagger so re-reveal is fresh after drag
             return;
         }
-        // HIDE ALL LABELS ONLY AT EXTREME DEEP SPACE ZOOM (< 0.20)
-        if (cam.scale < 0.20) {
+        // HIDE ALL LABELS when zoomed out (scale < 0.65) — labels only visible when close
+        if (cam.scale < 0.65) {
             labelData.forEach(function(item, idx) {
                 item.el.style.opacity = '0';
                 item.g.style.opacity = '0';
@@ -2914,8 +2903,8 @@ function showInterpretationPanel(userVision) {
             if (!isExpanded) {
                 el.style.left = lx + 'px';
                 el.style.top  = ly + 'px';
-                var lineOpacity = shouldShow ? a * 0.75 : (isApproaching ? hintAlpha * 0.6 : 0);
-                g.style.opacity = lineOpacity;
+                // Hide SVG connecting lines and circles — user requested clean look
+                g.style.opacity = '0';
                 hudLine.setAttribute('x1', sx); hudLine.setAttribute('y1', sy);
                 hudLine.setAttribute('x2', lx); hudLine.setAttribute('y2', ly);
                 if (item.dotCirc) {
