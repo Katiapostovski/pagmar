@@ -7910,15 +7910,15 @@ if (window.location.hash === '#screensaver') {
     
     // ── STARFIELD BACKGROUND ──
     const bgStars = [];
-    // Layer 1: medium stars (smaller than before)
-    for (let i = 0; i < 1500; i++) {
+    // Layer 1: bright visible stars
+    for (let i = 0; i < 800; i++) {
         const sx = (Math.random() - 0.5) * scrW * 2.5;
         const sy = (Math.random() - 0.5) * scrH * 2.5;
         const roll = Math.random();
-        const bright = roll < 0.03 ? 0.5 : roll < 0.1 ? 0.2 : roll < 0.3 ? 0.08 : 0.03;
-        const size = roll < 0.03 ? 1.2 : roll < 0.1 ? 0.7 : roll < 0.3 ? 0.4 : 0.25;
+        const bright = roll < 0.05 ? 0.8 : roll < 0.15 ? 0.4 : 0.15;
+        const size = roll < 0.05 ? 1.4 : roll < 0.15 ? 0.9 : 0.5;
         const geo = new THREE.CircleGeometry(size, 5);
-        const col = new THREE.Color().setHSL(Math.random(), 0.12, 0.6 + bright * 0.4);
+        const col = new THREE.Color().setHSL(Math.random(), 0.12, 0.7 + bright * 0.3);
         const mat = new THREE.MeshBasicMaterial({
             color: col, transparent: true, opacity: bright,
             blending: THREE.AdditiveBlending, depthWrite: false
@@ -7928,13 +7928,29 @@ if (window.location.hash === '#screensaver') {
         scrScene.add(mesh);
         bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
     }
-    // Layer 2: tiny pinpoint white dots
-    for (let i = 0; i < 4000; i++) {
+    // Layer 2: dense small stars
+    for (let i = 0; i < 3000; i++) {
         const sx = (Math.random() - 0.5) * scrW * 2.8;
         const sy = (Math.random() - 0.5) * scrH * 2.8;
-        const bright = 0.015 + Math.random() * 0.06;
-        const size = 0.15 + Math.random() * 0.2;
+        const bright = 0.04 + Math.random() * 0.12;
+        const size = 0.25 + Math.random() * 0.35;
         const geo = new THREE.CircleGeometry(size, 4);
+        const mat = new THREE.MeshBasicMaterial({
+            color: 0xeeeeff, transparent: true, opacity: bright,
+            blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sx, sy, -11);
+        scrScene.add(mesh);
+        bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
+    }
+    // Layer 3: tiny dust — fills the entire sky
+    for (let i = 0; i < 5000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 3;
+        const sy = (Math.random() - 0.5) * scrH * 3;
+        const bright = 0.01 + Math.random() * 0.04;
+        const size = 0.1 + Math.random() * 0.15;
+        const geo = new THREE.CircleGeometry(size, 3);
         const mat = new THREE.MeshBasicMaterial({
             color: 0xffffff, transparent: true, opacity: bright,
             blending: THREE.AdditiveBlending, depthWrite: false
@@ -8054,8 +8070,8 @@ if (window.location.hash === '#screensaver') {
                     uTime: { value: Math.random() * 100 },
                     uColor: { value: c.clone() },
                     uType: { value: 0.0 }, // blade — match main app
-                    uOpacity: { value: 1.4 },
-                    uGlow: { value: 0.62 }, // match main app
+                    uOpacity: { value: 2.5 },
+                    uGlow: { value: 1.0 },
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 }, // match main app
                     uDepth: { value: 0.6 },
@@ -8145,8 +8161,8 @@ if (window.location.hash === '#screensaver') {
             // Enchanting glow pulse
             const breathe = 0.5 + 0.5 * Math.sin(now * 1.5 + ci * 0.7);
             cg.pointMats.forEach(mat => {
-                mat.uniforms.uOpacity.value = 1.2 + breathe * 0.6;
-                mat.uniforms.uGlow.value = 0.5 + breathe * 0.25;
+                mat.uniforms.uOpacity.value = 2.0 + breathe * 1.0;
+                mat.uniforms.uGlow.value = 0.8 + breathe * 0.4;
                 mat.uniforms.uTime.value += 0.015;
             });
         });
