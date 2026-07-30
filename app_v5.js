@@ -7909,26 +7909,24 @@ if (window.location.hash === '#screensaver') {
     scrCam.position.z = 100;
     
     // ── PRISMATIC DUST STARS (background) ──
-    // Use the SAME prismatic shader as constellations for consistent look
     const dustPlane = new THREE.PlaneGeometry(200, 200);
     const dustStars = [];
-    for (let i = 0; i < 120; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 1.6;
-        const sy = (Math.random() - 0.5) * scrH * 1.6;
-        const dustHue = Math.random();
-        const dustColor = new THREE.Color().setHSL(dustHue, 0.5, 0.6);
-        const dustType = [0.0, 1.0, 2.0, 3.0][Math.floor(Math.random() * 4)];
+    for (let i = 0; i < 80; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 1.8;
+        const sy = (Math.random() - 0.5) * scrH * 1.8;
+        const dustColor = new THREE.Color(1, 1, 1);
+        dustColor.lerp(new THREE.Color().setHSL(Math.random(), 0.5, 0.6), 0.3);
         const mat = new THREE.ShaderMaterial({
             vertexShader,
             fragmentShader,
             uniforms: {
                 uTime: { value: Math.random() * 200 },
                 uColor: { value: dustColor },
-                uType: { value: dustType },
-                uOpacity: { value: 0.3 + Math.random() * 0.4 },
-                uGlow: { value: 0.2 + Math.random() * 0.3 },
+                uType: { value: 0.0 },
+                uOpacity: { value: 0.15 + Math.random() * 0.25 },
+                uGlow: { value: 0.3 },
                 uState: { value: 1.0 },
-                uZoom: { value: 0.8 },
+                uZoom: { value: 0.65 },
                 uDepth: { value: 0.5 },
                 uHasLabel: { value: 0.0 },
                 uSeed: { value: Math.random() }
@@ -7940,7 +7938,7 @@ if (window.location.hash === '#screensaver') {
         const mesh = new THREE.Mesh(dustPlane, mat);
         mesh.position.set(sx, sy, -5);
         mesh.rotation.z = Math.random() * Math.PI * 2;
-        const dustScale = 0.08 + Math.random() * 0.15;
+        const dustScale = 0.3 + Math.random() * 0.7;
         mesh.scale.set(dustScale, dustScale, 1);
         scrScene.add(mesh);
         dustStars.push({ mesh, phase: Math.random() * Math.PI * 2 });
@@ -7948,28 +7946,27 @@ if (window.location.hash === '#screensaver') {
     
     // ── CONSTELLATION DEFINITIONS ──
     const scrGhosts = [
-        { nameHe: 'הירח', color: [200,230,255], pts: [{x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},{x:-20,y:30},{x:-30,y:0},{x:-20,y:-30}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]] },
-        { nameHe: 'הנחש', color: [120,255,180], pts: [{x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},{x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]] },
-        { nameHe: 'הצב', color: [150,255,200], pts: [{x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},{x:30,y:55},{x:60,y:20},{x:50,y:-30},{x:0,y:-60},{x:0,y:70}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
-        { nameHe: 'הכלב', color: [255,220,150], pts: [{x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},{x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60}], lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]] },
-        { nameHe: 'הדב', color: [255,180,100], pts: [{x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},{x:100,y:90},{x:40,y:90},{x:0,y:50},{x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,7],[7,8],[0,9],[9,10]] },
-        { nameHe: 'הכוכב', color: [255,255,180], pts: [{x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},{x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20}], lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7]] },
-        { nameHe: 'העכביש', color: [255,150,150], pts: [{x:0,y:0},{x:50,y:-50},{x:70,y:-20},{x:70,y:20},{x:50,y:50},{x:-50,y:50},{x:-70,y:20},{x:-70,y:-20},{x:-50,y:-50}], lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]] },
-        { nameHe: 'האריה', color: [255,200,100], pts: [{x:0,y:0},{x:40,y:-60},{x:80,y:-20},{x:60,y:40},{x:0,y:80},{x:-60,y:40},{x:-80,y:-20},{x:-40,y:-60}], lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]] },
-        { nameHe: 'הדבורה', color: [255,220,60], pts: [{x:0,y:-40},{x:30,y:-20},{x:30,y:20},{x:0,y:40},{x:-30,y:20},{x:-30,y:-20},{x:60,y:-30},{x:-60,y:-30},{x:50,y:0},{x:-50,y:0}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[0,7],[2,8],[4,9]] },
-        { nameHe: 'הפרפר', color: [200,150,255], pts: [{x:0,y:0},{x:50,y:-40},{x:80,y:-10},{x:50,y:30},{x:-50,y:-40},{x:-80,y:-10},{x:-50,y:30},{x:0,y:-60},{x:0,y:50}], lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
+        { nameHe: 'הירח', color: 'rgba(200,230,255,', pts: [{x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},{x:-20,y:30},{x:-30,y:0},{x:-20,y:-30}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]] },
+        { nameHe: 'הנחש', color: 'rgba(120,255,180,', pts: [{x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},{x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]] },
+        { nameHe: 'הצב', color: 'rgba(150,255,200,', pts: [{x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},{x:30,y:55},{x:60,y:20},{x:50,y:-30},{x:0,y:-60},{x:0,y:70}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
+        { nameHe: 'הכלב', color: 'rgba(255,220,150,', pts: [{x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},{x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60}], lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]] },
+        { nameHe: 'הדב', color: 'rgba(255,180,100,', pts: [{x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},{x:100,y:90},{x:40,y:90},{x:0,y:50},{x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,7],[7,8],[0,9],[9,10]] },
+        { nameHe: 'הכוכב', color: 'rgba(255,255,180,', pts: [{x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},{x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20}], lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7]] },
+        { nameHe: 'העכביש', color: 'rgba(255,150,150,', pts: [{x:0,y:0},{x:50,y:-50},{x:70,y:-20},{x:70,y:20},{x:50,y:50},{x:-50,y:50},{x:-70,y:20},{x:-70,y:-20},{x:-50,y:-50}], lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]] },
+        { nameHe: 'האריה', color: 'rgba(255,200,100,', pts: [{x:0,y:0},{x:40,y:-60},{x:80,y:-20},{x:60,y:40},{x:0,y:80},{x:-60,y:40},{x:-80,y:-20},{x:-40,y:-60}], lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]] },
+        { nameHe: 'הדבורה', color: 'rgba(255,220,60,', pts: [{x:0,y:-40},{x:30,y:-20},{x:30,y:20},{x:0,y:40},{x:-30,y:20},{x:-30,y:-20},{x:60,y:-30},{x:-60,y:-30},{x:50,y:0},{x:-50,y:0}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[0,7],[2,8],[4,9]] },
+        { nameHe: 'הפרפר', color: 'rgba(200,150,255,', pts: [{x:0,y:0},{x:50,y:-40},{x:80,y:-10},{x:50,y:30},{x:-50,y:-40},{x:-80,y:-10},{x:-50,y:30},{x:0,y:-60},{x:0,y:50}], lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
     ];
     
-    // ── BUILD CONSTELLATIONS with PRISMATIC SHADERS ──
-    const SCALE = 3.5;
-    const prismPlane = new THREE.PlaneGeometry(200, 200);
+    // ── BUILD CONSTELLATIONS — EXACT MATCH to main app ghost rendering ──
     const constellationGroups = [];
+    const ghostPlane = new THREE.PlaneGeometry(200, 200);
     
     scrGhosts.forEach((ghost, gi) => {
         const group = new THREE.Group();
         const count = scrGhosts.length;
         
-        // Spread across screen in a pleasing layout
+        // Spread across screen
         const cols = Math.ceil(Math.sqrt(count * (scrW / scrH)));
         const rows = Math.ceil(count / cols);
         const col = gi % cols;
@@ -7979,29 +7976,52 @@ if (window.location.hash === '#screensaver') {
         const cx = -scrW/2 + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.15;
         const cy = scrH/2 - cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.15;
         
-        const hue = Math.atan2(ghost.color[1] - 128, ghost.color[0] - 128) / (Math.PI * 2) + 0.5;
-        const baseColor = new THREE.Color().setHSL(hue, 1.0, 0.65);
+        // Parse color and LERP toward white (exactly like main app)
+        const match = ghost.color.match(/\d+/g);
+        let c = new THREE.Color(1, 1, 1);
+        if (match && match.length >= 3) {
+            c = new THREE.Color(parseInt(match[0])/255, parseInt(match[1])/255, parseInt(match[2])/255);
+        }
+        c.lerp(new THREE.Color(1, 1, 1), 0.40); // Soften — match main app
         
-        const pointMeshes = [];
+        // Calculate angles for points based on lines (match main app)
+        const ptAngles = new Array(ghost.pts.length).fill(null);
+        ghost.lines.forEach(([a, b]) => {
+            if (!ghost.pts[a] || !ghost.pts[b]) return;
+            const dx = ghost.pts[b].x - ghost.pts[a].x;
+            const dy = ghost.pts[b].y - ghost.pts[a].y;
+            ptAngles[a] = Math.atan2(dy, dx);
+            ptAngles[b] = Math.atan2(dy, dx);
+        });
         
-        // Draw prismatic star points
+        // Add distractor stars around constellation (match main app)
+        const mainPtCount = ghost.pts.length;
+        const numDist = 12 + Math.floor(Math.random() * 8);
+        for (let i = 0; i < numDist; i++) {
+            const minR = Math.random() * 350;
+            const minA = Math.random() * Math.PI * 2;
+            ghost.pts.push({ x: Math.cos(minA) * minR, y: Math.sin(minA) * minR, isDistractor: true });
+            ptAngles.push(Math.random() * Math.PI * 2);
+        }
+        
+        const starMeshes = [];
+        const pointMats = [];
+        
+        // Create all points — beamType 0.0 (blade) for ALL (match main app)
         ghost.pts.forEach((pt, pi) => {
-            const types = [0.0, 1.0, 2.0]; // blade, crystal, shard
-            const typeVal = types[pi % 3];
-            const angle = Math.random() * Math.PI * 2;
-            
+            const gAngle = ptAngles[pi] !== null ? ptAngles[pi] : (Math.random() * Math.PI);
             const mat = new THREE.ShaderMaterial({
                 vertexShader,
                 fragmentShader,
                 uniforms: {
                     uTime: { value: Math.random() * 100 },
-                    uColor: { value: baseColor.clone() },
-                    uType: { value: typeVal },
-                    uOpacity: { value: 2.0 },
-                    uGlow: { value: 1.0 },
+                    uColor: { value: c.clone() },
+                    uType: { value: 0.0 }, // blade — match main app
+                    uOpacity: { value: 1.8 }, // match main app: a * 1.8
+                    uGlow: { value: 0.62 }, // match main app
                     uState: { value: 1.0 },
-                    uZoom: { value: 0.8 },
-                    uDepth: { value: 1.0 },
+                    uZoom: { value: 0.65 }, // match main app
+                    uDepth: { value: 0.6 },
                     uHasLabel: { value: 0.0 },
                     uSeed: { value: Math.random() }
                 },
@@ -8009,88 +8029,107 @@ if (window.location.hash === '#screensaver') {
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
-            
-            const mesh = new THREE.Mesh(prismPlane, mat);
-            mesh.position.set(pt.x * SCALE, pt.y * SCALE, 10);
-            mesh.rotation.z = angle;
-            mesh.scale.set(0.55, 0.55, 1);
+            pointMats.push(mat);
+            const mesh = new THREE.Mesh(ghostPlane, mat);
+            mesh.rotation.z = gAngle;
+            const baseScale = pt.isDistractor ? (0.5 + Math.random() * 1.0) : (1.0 + Math.random() * 2.0);
+            mesh.userData.baseScale = baseScale;
+            mesh.scale.set(baseScale, baseScale, 1);
+            mesh.position.set(pt.x, pt.y, pt.isDistractor ? -20 : 0);
+            starMeshes.push(mesh);
             group.add(mesh);
-            
-            pointMeshes.push({ mesh, phase: Math.random() * Math.PI * 2, baseAngle: angle });
         });
         
-        // Draw constellation lines with glow
-        ghost.lines.forEach(([a, bi]) => {
-            if (ghost.pts[a] && ghost.pts[bi]) {
-                const lineGeo = new THREE.BufferGeometry();
-                lineGeo.setAttribute('position', new THREE.Float32BufferAttribute([
-                    ghost.pts[a].x * SCALE, ghost.pts[a].y * SCALE, 3,
-                    ghost.pts[bi].x * SCALE, ghost.pts[bi].y * SCALE, 3
-                ], 3));
-                const lineMat = new THREE.LineBasicMaterial({
-                    color: baseColor, transparent: true, opacity: 0.45,
-                    blending: THREE.AdditiveBlending
-                });
-                group.add(new THREE.LineSegments(lineGeo, lineMat));
+        // White connection lines (match main app)
+        const lineGeo = new THREE.BufferGeometry();
+        const linePos = [];
+        ghost.lines.forEach(([a, b]) => {
+            if (ghost.pts[a] && ghost.pts[b]) {
+                linePos.push(ghost.pts[a].x, ghost.pts[a].y, 0);
+                linePos.push(ghost.pts[b].x, ghost.pts[b].y, 0);
             }
         });
-        
-        // No labels in screensaver — just pure constellations
+        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, depthWrite: false });
+        const lineMesh = new THREE.LineSegments(lineGeo, lineMat);
+        group.add(lineMesh);
         
         group.position.set(cx, cy, 0);
         scrScene.add(group);
         
         constellationGroups.push({
-            group, pointMeshes, ghost, cx, cy,
-            driftX: (Math.random() - 0.5) * 12,
-            driftY: (Math.random() - 0.5) * 10,
-            driftPhase: Math.random() * Math.PI * 2,
-            rotSpeed: (Math.random() - 0.5) * 0.0003
+            group, starMeshes, pointMats, lineMesh, ghost, cx, cy,
+            mainPtCount,
+            selfRotY: gi * 0.42,
+            driftPhase: Math.random() * Math.PI * 2
         });
     });
     
-    // ── ANIMATION LOOP ──
+    // ── ANIMATION LOOP — match main app ghost rendering ──
     function scrLoop() {
         requestAnimationFrame(scrLoop);
         const now = performance.now() * 0.001;
         const dt = 0.016;
         
-        // Animate dust stars (background prisms)
+        // Animate dust stars
         dustStars.forEach(ds => {
             ds.mesh.material.uniforms.uTime.value += dt * 0.5;
         });
         
-        // Animate constellations
-        constellationGroups.forEach(cg => {
+        // Animate constellations (match main app's updateConstellations)
+        constellationGroups.forEach((cg, ci) => {
+            // 3D rotation (match main app: selfRotY += 0.006)
+            cg.selfRotY += 0.006;
+            const rotY = cg.selfRotY;
+            const rotX = Math.sin(cg.selfRotY * 0.31 + ci * 0.7) * 0.4;
+            const t = cg.selfRotY;
+            
             // Gentle drift
-            const dx = Math.sin(now * 0.12 + cg.driftPhase) * cg.driftX;
-            const dy = Math.cos(now * 0.09 + cg.driftPhase * 1.3) * cg.driftY;
+            const dx = Math.sin(now * 0.08 + cg.driftPhase) * 15;
+            const dy = Math.cos(now * 0.06 + cg.driftPhase * 1.3) * 12;
             cg.group.position.x = cg.cx + dx;
             cg.group.position.y = cg.cy + dy;
             
-            // Very slow rotation
-            cg.group.rotation.z += cg.rotSpeed;
-            
-            // Animate prismatic points
-            cg.pointMeshes.forEach(pm => {
-                const u = pm.mesh.material.uniforms;
-                u.uTime.value += dt;
-                // Pulsing glow
-                const pulse = 0.5 + 0.5 * Math.sin(now * 1.8 + pm.phase);
-                u.uGlow.value = 0.7 + pulse * 0.6;
-                u.uOpacity.value = 1.5 + pulse * 0.8;
-                // Gentle rotation
-                pm.mesh.rotation.z = pm.baseAngle + now * 0.08;
-                // Breathing scale
-                const s = 0.5 + Math.sin(now * 1.2 + pm.phase) * 0.1;
-                pm.mesh.scale.set(s, s, 1);
+            // Rotate star positions in 3D (match main app exactly)
+            cg.starMeshes.forEach((mesh, si) => {
+                const origPt = cg.ghost.pts[si];
+                if (!origPt) return;
+                
+                // 3D rotation around Y axis
+                let x = origPt.x * Math.cos(rotY);
+                let z = origPt.x * Math.sin(rotY);
+                
+                // 3D rotation around X axis
+                let y = origPt.y * Math.cos(rotX) - z * Math.sin(rotX);
+                z = origPt.y * Math.sin(rotX) + z * Math.cos(rotX);
+                
+                // Organic wobble
+                const phase = si * 1.618 + ci * 2.3;
+                x += Math.sin(t * 0.45 + phase) * 7;
+                y += Math.cos(t * 0.33 + phase) * 7;
+                
+                mesh.position.set(x, y, z);
             });
             
-            // Lines glow pulse
-            cg.group.children.forEach(child => {
-                if (child.material && child.material.opacity !== undefined && child.isLineSegments) {
-                    child.material.opacity = 0.25 + Math.sin(now * 0.8 + cg.driftPhase) * 0.15;
+            // Update line geometry to follow animated positions
+            const posAttr = cg.lineMesh.geometry.getAttribute('position');
+            let idx = 0;
+            cg.ghost.lines.forEach(([a, b]) => {
+                const ma = cg.starMeshes[a];
+                const mb = cg.starMeshes[b];
+                if (ma && mb) {
+                    posAttr.setXYZ(idx, ma.position.x, ma.position.y, 0);
+                    posAttr.setXYZ(idx+1, mb.position.x, mb.position.y, 0);
                 }
+                idx += 2;
+            });
+            posAttr.needsUpdate = true;
+            
+            // Update shader uniforms (match main app values)
+            cg.pointMats.forEach(mat => {
+                mat.uniforms.uOpacity.value = 1.8;
+                mat.uniforms.uGlow.value = 0.62;
+                mat.uniforms.uTime.value += 0.015;
             });
         });
         
