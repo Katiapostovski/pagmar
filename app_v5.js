@@ -3698,7 +3698,7 @@ function initConstellationSystem(userVision) {
                 skyScreen.appendChild(gs.infoEl);
             }
             
-            if (a > 0.04) {
+            if (a > 0.04 && !window.isScreensaverMode) {
                 // Ghost label: fixed world position (not affected by ghostRotY)
                 const rp2 = { x: ghost.offset.x, y: ghost.offset.y };
                 const s2 = w2s(rp2.x, rp2.y);
@@ -3723,7 +3723,7 @@ function initConstellationSystem(userVision) {
         });
 
         // ── USER CONSTELLATION LABEL ─────────────────────────────────────
-        if (window.skyRevealState === 'revealed') {
+        if (window.skyRevealState === 'revealed' && !window.isScreensaverMode) {
             if (!window.userConstellationLabel) {
                 window.userConstellationLabel = document.createElement('div');
                 window.userConstellationLabel.style.cssText = [
@@ -7774,15 +7774,21 @@ updateLang('he'); // Initialize text and default to Hebrew
 
 // --- Screensaver Mode Check ---
 if (window.location.hash === '#screensaver') {
-    window.location.href = window.location.pathname; // clear hash and reload
-}
-if (false) { // Screensaver disabled
+    // ── SCREENSAVER / ATTRACT MODE ──
+    // Shows ghost constellations floating in space, no interaction
+    window.isScreensaverMode = true;
     
     // Hide opening screen completely
     const scrOpen = document.getElementById('screen-opening');
     if (scrOpen) scrOpen.style.display = 'none';
     
-    // Setup for 3D
+    // Hide all UI elements that shouldn't show in screensaver
+    ['btn-sunrise', 'lang-toggle', 'sky-interpretation-panel', 'user-constellation-title'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    
+    // Setup for 3D — empty answers so no user constellation is built
     answers = {};
     buildVisualParams();
     window.skyRevealState = 'revealed';
@@ -7790,25 +7796,29 @@ if (false) { // Screensaver disabled
     initSky();
     
     setTimeout(() => {
-        cam.targetScale = 0.08;
-        cam.targetX = 0;
-        cam.targetY = 0;
+        targetCam.scale = 0.08;
+        targetCam.x = 0;
+        targetCam.y = 0;
+        cam.scale = 0.08;
     }, 100);
     
+    // Exit screensaver on any user interaction → go to normal start screen
     const exitScreensaver = () => {
         sessionStorage.removeItem('pagmar_screensaver');
-        if (window.location.hash === '#screensaver') {
-            window.location.hash = '';
-        }
+        window.location.hash = '';
         window.location.reload();
     };
     
+    // Delay listener to prevent accidental immediate exit
     setTimeout(() => {
-        document.addEventListener('pointerdown', exitScreensaver, {once:true});
-        document.addEventListener('keydown', exitScreensaver, {once:true});
-    }, 1000);
+        document.addEventListener('pointerdown', exitScreensaver, {once: true});
+        document.addEventListener('keydown', exitScreensaver, {once: true});
+        document.addEventListener('mousemove', exitScreensaver, {once: true});
+        document.addEventListener('touchstart', exitScreensaver, {once: true});
+    }, 2000); // 2 second grace period
 } else {
     // Show opening screen only if NOT in screensaver mode
+    window.isScreensaverMode = false;
     const scrOpen = document.getElementById('screen-opening');
     if (scrOpen) scrOpen.classList.add('active');
 }
@@ -8085,9 +8095,9 @@ document.addEventListener('DOMContentLoaded', () => {
             dismissPrompt();
         });
 
-        // Start the 5-second countdown → return to main page
+        // Start the 5-second countdown → enter screensaver mode
         promptTimer = setTimeout(() => {
-            // Fade to black then reload to initial state
+            // Fade to black then go to screensaver
             if (promptOverlay) {
                 promptOverlay.style.transition = 'opacity 1s ease';
                 promptOverlay.style.opacity = '0';
@@ -8096,7 +8106,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             setTimeout(() => {
                 sessionStorage.removeItem('pagmar_screensaver');
-                window.location.href = window.location.pathname;
+                // Go to screensaver mode instead of plain reload
+                window.location.hash = '#screensaver';
+                window.location.reload();
             }, 1200);
         }, PROMPT_TIMEOUT_MS);
     }
@@ -8120,6 +8132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener(evt, resetIdleTimer, { passive: true });
     });
 
-    // ── Start the idle timer ──
-    idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
+    // ── Start the idle timer (not in screensaver mode) ──
+    if (!window.isScreensaverMode) {
+        idleTimer = setTimeout(showIdlePrompt, IDLE_TIMEOUT_MS);
+    }
 })();
