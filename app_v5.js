@@ -7908,23 +7908,39 @@ if (window.location.hash === '#screensaver') {
     const scrCam = new THREE.OrthographicCamera(-scrW/2, scrW/2, scrH/2, -scrH/2, 1, 1000);
     scrCam.position.z = 100;
     
-    // ── STARFIELD BACKGROUND (circle dots like main app) ──
+    // ── STARFIELD BACKGROUND ──
     const bgStars = [];
-    for (let i = 0; i < 2500; i++) {
+    // Layer 1: medium stars (smaller than before)
+    for (let i = 0; i < 1500; i++) {
         const sx = (Math.random() - 0.5) * scrW * 2.5;
         const sy = (Math.random() - 0.5) * scrH * 2.5;
         const roll = Math.random();
-        const bright = roll < 0.03 ? 0.7 : roll < 0.12 ? 0.3 : roll < 0.3 ? 0.12 : 0.05;
-        const size = roll < 0.03 ? 2.0 : roll < 0.12 ? 1.2 : roll < 0.3 ? 0.7 : 0.4;
-        const geo = new THREE.CircleGeometry(size, 6);
-        const starHue = roll < 0.03 ? (Math.random() < 0.5 ? 0.08 : 0.6) : Math.random();
-        const col = new THREE.Color().setHSL(starHue, 0.15, 0.6 + bright * 0.4);
+        const bright = roll < 0.03 ? 0.5 : roll < 0.1 ? 0.2 : roll < 0.3 ? 0.08 : 0.03;
+        const size = roll < 0.03 ? 1.2 : roll < 0.1 ? 0.7 : roll < 0.3 ? 0.4 : 0.25;
+        const geo = new THREE.CircleGeometry(size, 5);
+        const col = new THREE.Color().setHSL(Math.random(), 0.12, 0.6 + bright * 0.4);
         const mat = new THREE.MeshBasicMaterial({
             color: col, transparent: true, opacity: bright,
             blending: THREE.AdditiveBlending, depthWrite: false
         });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(sx, sy, -10);
+        scrScene.add(mesh);
+        bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
+    }
+    // Layer 2: tiny pinpoint white dots
+    for (let i = 0; i < 4000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 2.8;
+        const sy = (Math.random() - 0.5) * scrH * 2.8;
+        const bright = 0.015 + Math.random() * 0.06;
+        const size = 0.15 + Math.random() * 0.2;
+        const geo = new THREE.CircleGeometry(size, 4);
+        const mat = new THREE.MeshBasicMaterial({
+            color: 0xffffff, transparent: true, opacity: bright,
+            blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sx, sy, -12);
         scrScene.add(mesh);
         bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
     }
