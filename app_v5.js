@@ -5034,11 +5034,20 @@ async function buildSignalField() {
             });
             const mesh = new THREE.Mesh(planeGeo, mat);
             mesh.rotation.z = pt.baseAngle || 0;
+            // Set position IMMEDIATELY — don't wait for render loop
+            mesh.position.set(pt.x, pt.y, pt.z || 0);
+            mesh.scale.set(0.5, 0.5, 1); // Ensure visible initial scale
             scene.add(mesh);
             skyMeshes.push(mesh);
             pt.mesh = mesh;
         });
-        console.log('[PAGMAR] Screensaver starfield created:', skyPoints.length, 'stars');
+        console.log('[PAGMAR] Screensaver starfield created:', skyPoints.length, 'stars, scene children:', scene.children.length);
+        // Visual debug: show star count on screen
+        const dbg = document.createElement('div');
+        dbg.style.cssText = 'position:fixed;bottom:10px;left:10px;color:lime;font-size:14px;z-index:9999;font-family:monospace;';
+        dbg.textContent = 'SCR: ' + skyPoints.length + ' stars, ' + (window.ghostDefs ? window.ghostDefs.length : 0) + ' ghosts';
+        document.body.appendChild(dbg);
+        setTimeout(() => dbg.remove(), 8000);
         return;
     }
     
