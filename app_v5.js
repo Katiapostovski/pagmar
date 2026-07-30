@@ -302,8 +302,8 @@ void main() {
     float twinkle = 1.0 + uGlow * sin(uTime * 1.5) * 0.15;
 
     // Rich prismatic beam color: smooth RGB split + spectral rainbow glow + minimal white core
-    vec3 rgbSplit = vec3(iR, iG, iB) * 4.0;
-    vec3 spectralGlow = specRainbow * iG * 1.8 * zoomColor; 
+    vec3 rgbSplit = vec3(iR, iG, iB) * 2.6;
+    vec3 spectralGlow = specRainbow * iG * 0.8 * zoomColor; 
     
     // Add back the central dot, keeping it very small so it doesn't blob
     float r = length(uv);
@@ -3198,7 +3198,7 @@ function initConstellationSystem(userVision) {
                     uColor: { value: c },
                     uType: { value: beamType },
                     uOpacity: { value: 0.0 },
-                    uGlow: { value: 1.8 },
+                    uGlow: { value: 0.5 },
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 },
                     uDepth: { value: 0.6 },
@@ -3212,7 +3212,7 @@ function initConstellationSystem(userVision) {
             gs.pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlaneGeo, mat);
             mesh.rotation.z = gAngle;
-            const baseScale = pt.isDistractor ? (2.0 + Math.random() * 4.0) : (4.0 + Math.random() * 8.0);
+            const baseScale = pt.isDistractor ? (0.5 + Math.random() * 1.0) : (1.0 + Math.random() * 2.0);
             mesh.userData.baseScale = baseScale;
             mesh.scale.set(baseScale, baseScale, 1.0);
             mesh.position.set(pt.x, pt.y, pt.isDistractor ? -20 : 0);
@@ -3408,7 +3408,7 @@ function initConstellationSystem(userVision) {
                 let targetScale = 1.2;
                 
                 // Keep them reasonably bounded
-                const maxAllowedChildScale = 25.0 / Math.max(0.01, cam.scale);
+                const maxAllowedChildScale = 6.0 / Math.max(0.01, cam.scale);
                 
                 gs.group.children.forEach(child => {
                     if (child.isMesh && child.userData.baseScale) {
@@ -3425,7 +3425,7 @@ function initConstellationSystem(userVision) {
                 // Unified opacity and glow to exactly match the active constellation
                 mat.uniforms.uOpacity.value = Math.min(1.5, a * 1.0 + hGlow * 0.5); // Reduced opacity to prevent blobs
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.8 + hGlow * 1.0; // Reduced base glow
+                mat.uniforms.uGlow.value = 0.3 + hGlow * 0.5; // Matched to main constellation glow range
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -6557,7 +6557,7 @@ function updatePoint(pt, dt, isClosest) {
 
         // Constellation beams: reasonable cap for clean single prisms
         if (!isStarfield) {
-            const maxBeamScale = 4.0; // Allow main constellation to have its signature long blades (increased to 4.0)
+            const maxBeamScale = 2.0; // Reasonable cap to prevent blinding white explosion on zoom-in
             s = Math.min(s, maxBeamScale);
         }
 
