@@ -7908,10 +7908,31 @@ if (window.location.hash === '#screensaver') {
     const scrCam = new THREE.OrthographicCamera(-scrW/2, scrW/2, scrH/2, -scrH/2, 1, 1000);
     scrCam.position.z = 100;
     
-    // ── PRISMATIC DUST STARS (background) ──
+    // ── STARFIELD BACKGROUND (circle dots like main app) ──
+    const bgStars = [];
+    for (let i = 0; i < 2500; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 2.5;
+        const sy = (Math.random() - 0.5) * scrH * 2.5;
+        const roll = Math.random();
+        const bright = roll < 0.03 ? 0.7 : roll < 0.12 ? 0.3 : roll < 0.3 ? 0.12 : 0.05;
+        const size = roll < 0.03 ? 2.0 : roll < 0.12 ? 1.2 : roll < 0.3 ? 0.7 : 0.4;
+        const geo = new THREE.CircleGeometry(size, 6);
+        const starHue = roll < 0.03 ? (Math.random() < 0.5 ? 0.08 : 0.6) : Math.random();
+        const col = new THREE.Color().setHSL(starHue, 0.15, 0.6 + bright * 0.4);
+        const mat = new THREE.MeshBasicMaterial({
+            color: col, transparent: true, opacity: bright,
+            blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sx, sy, -10);
+        scrScene.add(mesh);
+        bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
+    }
+    
+    // ── PRISMATIC DUST STARS (small scattered prisms) ──
     const dustPlane = new THREE.PlaneGeometry(200, 200);
     const dustStars = [];
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 40; i++) {
         const sx = (Math.random() - 0.5) * scrW * 1.8;
         const sy = (Math.random() - 0.5) * scrH * 1.8;
         const dustColor = new THREE.Color(1, 1, 1);
@@ -7923,7 +7944,7 @@ if (window.location.hash === '#screensaver') {
                 uTime: { value: Math.random() * 200 },
                 uColor: { value: dustColor },
                 uType: { value: 0.0 },
-                uOpacity: { value: 0.15 + Math.random() * 0.25 },
+                uOpacity: { value: 0.15 + Math.random() * 0.2 },
                 uGlow: { value: 0.3 },
                 uState: { value: 1.0 },
                 uZoom: { value: 0.65 },
@@ -8040,25 +8061,13 @@ if (window.location.hash === '#screensaver') {
             group.add(mesh);
         });
         
-        // White connection lines (match main app)
-        const lineGeo = new THREE.BufferGeometry();
-        const linePos = [];
-        ghost.lines.forEach(([a, b]) => {
-            if (ghost.pts[a] && ghost.pts[b]) {
-                linePos.push(ghost.pts[a].x, ghost.pts[a].y, 0);
-                linePos.push(ghost.pts[b].x, ghost.pts[b].y, 0);
-            }
-        });
-        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
-        const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, depthWrite: false });
-        const lineMesh = new THREE.LineSegments(lineGeo, lineMat);
-        group.add(lineMesh);
+        // No connection lines in screensaver
         
         group.position.set(cx, cy, 0);
         scrScene.add(group);
         
         constellationGroups.push({
-            group, starMeshes, pointMats, lineMesh, ghost, cx, cy,
+            group, starMeshes, pointMats, ghost, cx, cy,
             mainPtCount,
             selfRotY: gi * 0.42,
             driftPhase: Math.random() * Math.PI * 2
@@ -8071,17 +8080,23 @@ if (window.location.hash === '#screensaver') {
         const now = performance.now() * 0.001;
         const dt = 0.016;
         
-        // Animate dust stars
+        // Twinkle background stars
+        bgStars.forEach(s => {
+            const twinkle = 0.5 + 0.5 * Math.sin(now * 1.2 + s.phase * 8);
+            s.mesh.material.opacity = s.baseOp * (0.3 + twinkle * 0.7);
+        });
+        
+        // Animate dust prisms
         dustStars.forEach(ds => {
             ds.mesh.material.uniforms.uTime.value += dt * 0.5;
         });
         
-        // Animate constellations (match main app's updateConstellations)
+        // Animate constellations
         constellationGroups.forEach((cg, ci) => {
-            // 3D rotation (match main app: selfRotY += 0.006)
-            cg.selfRotY += 0.006;
+            // Slow 360° rotation
+            cg.selfRotY += 0.0008;
             const rotY = cg.selfRotY;
-            const rotX = Math.sin(cg.selfRotY * 0.31 + ci * 0.7) * 0.4;
+            const rotX = Math.sin(cg.selfRotY * 0.31 + ci * 0.7) * 0.2;
             const t = cg.selfRotY;
             
             // Gentle drift
@@ -8111,28 +8126,13 @@ if (window.location.hash === '#screensaver') {
                 mesh.position.set(x, y, z);
             });
             
-            // Update line geometry to follow animated positions
-            const posAttr = cg.lineMesh.geometry.getAttribute('position');
-            let idx = 0;
-            cg.ghost.lines.forEach(([a, b]) => {
-                const ma = cg.starMeshes[a];
-                const mb = cg.starMeshes[b];
-                if (ma && mb) {
-                    posAttr.setXYZ(idx, ma.position.x, ma.position.y, 0);
-                    posAttr.setXYZ(idx+1, mb.position.x, mb.position.y, 0);
-                }
-                idx += 2;
-            });
-            posAttr.needsUpdate = true;
-            
-            // Update shader uniforms — enchanting glow pulse
+            // Enchanting glow pulse
             const breathe = 0.5 + 0.5 * Math.sin(now * 1.5 + ci * 0.7);
             cg.pointMats.forEach(mat => {
                 mat.uniforms.uOpacity.value = 1.2 + breathe * 0.6;
                 mat.uniforms.uGlow.value = 0.5 + breathe * 0.25;
                 mat.uniforms.uTime.value += 0.015;
             });
-            cg.lineMesh.material.opacity = 0.2 + breathe * 0.15;
         });
         
         scrRenderer.render(scrScene, scrCam);
