@@ -7878,65 +7878,140 @@ updateLang('he'); // Initialize text and default to Hebrew
 // --- Screensaver Mode Check ---
 if (window.location.hash === '#screensaver') {
     // ── SCREENSAVER / ATTRACT MODE ──
-    // Shows ghost constellations floating in space, no interaction
     window.isScreensaverMode = true;
     console.log('[PAGMAR] Screensaver mode activated');
     
-    // Hide opening screen completely
-    const scrOpen = document.getElementById('screen-opening');
-    if (scrOpen) scrOpen.style.display = 'none';
+    // Hide ALL screens
+    document.querySelectorAll('.screen').forEach(s => {
+        s.style.display = 'none';
+    });
     
-    // Hide questionnaire screen too
-    const scrQ = document.getElementById('screen-questionnaire');
-    if (scrQ) scrQ.style.display = 'none';
-    
-    // Hide all UI elements that shouldn't show in screensaver
+    // Hide all UI elements
     ['btn-sunrise', 'lang-toggle', 'sky-interpretation-panel', 'user-constellation-title',
      'dawn-overlay', 'epilogue-screen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
     
-    // Setup for 3D — empty answers so no user constellation is built
+    // ── STANDALONE THREE.JS SCREENSAVER ──
+    // Bypass initSky entirely — create our own renderer
+    const scrW = window.innerWidth;
+    const scrH = window.innerHeight;
+    
+    const scrRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    scrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    scrRenderer.setSize(scrW, scrH);
+    scrRenderer.setClearColor(0x000000, 1);
+    scrRenderer.domElement.style.cssText = 'position:fixed;top:0;left:0;z-index:100;';
+    document.body.appendChild(scrRenderer.domElement);
+    
+    const scrScene = new THREE.Scene();
+    const scrCam = new THREE.OrthographicCamera(-scrW/2, scrW/2, scrH/2, -scrH/2, 1, 1000);
+    scrCam.position.z = 100;
+    
+    // Create 3000 starfield dots
+    const starData = [];
+    for (let i = 0; i < 3000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 3;
+        const sy = (Math.random() - 0.5) * scrH * 3;
+        const roll = Math.random();
+        const bright = roll < 0.05 ? 0.9 : roll < 0.2 ? 0.5 : 0.2;
+        const size = roll < 0.05 ? 4 : roll < 0.2 ? 2.5 : 1.5;
+        const geo = new THREE.CircleGeometry(size, 8);
+        const hue = Math.random();
+        const col = new THREE.Color().setHSL(hue, 0.3, 0.7 + bright * 0.3);
+        const mat = new THREE.MeshBasicMaterial({
+            color: col, transparent: true, opacity: bright,
+            blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sx, sy, 0);
+        scrScene.add(mesh);
+        starData.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
+    }
+    
+    // Create ghost constellations
     answers = {};
     buildVisualParams();
     window.skyRevealState = 'revealed';
     
-    // Set camera to zoomed-out BEFORE initSky
-    cam.scale = 0.08;
-    cam.x = 0;
-    cam.y = 0;
-    targetCam.scale = 0.08;
-    targetCam.x = 0;
-    targetCam.y = 0;
+    // Use ghostDefs for constellation shapes
+    const ghostConstellations = [];
+    if (typeof ghostDefs !== 'undefined' && ghostDefs.length > 0) {
+        ghostDefs.forEach((ghost, gi) => {
+            const angle = (gi / ghostDefs.length) * Math.PI * 2;
+            const radius = Math.min(scrW, scrH) * 0.35;
+            const cx = Math.cos(angle) * radius;
+            const cy = Math.sin(angle) * radius;
+            
+            // Draw constellation points
+            ghost.points.forEach(pt => {
+                const px = cx + pt[0] * 0.15;
+                const py = cy + pt[1] * 0.15;
+                const geo = new THREE.CircleGeometry(3, 12);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: 0xaaccff, transparent: true, opacity: 0.7,
+                    blending: THREE.AdditiveBlending, depthWrite: false
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(px, py, 10);
+                scrScene.add(mesh);
+            });
+            
+            // Draw constellation lines
+            if (ghost.lines) {
+                ghost.lines.forEach(([a, b]) => {
+                    if (ghost.points[a] && ghost.points[b]) {
+                        const ax = cx + ghost.points[a][0] * 0.15;
+                        const ay = cy + ghost.points[a][1] * 0.15;
+                        const bx = cx + ghost.points[b][0] * 0.15;
+                        const by = cy + ghost.points[b][1] * 0.15;
+                        const lineGeo = new THREE.BufferGeometry();
+                        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute([ax,ay,10, bx,by,10], 3));
+                        const lineMat = new THREE.LineBasicMaterial({ color: 0x6688bb, transparent: true, opacity: 0.4 });
+                        scrScene.add(new THREE.LineSegments(lineGeo, lineMat));
+                    }
+                });
+            }
+            
+            ghostConstellations.push({ cx, cy, name: ghost.name || '' });
+        });
+    }
     
-    // Async init — must await so render loop starts properly
-    (async () => {
-        try {
-            await initSky();
-            console.log('[PAGMAR] Screensaver sky initialized');
-            // Force camera to zoomed-out position after sky is ready
-            cam.scale = 0.08;
-            targetCam.scale = 0.08;
-        } catch(e) {
-            console.error('[PAGMAR] Screensaver initSky error:', e);
-        }
-    })();
+    console.log('[PAGMAR] Screensaver scene built:', scrScene.children.length, 'objects');
     
-    // Exit screensaver on any user interaction → go to normal start screen
+    // Slow rotation animation
+    let scrAngle = 0;
+    function scrLoop() {
+        requestAnimationFrame(scrLoop);
+        scrAngle += 0.0003;
+        
+        // Rotate entire scene slowly
+        scrScene.rotation.z = scrAngle;
+        
+        // Twinkle stars
+        const now = performance.now() * 0.001;
+        starData.forEach(s => {
+            const twinkle = 0.5 + 0.5 * Math.sin(now * 1.5 + s.phase * 10);
+            s.mesh.material.opacity = s.baseOp * (0.4 + twinkle * 0.6);
+        });
+        
+        scrRenderer.render(scrScene, scrCam);
+    }
+    scrLoop();
+    
+    // Exit screensaver on any user interaction
     const exitScreensaver = () => {
-        sessionStorage.removeItem('pagmar_screensaver');
         window.location.hash = '';
         window.location.reload();
     };
-    
-    // Delay listener to prevent accidental immediate exit
     setTimeout(() => {
         document.addEventListener('pointerdown', exitScreensaver, {once: true});
         document.addEventListener('keydown', exitScreensaver, {once: true});
         document.addEventListener('mousemove', exitScreensaver, {once: true});
         document.addEventListener('touchstart', exitScreensaver, {once: true});
-    }, 2000); // 2 second grace period
+    }, 2000);
+    
 } else {
     // Show opening screen only if NOT in screensaver mode
     window.isScreensaverMode = false;
