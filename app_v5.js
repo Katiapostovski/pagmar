@@ -7910,50 +7910,48 @@ if (window.location.hash === '#screensaver') {
     
     // ── STARFIELD BACKGROUND ──
     const bgStars = [];
-    // Layer 1: bright visible stars
-    for (let i = 0; i < 800; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 2.5;
-        const sy = (Math.random() - 0.5) * scrH * 2.5;
-        const roll = Math.random();
-        const bright = roll < 0.05 ? 0.8 : roll < 0.15 ? 0.4 : 0.15;
-        const size = roll < 0.05 ? 1.4 : roll < 0.15 ? 0.9 : 0.5;
-        const geo = new THREE.CircleGeometry(size, 5);
-        const col = new THREE.Color().setHSL(Math.random(), 0.12, 0.7 + bright * 0.3);
+    // Bright stars — clearly visible
+    for (let i = 0; i < 500; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 1.2;
+        const sy = (Math.random() - 0.5) * scrH * 1.2;
+        const bright = 0.3 + Math.random() * 0.7;
+        const size = 1.0 + Math.random() * 1.5;
+        const geo = new THREE.CircleGeometry(size, 6);
         const mat = new THREE.MeshBasicMaterial({
-            color: col, transparent: true, opacity: bright,
-            blending: THREE.AdditiveBlending, depthWrite: false
+            color: 0xffffff, transparent: true, opacity: bright,
+            depthWrite: false
         });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(sx, sy, -10);
         scrScene.add(mesh);
         bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
     }
-    // Layer 2: dense small stars
-    for (let i = 0; i < 3000; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 2.8;
-        const sy = (Math.random() - 0.5) * scrH * 2.8;
-        const bright = 0.04 + Math.random() * 0.12;
-        const size = 0.25 + Math.random() * 0.35;
-        const geo = new THREE.CircleGeometry(size, 4);
+    // Medium stars — fill the gaps
+    for (let i = 0; i < 2000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 1.4;
+        const sy = (Math.random() - 0.5) * scrH * 1.4;
+        const bright = 0.1 + Math.random() * 0.3;
+        const size = 0.4 + Math.random() * 0.6;
+        const geo = new THREE.CircleGeometry(size, 5);
         const mat = new THREE.MeshBasicMaterial({
             color: 0xeeeeff, transparent: true, opacity: bright,
-            blending: THREE.AdditiveBlending, depthWrite: false
+            depthWrite: false
         });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(sx, sy, -11);
         scrScene.add(mesh);
         bgStars.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
     }
-    // Layer 3: tiny dust — fills the entire sky
-    for (let i = 0; i < 5000; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 3;
-        const sy = (Math.random() - 0.5) * scrH * 3;
-        const bright = 0.01 + Math.random() * 0.04;
-        const size = 0.1 + Math.random() * 0.15;
-        const geo = new THREE.CircleGeometry(size, 3);
+    // Tiny dot stars — dense background
+    for (let i = 0; i < 3000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 1.5;
+        const sy = (Math.random() - 0.5) * scrH * 1.5;
+        const bright = 0.04 + Math.random() * 0.1;
+        const size = 0.2 + Math.random() * 0.3;
+        const geo = new THREE.CircleGeometry(size, 4);
         const mat = new THREE.MeshBasicMaterial({
             color: 0xffffff, transparent: true, opacity: bright,
-            blending: THREE.AdditiveBlending, depthWrite: false
+            depthWrite: false
         });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(sx, sy, -12);
