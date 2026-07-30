@@ -2979,16 +2979,6 @@ function initConstellationSystem(userVision) {
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[0,7],[0,8],[1,7],[6,7]]
         },
         {
-            nameHe: 'הפרפר', nameEn: 'the butterfly',
-            color: 'rgba(255,200,255,',
-            textHe: 'השינוי לא בא מבחוץ — הוא בקע מבפנים. הכנפיים לא ניתנו לפרפר; הן נבנו בחושך.',
-            textEn: 'Change does not come from outside — it breaks through from within. Wings are not given; they are built in darkness.',
-            offset: { x: -3500, y: 4400 },
-            pts: [ {x:0,y:0},{x:-70,y:-50},{x:-120,y:-10},{x:-60,y:30},
-                   {x:70,y:-50},{x:120,y:-10},{x:60,y:30},{x:0,y:50} ],
-            lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7]]
-        },
-        {
             nameHe: 'הכלב',  nameEn: 'the dog',
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
@@ -3024,7 +3014,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,150,150,',
             textHe: 'העכביש אורג את עולמו מתוך עצמו.',
             textEn: 'The spider weaves its world from within.',
-            offset: { x: 0, y: 0 },
+            offset: { x: -5800, y: -5000 },
             pts: [ {x:0,y:0}, {x:50,y:-50}, {x:70,y:-20}, {x:70,y:20}, {x:50,y:50}, {x:-50,y:50}, {x:-70,y:20}, {x:-70,y:-20}, {x:-50,y:-50} ],
             lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]]
         },
@@ -3033,19 +3023,10 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,100,',
             textHe: 'מלך החיות.',
             textEn: 'King of the beasts.',
-            offset: { x: 0, y: 0 },
+            offset: { x: 7200, y: 2800 },
             pts: [ {x:0,y:0}, {x:40,y:-60}, {x:80,y:-20}, {x:60,y:40}, {x:0,y:80}, {x:-60,y:40}, {x:-80,y:-20}, {x:-40,y:-60} ],
             lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]]
         },
-        {
-            nameHe: 'הציפור', nameEn: 'the bird',
-            color: 'rgba(150,200,255,',
-            textHe: 'מעוף אל הלא נודע.',
-            textEn: 'Flight into the unknown.',
-            offset: { x: 0, y: 0 },
-            pts: [ {x:0,y:20}, {x:100,y:-40}, {x:40,y:-10}, {x:0,y:-60}, {x:-40,y:-10}, {x:-100,y:-40} ],
-            lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[4,5],[2,3],[3,4]]
-        }
     ];
 
     // Filter hardcoded ghosts: remove any that match the user's own constellation name
@@ -3317,7 +3298,11 @@ function initConstellationSystem(userVision) {
             const distFromCenter = Math.hypot(cam.x, cam.y);
             const panReveal = smoothstep(200, 800, distFromCenter);
             
-            const exploreFade = Math.max(zoomOutReveal, panReveal);
+            // Visible if camera is NEAR this ghost (navigated to it)
+            const distToGhost = Math.hypot(cam.x - ghost.offset.x, cam.y - ghost.offset.y);
+            const proximityReveal = smoothstep(1500, 400, distToGhost);
+            
+            const exploreFade = Math.max(zoomOutReveal, panReveal, proximityReveal);
             
             // Age factor: older (low gi) = weaker glow, newer (high gi) = brighter glow
             const ageIntensity = 0.15 + (gi / ghostDefs.length) * 0.85; // 0.15 to 1.0
@@ -5139,7 +5124,35 @@ async function buildSignalField() {
     } // end for (let lobe = 0; lobe < numLobes; lobe++)
     } // end if (!window.isScreensaverMode)
 
-    // ── STARFIELD (REMOVED) ── white dots caused glare blobs on separate layer
+    // ── STARFIELD — subtle night-sky background stars ──
+    const STARFIELD_COUNT = 200;
+    const skySpread = 8000; // spread across a large area
+    for (let i = 0; i < STARFIELD_COUNT; i++) {
+        const sx = (Math.random() - 0.5) * skySpread * 2;
+        const sy = (Math.random() - 0.5) * skySpread * 2;
+        const sz = (Math.random() - 0.5) * 200;
+        const sfScale = 0.08 + Math.random() * 0.15; // very small
+        const sfOpacity = 0.08 + Math.random() * 0.15; // very dim
+        const sfGlow = 0.1 + Math.random() * 0.3;
+        skyPoints.push({
+            x: sx, y: sy, z: sz,
+            originalX: sx, originalY: sy, originalZ: sz,
+            targetX: sx, targetY: sy, targetZ: sz,
+            starX: sx, starY: sy,
+            anchorIdx: 0, isMajor: false, elementType: 'dot', theme: 'Starfield',
+            text: null, isBlurred: false, baseAngle: Math.random() * Math.PI * 2,
+            scale: sfScale,
+            hue: 200 + Math.random() * 60, // cool blue-white tones
+            isSeed: false, depthLayer: 2.0 + Math.random(),
+            fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: true,
+            pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
+            revealProgress: 1, hasBeenRevealed: true, assemblyProgress: 1, isAssembling: false,
+            totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 1, neighborPts: [],
+            isVertexStar: false, isQPathStar: false,
+            starfieldOpacity: sfOpacity,
+            starfieldGlow: sfGlow
+        });
+    }
 
     // Add text labels to one major point per theme
     for (let t = 0; t < 8; t++) {
