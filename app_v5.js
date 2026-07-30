@@ -635,13 +635,16 @@ function genderize(text) {
         'בו/בה':     { male: 'בו', female: 'בה' },
         'עצמו/ה':    { male: 'עצמו', female: 'עצמה' },
         'אותו/ה':    { male: 'אותו', female: 'אותה' },
+        'שואף/ת':    { male: 'שואף/פת', female: 'שואף/פת' },  // Always show both forms
     };
 
-    // First pass: replace known full-word patterns
+    // First pass: replace known full-word patterns (use placeholders to prevent re-processing)
     let result = text;
+    const PLACEHOLDER = '\u0000SLASH\u0000';
     Object.keys(WORD_MAP).forEach(pattern => {
         if (result.includes(pattern)) {
-            result = result.split(pattern).join(WORD_MAP[pattern][g] || pattern);
+            const replacement = (WORD_MAP[pattern][g] || pattern).replace(/\//g, PLACEHOLDER);
+            result = result.split(pattern).join(replacement);
         }
     });
 
@@ -651,6 +654,9 @@ function genderize(text) {
         if (g === 'female') return base + suffix;  // feminine = base + suffix
         return match;
     });
+
+    // Restore placeholders back to real slashes
+    result = result.split(PLACEHOLDER).join('/');
 
     return result;
 }
@@ -3418,8 +3424,13 @@ function initConstellationSystem(userVision) {
                 mat.uniforms.uTime.value += 0.015;
             });
             
-            // Boost stars + lines on hover
-            const hoverBoost = gs.isHovered ? 1.0 : 0;
+            // Boost stars + lines on hover — detect mouse proximity to the shape itself
+            const ghostScreenX = window.innerWidth / 2 + gs.group.position.x;
+            const ghostScreenY = window.innerHeight / 2 - gs.group.position.y;
+            const mouseDistToGhost = Math.hypot(lastMouse.x - ghostScreenX, lastMouse.y - ghostScreenY);
+            const shapeRadius = 120 * cam.scale; // approx visual radius of ghost shape
+            const mouseHover = mouseDistToGhost < shapeRadius ? 1.0 : 0;
+            const hoverBoost = Math.max(gs.isHovered ? 1.0 : 0, mouseHover);
             gs._hoverGlow = (gs._hoverGlow || 0) + (hoverBoost - (gs._hoverGlow || 0)) * 0.12;
 
             // ── Ghost HTML overlay (name label + text card) ──────────
@@ -3506,8 +3517,8 @@ function initConstellationSystem(userVision) {
                     'direction: rtl',
                     'background: rgba(4, 4, 10, 0.7)',
                     'padding: 24px',
-                    'border: 1px solid rgba(255,255,255,0.15)',
-                    'border-radius: 16px',
+                    'border: 1px solid rgba(255,255,255,0.25)',
+                    'border-radius: 0',
                     'backdrop-filter: blur(20px) saturate(1.2)',
                     '-webkit-backdrop-filter: blur(20px) saturate(1.2)',
                     'box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4)'
@@ -4167,7 +4178,7 @@ function renderQ() {
             genderWrap.style.cssText = 'margin-top: 24px; display: flex; justify-content: center; gap: 12px; direction: rtl;';
 
             const genderLabel = document.createElement('span');
-            genderLabel.style.cssText = 'display: block; width: 100%; text-align: center; margin-bottom: 10px; font-family: "SimplerPro", sans-serif; font-size: 0.85rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em;';
+            genderLabel.style.cssText = 'display: block; width: 100%; text-align: center; margin-bottom: 10px; font-family: "SimplerMono", "Courier New", monospace; font-size: 0.85rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em;';
             genderLabel.textContent = currentLang === 'he' ? 'לשון פנייה' : 'Pronoun';
             genderWrap.appendChild(genderLabel);
 
@@ -4179,7 +4190,7 @@ function renderQ() {
                 const btn = document.createElement('button');
                 btn.className = 'btn gender-btn';
                 btn.textContent = opt.label;
-                btn.style.cssText = 'padding: 6px 18px; font-size: 0.82rem; letter-spacing: 0.1em; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.5); border-radius: 2px; cursor: pointer; transition: all 0.3s ease; font-family: "SimplerPro", sans-serif;';
+                btn.style.cssText = 'padding: 6px 18px; font-size: 0.82rem; letter-spacing: 0.1em; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.5); border-radius: 0; cursor: pointer; transition: all 0.3s ease; font-family: "SimplerMono", "Courier New", monospace;';
                 btn.addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
                     answers.gender = opt.val;
@@ -4462,7 +4473,7 @@ function initDiscoverySystem() {
         secretCounter.style.cssText = [
             'position:absolute;top:14px;left:50%;transform:translateX(-50%);',
             'z-index:30;pointer-events:none;',
-            'font-family:var(--font-sans,sans-serif);font-size:0.65rem;',
+            'font-family:var(--font-mono,"SimplerMono",monospace);font-size:0.65rem;',
             'color:rgba(200,215,255,0.38);letter-spacing:0.22em;',
             'opacity:0;transition:opacity 1.2s ease;',
             'text-align:center;'
@@ -5463,22 +5474,43 @@ async function buildSignalField() {
                 const txf = (x) => (x-bcx)*sc, tyf = (y) => (y-bcy)*sc;
                 
                  const drawSide = (flip) => {
-                    // LINES ONLY — no dots/circles
+                    // Lines + dots at connection points
+                    const dotPositions = new Set();
                     rawSegs.forEach(seg => {
                         const l = document.createElementNS("http://www.w3.org/2000/svg","line");
-                        l.setAttribute('x1', cx2 + txf(seg.x1)*flip);
-                        l.setAttribute('y1', cy2 + tyf(seg.y1));
-                        l.setAttribute('x2', cx2 + txf(seg.x2)*flip);
-                        l.setAttribute('y2', cy2 + tyf(seg.y2));
+                        const sx1 = cx2 + txf(seg.x1)*flip;
+                        const sy1 = cy2 + tyf(seg.y1);
+                        const sx2 = cx2 + txf(seg.x2)*flip;
+                        const sy2 = cy2 + tyf(seg.y2);
+                        l.setAttribute('x1', sx1);
+                        l.setAttribute('y1', sy1);
+                        l.setAttribute('x2', sx2);
+                        l.setAttribute('y2', sy2);
                         l.setAttribute('stroke','rgba(255,255,255,0.60)');
                         l.setAttribute('stroke-width','0.8');
                         l.setAttribute('stroke-linecap','round');
-                        const len = Math.hypot(txf(seg.x2)*flip - txf(seg.x1)*flip, tyf(seg.y2) - tyf(seg.y1));
+                        const len = Math.hypot(sx2 - sx1, sy2 - sy1);
                         l.style.strokeDasharray = len;
                         l.style.strokeDashoffset = len;
                         l.style.transition = 'stroke-dashoffset 6.5s ease-in-out 0.5s';
                         dstSvg.appendChild(l);
                         requestAnimationFrame(() => { l.getBoundingClientRect(); l.style.strokeDashoffset = '0'; });
+                        // Track dot positions
+                        dotPositions.add(`${Math.round(sx1)},${Math.round(sy1)}`);
+                        dotPositions.add(`${Math.round(sx2)},${Math.round(sy2)}`);
+                    });
+                    // Draw dots at connection vertices
+                    dotPositions.forEach(key => {
+                        const [dx, dy] = key.split(',').map(Number);
+                        const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                        c.setAttribute('cx', dx);
+                        c.setAttribute('cy', dy);
+                        c.setAttribute('r', '2.5');
+                        c.setAttribute('fill','rgba(255,255,255,0.75)');
+                        c.style.opacity = '0';
+                        c.style.transition = 'opacity 2s ease-in-out 6s';
+                        dstSvg.appendChild(c);
+                        requestAnimationFrame(() => { c.getBoundingClientRect(); c.style.opacity = '1'; });
                     });
                  };
                  drawSide(1);   // Original constellation side
@@ -6671,7 +6703,11 @@ function updatePoint(pt, dt, isClosest) {
         // Glow — ENHANCED: pulsing organic luminescence
         let glowValue;
         if (pt.permanentlyRevealed) {
-            const baseGlow = 0.4; // Uniform glow — no blinding hot spots
+            // Per-star glow variation — creates prismatic discovery during zoom
+            const depthFactor = (pt.depthLayer || 1.0) / 3.0; // 0.3-1.0 range
+            const starPhase = Math.sin(now * 0.001 + pt.baseAngle * 5) * 0.15; // subtle shimmer
+            const zoomProximity = smoothstep(0.5, 2.0, cam.scale); // brighter as you zoom in
+            const baseGlow = 0.2 + depthFactor * 0.25 + zoomProximity * 0.15 + starPhase;
             glowValue = baseGlow + (pt.glowP + pt.hoverPulse * 0.8) * lanternSoft;
             
             if (window.skyRevealState === 'revealed') {
@@ -7649,7 +7685,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
+            border-radius: 0;
             padding: 2.2rem 2.4rem 2rem;
             text-align: center;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -7696,7 +7732,7 @@ document.addEventListener('DOMContentLoaded', () => {
         barFill.style.cssText = `
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, rgba(180, 160, 255, 0.6), rgba(255, 200, 150, 0.6));
+            background: rgba(255, 255, 255, 0.6);
             transition: width ${PROMPT_TIMEOUT_MS}ms linear;
             border-radius: 2px;
         `;
