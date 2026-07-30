@@ -7910,14 +7910,15 @@ if (window.location.hash === '#screensaver') {
     
     // ── STARFIELD BACKGROUND ──
     const starData = [];
-    for (let i = 0; i < 2000; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 2.5;
-        const sy = (Math.random() - 0.5) * scrH * 2.5;
+    for (let i = 0; i < 3000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 2.8;
+        const sy = (Math.random() - 0.5) * scrH * 2.8;
         const roll = Math.random();
-        const bright = roll < 0.03 ? 0.7 : roll < 0.12 ? 0.35 : 0.12;
-        const size = roll < 0.03 ? 2.5 : roll < 0.12 ? 1.5 : 0.8;
+        const bright = roll < 0.04 ? 0.85 : roll < 0.15 ? 0.45 : roll < 0.35 ? 0.2 : 0.08;
+        const size = roll < 0.04 ? 3.0 : roll < 0.15 ? 2.0 : roll < 0.35 ? 1.2 : 0.6;
         const geo = new THREE.CircleGeometry(size, 6);
-        const col = new THREE.Color().setHSL(Math.random(), 0.2, 0.6 + bright * 0.4);
+        const starHue = roll < 0.04 ? (Math.random() < 0.4 ? 0.08 : 0.6) : Math.random();
+        const col = new THREE.Color().setHSL(starHue, 0.3 + roll * 0.3, 0.65 + bright * 0.35);
         const mat = new THREE.MeshBasicMaterial({
             color: col, transparent: true, opacity: bright,
             blending: THREE.AdditiveBlending, depthWrite: false
@@ -7943,7 +7944,7 @@ if (window.location.hash === '#screensaver') {
     ];
     
     // ── BUILD CONSTELLATIONS with PRISMATIC SHADERS ──
-    const SCALE = 2.5;
+    const SCALE = 3.5;
     const prismPlane = new THREE.PlaneGeometry(200, 200);
     const constellationGroups = [];
     
@@ -7962,7 +7963,7 @@ if (window.location.hash === '#screensaver') {
         const cy = scrH/2 - cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.15;
         
         const hue = Math.atan2(ghost.color[1] - 128, ghost.color[0] - 128) / (Math.PI * 2) + 0.5;
-        const baseColor = new THREE.Color().setHSL(hue, 0.9, 0.6);
+        const baseColor = new THREE.Color().setHSL(hue, 1.0, 0.65);
         
         const pointMeshes = [];
         
@@ -7979,10 +7980,10 @@ if (window.location.hash === '#screensaver') {
                     uTime: { value: Math.random() * 100 },
                     uColor: { value: baseColor.clone() },
                     uType: { value: typeVal },
-                    uOpacity: { value: 1.2 },
-                    uGlow: { value: 0.6 },
+                    uOpacity: { value: 2.0 },
+                    uGlow: { value: 1.0 },
                     uState: { value: 1.0 },
-                    uZoom: { value: 1.0 },
+                    uZoom: { value: 0.8 },
                     uDepth: { value: 1.0 },
                     uHasLabel: { value: 0.0 },
                     uSeed: { value: Math.random() }
@@ -7995,7 +7996,7 @@ if (window.location.hash === '#screensaver') {
             const mesh = new THREE.Mesh(prismPlane, mat);
             mesh.position.set(pt.x * SCALE, pt.y * SCALE, 10);
             mesh.rotation.z = angle;
-            mesh.scale.set(0.35, 0.35, 1);
+            mesh.scale.set(0.55, 0.55, 1);
             group.add(mesh);
             
             pointMeshes.push({ mesh, phase: Math.random() * Math.PI * 2, baseAngle: angle });
@@ -8017,17 +8018,13 @@ if (window.location.hash === '#screensaver') {
             }
         });
         
-        // Add Hebrew label
-        const labelDiv = document.createElement('div');
-        labelDiv.textContent = ghost.nameHe;
-        labelDiv.style.cssText = 'position:fixed;color:rgba(' + ghost.color.join(',') + ',0.55);font-family:Noto Sans Hebrew,sans-serif;font-size:15px;z-index:101;pointer-events:none;text-align:center;letter-spacing:3px;width:120px;';
-        document.body.appendChild(labelDiv);
+        // No labels in screensaver — just pure constellations
         
         group.position.set(cx, cy, 0);
         scrScene.add(group);
         
         constellationGroups.push({
-            group, pointMeshes, ghost, labelDiv, cx, cy,
+            group, pointMeshes, ghost, cx, cy,
             driftX: (Math.random() - 0.5) * 12,
             driftY: (Math.random() - 0.5) * 10,
             driftPhase: Math.random() * Math.PI * 2,
@@ -8064,20 +8061,21 @@ if (window.location.hash === '#screensaver') {
                 u.uTime.value += dt;
                 // Pulsing glow
                 const pulse = 0.5 + 0.5 * Math.sin(now * 1.8 + pm.phase);
-                u.uGlow.value = 0.4 + pulse * 0.5;
-                u.uOpacity.value = 0.8 + pulse * 0.5;
+                u.uGlow.value = 0.7 + pulse * 0.6;
+                u.uOpacity.value = 1.5 + pulse * 0.8;
                 // Gentle rotation
                 pm.mesh.rotation.z = pm.baseAngle + now * 0.08;
                 // Breathing scale
-                const s = 0.3 + Math.sin(now * 1.2 + pm.phase) * 0.08;
+                const s = 0.5 + Math.sin(now * 1.2 + pm.phase) * 0.1;
                 pm.mesh.scale.set(s, s, 1);
             });
             
-            // Update label position (world → screen)
-            const screenX = cg.group.position.x + scrW / 2;
-            const screenY = -cg.group.position.y + scrH / 2 + 40;
-            cg.labelDiv.style.left = (screenX - 60) + 'px';
-            cg.labelDiv.style.top = screenY + 'px';
+            // Lines glow pulse
+            cg.group.children.forEach(child => {
+                if (child.material && child.material.opacity !== undefined && child.isLineSegments) {
+                    child.material.opacity = 0.25 + Math.sin(now * 0.8 + cg.driftPhase) * 0.15;
+                }
+            });
         });
         
         scrRenderer.render(scrScene, scrCam);
