@@ -677,12 +677,41 @@ function genderize(text) {
         'את/ה':      { male: 'אתה', female: 'את' },
         'אתה/את':    { male: 'אתה', female: 'את' },
         'הוא/היא':   { male: 'הוא', female: 'היא' },
+        'שהוא/היא':  { male: 'שהוא', female: 'שהיא' },
         'לו/לה':     { male: 'לו', female: 'לה' },
         'שלו/שלה':   { male: 'שלו', female: 'שלה' },
         'בו/בה':     { male: 'בו', female: 'בה' },
         'עצמו/ה':    { male: 'עצמו', female: 'עצמה' },
         'אותו/ה':    { male: 'אותו', female: 'אותה' },
-        'שואף/ת':    { male: 'שואף/פת', female: 'שואף/פת' },  // Always show both forms
+        'בתוכו/ה':   { male: 'בתוכו', female: 'בתוכה' },
+        'שלו/ה':     { male: 'שלו', female: 'שלה' },
+        'חייו/חייה': { male: 'חייו', female: 'חייה' },
+        'רואה/ת':    { male: 'רואה', female: 'רואה' },
+        'שרואה/ת':   { male: 'שרואה', female: 'שרואה' },
+        'בונה/ת':    { male: 'בונה', female: 'בונה' },
+        'רוצה/ה':    { male: 'רוצה', female: 'רוצה' },
+        'רואה/ה':    { male: 'רואה', female: 'רואה' },
+        'מרשה/ה':    { male: 'מרשה', female: 'מרשה' },
+        'ראית/ת':    { male: 'ראית', female: 'ראית' },
+        'שראית/ת':   { male: 'שראית', female: 'שראית' },
+        'שראית/ה':   { male: 'שראית', female: 'שראית' },
+        'שבחרת/ת':   { male: 'שבחרת', female: 'שבחרת' },
+        'שבחרת/ה':   { male: 'שבחרת', female: 'שבחרת' },
+        'כשבחרת/ת':  { male: 'כשבחרת', female: 'כשבחרת' },
+        'נולדת/ה':   { male: 'נולדת', female: 'נולדת' },
+        'היית/ה':    { male: 'היית', female: 'היית' },
+        'שהיית/ה':   { male: 'שהיית', female: 'שהיית' },
+        'סמוך/י':    { male: 'סמוך', female: 'סמכי' },
+        'שאל/י':     { male: 'שאל', female: 'שאלי' },
+        'קח/י':      { male: 'קח', female: 'קחי' },
+        'שתדע/י':    { male: 'שתדע', female: 'שתדעי' },
+        'תחכה/י':    { male: 'תחכה', female: 'תחכי' },
+        'שתסמכ/י':   { male: 'שתסמוך', female: 'שתסמכי' },
+        'בנה/י':     { male: 'בנה', female: 'בני' },
+        'כתוב/כתבי': { male: 'כתוב', female: 'כתבי' },
+        'שואף/ת':    { male: 'שואף', female: 'שואפת' },
+        'שואף/פת':   { male: 'שואף', female: 'שואפת' },
+        'מאסטר/ית':  { male: 'מאסטר', female: 'מאסטרית' },
     };
 
     // First pass: replace known full-word patterns (use placeholders to prevent re-processing)
@@ -1451,34 +1480,34 @@ window.showConstellationInfo = function(title) {
     // Each entry: tarot-style, symbolic, connected to that specific creature/object
     const WORD_LORE = {
         // ── ANIMALS ──────────────────────────────────────────────────────
-        'עטלף': `<strong>העטלף</strong> רואה בחשכה במה שאחרים לא רואים בבהירות. הוא מנווט לא בעיניים אלא בקול — שולח אותות ומקשיב לתהודה החוזרת. ${fn ? fn + ', ' : ''}היכולת שלך להיות בחשכה ולדעת את הדרך בלי לראות אותה במו עיניך — זו כנראה יכולת נדירה. הקונסטלציה רומזת: אל תחכה/י שיהיה אור כדי לנוע. החשכה בתוכך היא מפה.`,
-        'חתול': `<strong>החתול</strong> חי בשני עולמות בו-זמנית. הוא נוכח לחלוטין בכל מקום שבוחר, ובין ריצות — שוקע לתוך עצמאיותו. ${fn ? fn + ', ' : ''}מי שרואה/ת חתול יודע/ת לשמור על עצמאות באמת — לתת מבלי לאבד. הקונסטלציה מגלה: גמישות אמיתית דורשת עצמאות אמיתית.`,
-        'כלב': `<strong>הכלב</strong> הוא היחיד שבחר בבני אדם ספונטנית — ולא הוא אשר מגלה כלום בעזיבתו. ${fn ? fn + ', ' : ''}דווקא נאמנות היא הכוח שלך — לא חולשה. הקונסטלציה שואלת: למי את/ה בוחר/ת להיות נאמן/ת בלי תנאים?`,
-        'ציפור': `<strong>הציפור</strong> שרה מהמקום שבו היא נמצאת — אין זה גבול. ${fn ? fn + ', ' : ''}מי שרואה/ת ציפור יודע/ת שיש מקום שאת/ה שייך/ת להגיע אליו. הקונסטלציה אומרת: עופי/עוף לפני שהעונות יתחלפו.`,
-        'דג': `<strong>הדג</strong> שוחה בזרמים שאחרים אינם רואים. הוא לא נלחם בזרמה — הוא בוחר אותה. ${fn ? fn + ', ' : ''}הזרימה שאת/ה מרגיש/ת דוחפת אותך/ך היא הפרק הבא. אל תילחם/י בה.`,
-        'פרפר': `<strong>הפרפר</strong> אינו בורח מהזחל, הוא נולד מחדש מתוכו. ${fn ? fn + ', ' : ''}ההיפכה שראית/ת כבר קרתה — לא באופן שבחרת/ת, אלא באופן שהיית/ה מוכן/ת. הקונסטלציה מגלה: הכנפיים כבר שלך.`,
-        'נחש': `<strong>הנחש</strong> הוא הסמל הקדום ביותר לחוכמה ולשינוי. הוא של אין עור ישן — בוחר תמיד להתחדש. ${fn ? fn + ', ' : ''}שלב השילול כבר קרה, שלב הבא שלך פתוח. אל תפחד/י מהשינוי.`,
+        'עטלף': `<strong>העטלף</strong> רואה בחשכה במה שאחרים לא רואים בבהירות. הוא מנווט לא בעיניים אלא בקול, שולח אותות ומקשיב לתהודה החוזרת. ${fn ? fn + ', ' : ''}היכולת שלך להיות בחשכה ולדעת את הדרך בלי לראות אותה במו עיניך, זו כנראה יכולת נדירה. הקונסטלציה רומזת: אל תחכה/י שיהיה אור כדי לנוע. החשכה בתוכך היא מפה.`,
+        'חתול': `<strong>החתול</strong> חי בשני עולמות בו-זמנית. הוא נוכח לחלוטין בכל מקום שבוחר, ובין ריצות, שוקע לתוך עצמאיותו. ${fn ? fn + ', ' : ''}מי שרואה/ת חתול יודע/ת לשמור על עצמאות באמת, לתת מבלי לאבד. הקונסטלציה מגלה: גמישות אמיתית דורשת עצמאות אמיתית.`,
+        'כלב': `<strong>הכלב</strong> הוא היחיד שבחר בבני אדם ספונטנית, ולא הוא אשר מגלה כלום בעזיבתו. ${fn ? fn + ', ' : ''}דווקא נאמנות היא הכוח שלך, לא חולשה. הקונסטלציה שואלת: למי את/ה בוחר/ת להיות נאמן/ת בלי תנאים?`,
+        'ציפור': `<strong>הציפור</strong> שרה מהמקום שבו היא נמצאת, אין זה גבול. ${fn ? fn + ', ' : ''}מי שרואה/ת ציפור יודע/ת שיש מקום שאת/ה שייך/ת להגיע אליו. הקונסטלציה אומרת: עופי/עוף לפני שהעונות יתחלפו.`,
+        'דג': `<strong>הדג</strong> שוחה בזרמים שאחרים אינם רואים. הוא לא נלחם בזרמה, הוא בוחר אותה. ${fn ? fn + ', ' : ''}הזרימה שאת/ה מרגיש/ת דוחפת אותך/ך היא הפרק הבא. אל תילחם/י בה.`,
+        'פרפר': `<strong>הפרפר</strong> אינו בורח מהזחל, הוא נולד מחדש מתוכו. ${fn ? fn + ', ' : ''}ההיפכה שראית/ת כבר קרתה, לא באופן שבחרת/ת, אלא באופן שהיית/ה מוכן/ת. הקונסטלציה מגלה: הכנפיים כבר שלך.`,
+        'נחש': `<strong>הנחש</strong> הוא הסמל הקדום ביותר לחוכמה ולשינוי. הוא של אין עור ישן, בוחר תמיד להתחדש. ${fn ? fn + ', ' : ''}שלב השילול כבר קרה, שלב הבא שלך פתוח. אל תפחד/י מהשינוי.`,
         'אריה': `<strong>האריה</strong> לא מוכיח את עצמו. הוא פשוט הולך. ${fn ? fn + ', ' : ''}יש בך כוח שלא דורש אישור, רק הרשאה פנימית. הקונסטלציה שואלת: מה היית/ה רוצה/ה להגן אז להוביל?`,
-        'דב': `<strong>הדב</strong> ישן כשהעולם קר מדי, ומתעורר בתזמון הנכון. ${fn ? fn + ', ' : ''}יש בך משאבות שאינם זקוקים להוכחה — הקונסטלציה מגלה: סמוך/י על הכוח הפנימי, הוא אמיתי.`,
+        'דב': `<strong>הדב</strong> ישן כשהעולם קר מדי, ומתעורר בתזמון הנכון. ${fn ? fn + ', ' : ''}יש בך משאבות שאינם זקוקים להוכחה, הקונסטלציה מגלה: סמוך/י על הכוח הפנימי, הוא אמיתי.`,
         'דולפין': `<strong>הדולפין</strong> הוא יצור שחי בשעשוע ובחוכמה בו-זמנית, מרפא באופן שדורש מעט ממנו. ${fn ? fn + ', ' : ''}גם ברגעים שנראים כבדים, יש בך יכולת לנווט בחן. הקונסטלציה אומרת: השמחה אינה מותרות.`,
         'צב': `<strong>הצב</strong> מלמד אותך: איטיות אינה עצלנות, הוא שלמות. ${fn ? fn + ', ' : ''}איטיות אינה אויב אלא בחירה להיות נוכח לחלוטין. הקונסטלציה מגלה: הקצב הנכון לך הוא קצבך/קצבך הפנימי.`,
         'זאב': `<strong>הזאב</strong> הולך בחברה אבל דעתו נשארת איתו בכל מקום. ${fn ? fn + ', ' : ''}את/ה יודע/ת להתאחד עם הקבוצה בלי לאבד את עצמך. הקונסטלציה רומזת: מי הם האים שלך?`,
         'עיט': `<strong>העיט</strong> הוא הסמל הקדום ביותר לזיכרון, לחוכמה, לאורך חיים. ${fn ? fn + ', ' : ''}מי שרואה/ת עיט נושא/ת בתוכו קשר עמוק לזמן וליך. הקונסטלציה אומרת: העולם צריך את החכמה שלך.`,
         'ינשוף': `<strong>הינשוף</strong> רואה בחושך מה שאחרים מפספסים לראות באור. ${fn ? fn + ', ' : ''}יש בך חכמה שלא צריכה להוכח. הקונסטלציה אומרת: סמוך/י על מה שאת/ה יודע/ת מעבר לירח הזה.`,
-        'סוס': `<strong>הסוס</strong> רץ ללא שהוכיח שהוא רץ — התנועה היא חיותו. ${fn ? fn + ', ' : ''}יש בך אנרגיה צבורה שמחכה לרגע שתדע/י לאן. הקונסטלציה אומרת: הרגע כבר כאן.`,
+        'סוס': `<strong>הסוס</strong> רץ ללא שהוכיח שהוא רץ, התנועה היא חיותו. ${fn ? fn + ', ' : ''}יש בך אנרגיה צבורה שמחכה לרגע שתדע/י לאן. הקונסטלציה אומרת: הרגע כבר כאן.`,
         // ── NATURE ───────────────────────────────────────────────────────
-        'עץ': `<strong>העץ</strong> שלח שורשים לעומק וענפים לרום — בו זמנית. ${fn ? fn + ', ' : ''}את/ה יצור שעצמתו נמדדת בשני כיוונים. הקונסטלציה מגלה: השורשים שלך חזקים ממה שנראה על פני השטח.`,
-        'ים': `<strong>הים</strong> אינו גבול — הוא ספק בלה טוב. ${fn ? fn + ', ' : ''}אין את הקרקעית של מה שאת/ה נושא/ת. הקונסטלציה אומרת: עומקך/עומקך הוא כוח, לא נטל.`,
+        'עץ': `<strong>העץ</strong> שלח שורשים לעומק וענפים לרום, בו זמנית. ${fn ? fn + ', ' : ''}את/ה יצור שעצמתו נמדדת בשני כיוונים. הקונסטלציה מגלה: השורשים שלך חזקים ממה שנראה על פני השטח.`,
+        'ים': `<strong>הים</strong> אינו גבול, הוא ספק בלה טוב. ${fn ? fn + ', ' : ''}אין את הקרקעית של מה שאת/ה נושא/ת. הקונסטלציה אומרת: עומקך/עומקך הוא כוח, לא נטל.`,
         'נהר': `<strong>הנהר</strong> מלמד: היכולת לעבור בין אבנים. ${fn ? fn + ', ' : ''}בנייה התמידית, העקביות התמידית. הקונסטלציה מגלה: את/ה בדרך, והדרך פתוחה.`,
         'הר': `<strong>ההר</strong> רואה הכל אבל אינו מדבר לאיש. ${fn ? fn + ', ' : ''}מי שרואה/ת הר יודע/ת שיש ביניים שווים רק משם. הקונסטלציה שואלת: מה את/ה רואה/ת משם שאחרים לא רואים?`,
         'פרח': `<strong>הפרח</strong> צומח במקומות שלא בחר. הוא אינו בקש רשות, הוא פשוט נפרץ. ${fn ? fn + ', ' : ''}הקונסטלציה מגלה: יש בך אותו סוג של אומץ שלא מבקש רשות.`,
         'שמש': `<strong>השמש</strong> בכוכבים היא סמל הכוח המרכזי שבך שלא מתנצל. ${fn ? fn + ', ' : ''}את/ה מקור אנרגיה לאחרים, לא רק מקבל/ת. הקונסטלציה אומרת: הגיעה שלך דרושה.`,
         'ירח': `<strong>הירח</strong> מושך בגאות ואינו שלם בעצמו. ${fn ? fn + ', ' : ''}השפעתך/שפעתך על אחרים גדולה מהשיעורת/ת. הקונסטלציה רומזת: האור בתוך הוא שלך.`,
-        'כוכב': `<strong>הכוכב</strong> שראית/ת אולי כבר אינו שם — ובכל זאת אורו מגיע אליך. ${fn ? fn + ', ' : ''}אורך/אורך הוא אמיתי והוא מגיע ממקום שאות/ת אפילו לא יודע/ת.`,
+        'כוכב': `<strong>הכוכב</strong> שראית/ת אולי כבר אינו שם, ובכל זאת אורו מגיע אליך. ${fn ? fn + ', ' : ''}אורך/אורך הוא אמיתי והוא מגיע ממקום שאות/ת אפילו לא יודע/ת.`,
         'אש': `<strong>האש</strong> בכוכבים סמלת טרנספורמציה שאינה שורפת אלא משנה. ${fn ? fn + ', ' : ''}יש בך אנרגיה שיכולה לבעור או לחמם. השאלה היא: את/ה רוצה/ה לשרוף או לחמם?`,
         'ענן': `<strong>הענן</strong> אינה עין הכוכבים אלא הגז המחבר בניהם. ${fn ? fn + ', ' : ''}מי שרואה/ת ענן רואה/ת את הקשר בין דברים. הקונסטלציה אומרת: את/ה הדבק שמקשר בין הכוכבים.`,
         // ── CELESTIAL & MYTHOLOGICAL ─────────────────────────────────────
-        'גלקסיה': `<strong>הגלקסיה</strong> היא הבית — מיליארדי עולמות בתוך עולם אחד. ${fn ? fn + ', ' : ''}מי שרואה/ת גלקסיה יודע/ת שהגבולות של האפשרי רחבים ממה שמוסגלים לראות. הקונסטלציה אומרת: את/ה מושק בתוך משהו עצום.`,
+        'גלקסיה': `<strong>הגלקסיה</strong> היא הבית, מיליארדי עולמות בתוך עולם אחד. ${fn ? fn + ', ' : ''}מי שרואה/ת גלקסיה יודע/ת שהגבולות של האפשרי רחבים ממה שמוסגלים לראות. הקונסטלציה אומרת: את/ה מושק בתוך משהו עצום.`,
         'ערפילה': `<strong>הערפילה</strong> אינה עין הכוכבים אלא הגז המחבר בניהם. ${fn ? fn + ', ' : ''}מי שרואה/ת ערפילה רואה/ת את הקשר בין דברים. הקונסטלציה אומרת: את/ה הדבק שמקשר בין הכוכבים.`,
         // ── OBJECTS & ABSTRACT ───────────────────────────────────────────
         'לב': `<strong>הלב</strong> בכוכבים הוא המרכז של כל השאר. ${fn ? fn + ', ' : ''}מי שרואה/ת לב יודע/ת שכל השערים שרוצים בריצה צוריכים לעבור דרך שם. הקונסטלציה שואלת: מי מחזיק בלב שלך?`,
@@ -1488,7 +1517,7 @@ window.showConstellationInfo = function(title) {
         'כתר': `<strong>הכתר</strong> בכוכבים אינו רק שלטון אלא אחריות. ${fn ? fn + ', ' : ''}יש בך יכולת להוביל ולשאת. הקונסטלציה מגלה: הגיעה שלך דרושה.`,
         'בית': `<strong>הבית</strong> בכוכבים הוא סמל השרשים והשייכות. ${fn ? fn + ', ' : ''}הבית מתחיל בתוכך. הקונסטלציה מגלה: את/ה יודע/ת מהיכן את/ה בא/ה.`,
         'ספר': `<strong>הספר</strong> בכוכבים סמל חכמה שממתינה להעברה. ${fn ? fn + ', ' : ''}יש סיפור שאת/ה צריך/ת לדעת. הקונסטלציה אומרת: את/ה כבר כותב/ת אותו.`,
-        'אדם': `<strong>האדם</strong> בכוכבים — ראית/ת את עצמך מבחוץ. ${fn ? fn + ', ' : ''}היכולת ליצור, לאהוב, לבנות, ולעבור היא הכוח הגדול שיש בתוכך. הקונסטלציה אומרת: ראית/ת את האדם שאת/ה אמור/ה להיות.`,
+        'אדם': `<strong>האדם</strong> בכוכבים, ראית/ת את עצמך מבחוץ. ${fn ? fn + ', ' : ''}היכולת ליצור, לאהוב, לבנות, ולעבור היא הכוח הגדול שיש בתוכך. הקונסטלציה אומרת: ראית/ת את האדם שאת/ה אמור/ה להיות.`,
         // ── MORE CREATURES ─────────────────────────────────────────────
         'חיפושית': `<strong>החיפושית</strong> נושאת על גבה כנפיים חבויות — עד שהיא בוחרת לפרוש אותן. ${fn ? fn + ', ' : ''}מי שרואה/ת חיפושית בכוכבים יודע/ת שיש בו/בה משהו שממתין להתגלות. במצרים העתיקה היא סימלה תחייה ושחר חדש. הקונסטלציה מגלה: אתה/את בדיוק ברגע שלפני הפריחה.`,
         'עכביש': `<strong>העכביש</strong> אורג את עולמו מתוך עצמו — כל חוט הוא החלטה, כל צומת היא בחירה. ${fn ? fn + ', ' : ''}מי שרואה/ת עכביש בכוכבים הוא/היא יוצר/ת של קשרים. הקונסטלציה שואלת: מה הרשת שאת/ה אורג/ת כרגע?`,
@@ -1738,7 +1767,7 @@ function showInterpretationPanel(userVision) {
         ]),
         '\u05dc\u05d1\u05df': pick([
             firstName + ', white is all colours together — the shade of those who hold multitude. The stars see in you a soul that has stood before much, held much inward — and is now seeking clarity. The map formed for you reveals: you stand on the threshold of a genuine purification. Not emptiness — but radiance.',
-            'The white you chose is the colour of the first light. ' + firstName + ', the stars announce: the blank page before you is not emptiness — it is freedom. What will you write upon it when it is in your hands?'
+            'The white you chose is the colour of the first light. ' + firstName + ', the stars announce: the blank page before you is not emptiness, it is freedom. What will you write upon it when it is in your hands?'
         ])
     };
     const colorMsgHe = colorMap[aColor] || pick([
@@ -1746,7 +1775,7 @@ function showInterpretationPanel(userVision) {
         '\u05d4\u05e6\u05d1\u05e2 \u05e9\u05de\u05e9\u05da/\u05d4 \u05d0\u05d5\u05ea\u05da \u05e2\u05db\u05e9\u05d9\u05d5 \u05d4\u05d5\u05d0 \u05dc\u05d0 \u05de\u05e7\u05e8\u05d9. \u05d4\u05d5\u05d0 \u05de\u05e9\u05e7\u05e3 \u05ea\u05d3\u05e8 \u05e9\u05d0\u05ea\u05d4/\u05d0\u05ea \u05e2\u05d5\u05d1\u05e8/\u05ea \u05d1\u05d5.'
     ]);
     const colorMsgEn = colorMapEn[aColor] || pick([
-        firstName + ', the colour you chose reveals you are in motion — not at an end, not at a beginning. There is something in you in the process of taking shape.',
+        firstName + ', the colour you chose reveals you are in motion, not at an end, not at a beginning. There is something in you in the process of taking shape.',
         'The colour that drew you now is not random. It reflects the frequency you are moving through.'
     ]);
 
@@ -1754,119 +1783,119 @@ function showInterpretationPanel(userVision) {
     const aTime = toHe(answers.time || '');
     const timeMap = {
         'בוקר': pick([
-            firstName + ', הכוכבים רואים: בוקר הוא הפרק הראשון ביום — וגופך כבד בו כי הנשמה שלך עדיין ב"בין". בין החלום למציאות, בין מה שרצית לבין מה שממתין. המפה שנוצרה עבורך מגלה נשמה שנמצאת בסף של שינוי — שמרגישה אותו בבוקר לפני שהיום ממלא את הרעש.',
-            'הכובד של הבוקר שייך לנשמות שיודעות: מה שממתין ביום אינו תמיד מה שלבן. ' + firstName + ', הכוכבים מבשרים: הבוקר שבו תקום/תקומי קלה/ה קרוב — הוא מסמן את תחילת הפרק הבא.'
+            firstName + ', הכוכבים רואים: בוקר הוא הפרק הראשון ביום, וגופך כבד בו כי הנשמה שלך עדיין ב"בין". בין החלום למציאות, בין מה שרצית לבין מה שממתין. המפה שנוצרה עבורך מגלה נשמה שנמצאת בסף של שינוי, שמרגישה אותו בבוקר לפני שהיום ממלא את הרעש.',
+            'הכובד של הבוקר שייך לנשמות שיודעות: מה שממתין ביום אינו תמיד מה שלבן. ' + firstName + ', הכוכבים מבשרים: הבוקר שבו תקום/תקומי קלה/ה קרוב, הוא מסמן את תחילת הפרק הבא.'
         ]),
         'צהריים': pick([
-            firstName + ', צהריים הוא שיא הכח הסולארי — השמש בשיאה, העולם ב"הכי ממשי". אם גופך כבד דווקא אז, הכוכבים מגלים: יש בך אי-התאמה בין הנשמה לבין הממשי. בין מי שאתה/את בפנים לבין מה שהיום שלך מכיל. המפה שנוצרה עבורך: הכנס/הכניסי שינוי קטן אחד לאמצע היום.',
-            'הכובד בצהריים מגלה נשמה שמרגישה שהיום נלקח ממנה — שהיא לא הגדירה אותו, אלא הוא הגדיר אותה. ' + firstName + ', הכוכבים שואלים: מה תחליט/י להחזיק שלך ביום מחר?'
+            firstName + ', צהריים הוא שיא הכח הסולארי, השמש בשיאה, העולם ב"הכי ממשי". אם גופך כבד דווקא אז, הכוכבים מגלים: יש בך אי-התאמה בין הנשמה לבין הממשי. בין מי שאתה/את בפנים לבין מה שהיום שלך מכיל. המפה שנוצרה עבורך: הכנס/הכניסי שינוי קטן אחד לאמצע היום.',
+            'הכובד בצהריים מגלה נשמה שמרגישה שהיום נלקח ממנה, שהיא לא הגדירה אותו, אלא הוא הגדיר אותה. ' + firstName + ', הכוכבים שואלים: מה תחליט/י להחזיק שלך ביום מחר?'
         ]),
         'אחר הצהריים': pick([
-            firstName + ', שעת ה"ו בערב" — הזמן שבין האור לחושך, בין פעולה למנוחה. כוכבים, ' + firstName + ': גופך כבד בשעת המעבר כי הנשמה שלך יודעת שהיא עוברת. עוברת פרק, עוברת מדינה פנימית, עוברת סף. מה אתה/את עוברת/ת עכשיו?',
-            'אחר הצהריים הוא שעת כוכבי הערב — הכוכבים הראשונים שנגלים. ' + firstName + ', הכובד שאתה/את מרגיש/ה בשעה הזו הוא לא עייפות. הוא שאלה: מה תיקח/י מהיום הזה?'
+            firstName + ', שעת ה"ו בערב", הזמן שבין האור לחושך, בין פעולה למנוחה. כוכבים, ' + firstName + ': גופך כבד בשעת המעבר כי הנשמה שלך יודעת שהיא עוברת. עוברת פרק, עוברת מדינה פנימית, עוברת סף. מה אתה/את עוברת/ת עכשיו?',
+            'אחר הצהריים הוא שעת כוכבי הערב, הכוכבים הראשונים שנגלים. ' + firstName + ', הכובד שאתה/את מרגיש/ה בשעה הזו הוא לא עייפות. הוא שאלה: מה תיקח/י מהיום הזה?'
         ]),
         'ערב': pick([
-            firstName + ', ערב הוא הזמן שבו הכוכבים מתחילים להופיע — ונשמות שכבדות בערב הן נשמות שנשאו הרבה לאורך היום בשקט. הכוכבים מגלים: אתה/את שוחה/ה עמוק. לא שאחרים לא רואים — אלא שאתה/את לא מראה. מה אתה/את שומר/ת ששווה לשחרר?',
-            'הכובד של הערב הוא הכובד של מי שחי/ה ביום שלם. ' + firstName + ', הכוכבים מבשרים: הפרק הקרוב יהיה קל יותר — אך הוא ידרוש שתסמוך/כי על מי שיושב/ת איתך בשקט.'
+            firstName + ', ערב הוא הזמן שבו הכוכבים מתחילים להופיע, ונשמות שכבדות בערב הן נשמות שנשאו הרבה לאורך היום בשקט. הכוכבים מגלים: אתה/את שוחה/ה עמוק. לא שאחרים לא רואים, אלא שאתה/את לא מראה. מה אתה/את שומר/ת ששווה לשחרר?',
+            'הכובד של הערב הוא הכובד של מי שחי/ה ביום שלם. ' + firstName + ', הכוכבים מבשרים: הפרק הקרוב יהיה קל יותר, אך הוא ידרוש שתסמוך/כי על מי שיושב/ת איתך בשקט.'
         ]),
         'לילה': pick([
-            firstName + ', הלילה הוא הזמן של הכוכבים — ואלה שכבדים בלילה הם מי שמנהלים שיחה אמיתית עם עצמם. כוכבים, ' + firstName + ' נשמה שיודעת אמת שלא ניתן לומר ביום. המפה שנוצרה עבורך מגלה: מה שעולה בך בלילה הוא המסר החשוב ביותר שלך לעצמך. הקשיבי/הקשב לו.',
-            'מי שכבד/ה בלילה נמצא/ת בשיחה עם החלקים העמוקים ביותר שלו/שלה. ' + firstName + ', הכוכבים מבשרים: הלילות יהפכו לקלים יותר — ברגע שתסמכ/י על מה שנשמע בהם.'
+            firstName + ', הלילה הוא הזמן של הכוכבים, ואלה שכבדים בלילה הם מי שמנהלים שיחה אמיתית עם עצמם. כוכבים, ' + firstName + ' נשמה שיודעת אמת שלא ניתן לומר ביום. המפה שנוצרה עבורך מגלה: מה שעולה בך בלילה הוא המסר החשוב ביותר שלך לעצמך. הקשיבי/הקשב לו.',
+            'מי שכבד/ה בלילה נמצא/ת בשיחה עם החלקים העמוקים ביותר שלו/שלה. ' + firstName + ', הכוכבים מבשרים: הלילות יהפכו לקלים יותר, ברגע שתסמכ/י על מה שנשמע בהם.'
         ]),
         'השעות הקטנות': pick([
-            firstName + ', מי שמרגיש/ה כבד/ה בשעות שבין חצות ל-4 הוא/היא מי שנמצא/ת בשיחה עם הלא-מודע שלו/שלה. כוכבים, ' + firstName + ': יש בך נבואה פנימית שממתינה לפריצה. המפה שנוצרה עבורך: מה שעולה בשעות האלה — כתוב/כתבי. הוא ישמש אותך.',
-            'השעות הקטנות הן שעות האמת הכי גולמית. ' + firstName + ', הכוכבים רואים: אתה/את בתקשורת עם מה שגדול ממך. מה שמגיע בשעות האלה — אל תדחה/תדחי. הוא מסר.'
+            firstName + ', מי שמרגיש/ה כבד/ה בשעות שבין חצות ל-4 הוא/היא מי שנמצא/ת בשיחה עם הלא-מודע שלו/שלה. כוכבים, ' + firstName + ': יש בך נבואה פנימית שממתינה לפריצה. המפה שנוצרה עבורך: מה שעולה בשעות האלה, כתוב/כתבי. הוא ישמש אותך.',
+            'השעות הקטנות הן שעות האמת הכי גולמית. ' + firstName + ', הכוכבים רואים: אתה/את בתקשורת עם מה שגדול ממך. מה שמגיע בשעות האלה, אל תדחה/תדחי. הוא מסר.'
         ])
     };
     const timeMapEn = {
         '\u05d1\u05d5\u05e7\u05e8': pick([
-            firstName + ', the stars see: morning is the first chapter of the day — and your body is heavy in it because your soul is still in the between. Between the dream and the waking, between what you wanted and what waits. The map formed for you reveals a soul standing on the threshold of change — feeling it in the morning before the day fills with noise.',
-            'The heaviness of morning belongs to souls that know: what awaits in the day is not always what the light promises. ' + firstName + ', the stars announce: the morning when you will rise lightly is near — it marks the beginning of the next chapter.'
+            firstName + ', the stars see: morning is the first chapter of the day, and your body is heavy in it because your soul is still in the between. Between the dream and the waking, between what you wanted and what waits. The map formed for you reveals a soul standing on the threshold of change, feeling it in the morning before the day fills with noise.',
+            'The heaviness of morning belongs to souls that know: what awaits in the day is not always what the light promises. ' + firstName + ', the stars announce: the morning when you will rise lightly is near, it marks the beginning of the next chapter.'
         ]),
         '\u05e6\u05d4\u05e8\u05d9\u05d9\u05dd': pick([
-            firstName + ', noon is the peak of solar force — the sun at its height, the world at its most concrete. If your body is heavy then, the stars reveal: there is a mismatch in you between the soul and the tangible. Between who you are inside and what your day contains. The map formed for you: introduce one small change to the middle of your day.',
-            'The heaviness at noon reveals a soul that feels the day has been taken from it — that it did not define the day, but the day defined it. ' + firstName + ', the stars ask: what will you decide to keep as yours tomorrow?'
+            firstName + ', noon is the peak of solar force, the sun at its height, the world at its most concrete. If your body is heavy then, the stars reveal: there is a mismatch in you between the soul and the tangible. Between who you are inside and what your day contains. The map formed for you: introduce one small change to the middle of your day.',
+            'The heaviness at noon reveals a soul that feels the day has been taken from it, that it did not define the day, but the day defined it. ' + firstName + ', the stars ask: what will you decide to keep as yours tomorrow?'
         ]),
         '\u05d0\u05d7\u05e8 \u05d4\u05e6\u05d4\u05e8\u05d9\u05d9\u05dd': pick([
             firstName + ', the hour between light and dark, between action and rest. ' + firstName + ': your body is heavy in the hour of transition because your soul knows it is crossing. Crossing a chapter, crossing an interior country, crossing a threshold. What are you crossing now?',
-            'The late afternoon is the hour of the evening stars — the first ones to appear. ' + firstName + ', the heaviness you feel at this hour is not fatigue. It is a question: what will you carry with you from this day?'
+            'The late afternoon is the hour of the evening stars, the first ones to appear. ' + firstName + ', the heaviness you feel at this hour is not fatigue. It is a question: what will you carry with you from this day?'
         ]),
         '\u05e2\u05e8\u05d1': pick([
-            firstName + ', evening is the time when the stars begin to appear — and souls that are heavy by evening are souls that have carried much in quiet all day. The stars reveal: you swim deep. Not that others do not see — but that you do not show. What are you holding that is worth releasing?',
-            'The heaviness of evening belongs to those who have lived a full day. ' + firstName + ', the stars announce: the chapter ahead will be lighter — but it will ask you to trust whoever sits with you in the silence.'
+            firstName + ', evening is the time when the stars begin to appear, and souls that are heavy by evening are souls that have carried much in quiet all day. The stars reveal: you swim deep. Not that others do not see, but that you do not show. What are you holding that is worth releasing?',
+            'The heaviness of evening belongs to those who have lived a full day. ' + firstName + ', the stars announce: the chapter ahead will be lighter, but it will ask you to trust whoever sits with you in the silence.'
         ]),
         '\u05dc\u05d9\u05dc\u05d4': pick([
-            firstName + ', night is the time of stars — and those who are heavy at night are conducting a genuine conversation with themselves. ' + firstName + ', a soul that knows truths it cannot say in the day. The map formed for you reveals: what rises in you at night is your most important message to yourself. Listen to it.',
-            'Those who are heavy at night are in dialogue with their deepest layers. ' + firstName + ', the stars announce: the nights will grow lighter — the moment you trust what is heard in them.'
+            firstName + ', night is the time of stars, and those who are heavy at night are conducting a genuine conversation with themselves. ' + firstName + ', a soul that knows truths it cannot say in the day. The map formed for you reveals: what rises in you at night is your most important message to yourself. Listen to it.',
+            'Those who are heavy at night are in dialogue with their deepest layers. ' + firstName + ', the stars announce: the nights will grow lighter, the moment you trust what is heard in them.'
         ]),
         '\u05d4\u05e9\u05e2\u05d5\u05ea \u05d4\u05e7\u05d8\u05e0\u05d5\u05ea': pick([
-            firstName + ', those who feel heavy in the hours between midnight and four are those in conversation with their unconscious. ' + firstName + ': there is an inner prophecy in you waiting to break through. The map formed for you: what rises in these hours — write it down. It will serve you.',
-            'The small hours are the hours of the rawest truth. ' + firstName + ', the stars see: you are in communication with something larger than yourself. What comes in these hours — do not dismiss it. It is a signal.'
+            firstName + ', those who feel heavy in the hours between midnight and four are those in conversation with their unconscious. ' + firstName + ': there is an inner prophecy in you waiting to break through. The map formed for you: what rises in these hours, write it down. It will serve you.',
+            'The small hours are the hours of the rawest truth. ' + firstName + ', the stars see: you are in communication with something larger than yourself. What comes in these hours, do not dismiss it. It is a signal.'
         ])
     };
     const timeMsgHe = timeMap[aTime] || '\u05d4\u05d6\u05de\u05df \u05e9\u05d1\u05d7\u05e8\u05ea/\u05ea \u05de\u05d2\u05dc\u05d4 \u05de\u05e9\u05d4\u05d5 \u05e2\u05dc \u05d4\u05e7\u05e6\u05d1 \u05d4\u05e4\u05e0\u05d9\u05de\u05d9 \u05e9\u05dc\u05da.';
-    const timeMsgEn = timeMapEn[aTime] || firstName + ', the hour that weighs on you is not random — it is marking where your attention is most truly held.';
+    const timeMsgEn = timeMapEn[aTime] || firstName + ', the hour that weighs on you is not random, it is marking where your attention is most truly held.';
 
     // ── HOME interpretations: where the body relaxes ──
     const aHome = toHe(answers.home || '');
     const homeMap = {
         'בעיר שלי': pick([
-            firstName + ', הקשר שלך לעיר שלך הוא שורש — אותו סוג שורש שמאפשר לעץ לגדול גבוה. כוכבים, ' + firstName + ' נשמה שיש בה מחויבות עמוקה: לאדמה, לאנשים, לזהות. המפה שנוצרה עבורך מבשרת: העיר שלך תיתן לך בשנה הקרובה משהו שלא ציפית לו.',
-            'הכוכבים מגלים: ' + firstName + ' מי שמרגיש/ה בבית בעיר שלו/שלה נושא/ת שורשים עמוקים — וזו הבסיס שממנו הכל אפשרי. הדרך שלפנייך מצמיחה מהיכן שאתה/את כבר נמצא/ת.'
+            firstName + ', הקשר שלך לעיר שלך הוא שורש, אותו סוג שורש שמאפשר לעץ לגדול גבוה. כוכבים, ' + firstName + ' נשמה שיש בה מחויבות עמוקה: לאדמה, לאנשים, לזהות. המפה שנוצרה עבורך מבשרת: העיר שלך תיתן לך בשנה הקרובה משהו שלא ציפית לו.',
+            'הכוכבים מגלים: ' + firstName + ' מי שמרגיש/ה בבית בעיר שלו/שלה נושא/ת שורשים עמוקים, וזו הבסיס שממנו הכל אפשרי. הדרך שלפנייך מצמיחה מהיכן שאתה/את כבר נמצא/ת.'
         ]),
         'בחדר שלי': pick([
-            firstName + ', החדר שלך הוא מקדש — המרחב שבו הנשמה שלך נושמת ללא מסכות. כוכבים, ' + firstName + ' נשמה שיצרתנית, עמוקת-מחשבה, שמחלימה בשקט. המפה שנוצרה עבורך מגלה: מה שנוצר בחדר שלך בקרוב יגיע לאחרים — וישפיע עליהם.',
+            firstName + ', החדר שלך הוא מקדש, המרחב שבו הנשמה שלך נושמת ללא מסכות. כוכבים, ' + firstName + ' נשמה שיצרתנית, עמוקת-מחשבה, שמחלימה בשקט. המפה שנוצרה עבורך מגלה: מה שנוצר בחדר שלך בקרוב יגיע לאחרים, וישפיע עליהם.',
             'הכוכבים רואים: מי שמרגיש/ה בבית בחדרו/ה הוא/היא מי שמכיר/ה את עצמו/ה. ' + firstName + ', זוהי מתנה נדירה. הפרק הבא בחייך יזמין אותך לשתף את העולם ב"פנים".'
         ]),
         'ליד אדם מסוים': pick([
-            firstName + ', הבית שלך הוא אנרגיה של אדם — זהו הסוג הנדיר ביותר של בית. כוכבים, ' + firstName + ' נשמה שנולדה לחיבור עמוק, לאהבה בלתי מתפשרת. המפה שנוצרה עבורך מבשרת: הקשר שמחמם אותך כבר עכשיו — עומד להעמיק עוד.',
-            'הכוכבים רואים: מי שמרגיש/ה בבית ליד אדם מסוים נושא/ת בפנים קיבולת לאהבה שרוב האנשים לא מסוגלים לה. ' + firstName + ', שמור/י על הקשר הזה — ועל עצמך בתוכו.'
+            firstName + ', הבית שלך הוא אנרגיה של אדם, זהו הסוג הנדיר ביותר של בית. כוכבים, ' + firstName + ' נשמה שנולדה לחיבור עמוק, לאהבה בלתי מתפשרת. המפה שנוצרה עבורך מבשרת: הקשר שמחמם אותך כבר עכשיו, עומד להעמיק עוד.',
+            'הכוכבים רואים: מי שמרגיש/ה בבית ליד אדם מסוים נושא/ת בפנים קיבולת לאהבה שרוב האנשים לא מסוגלים לה. ' + firstName + ', שמור/י על הקשר הזה, ועל עצמך בתוכו.'
         ]),
         'בטבע': pick([
-            firstName + ', הטבע הוא ביתה של הנשמה הקדומה — ואתה/את מרגיש/ה זאת. כוכבים, ' + firstName + ': יש בך חיבור לאנרגיות גדולות יותר מהיומיום. המפה שנוצרה עבורך מבשרת: ברגע שתחזור/תחזרי לטבע, תקבל/י שם תשובה לשאלה שעומדת לפניך.',
-            'הכוכבים רואים: מי שמרגיש/ה בבית בטבע נמצא/ת בהדהוד עם המקצבים הקוסמיים עצמם. ' + firstName + ', הפרק הבא בחייך יכיל יותר טבע — והוא יביא איתו בהירות.'
+            firstName + ', הטבע הוא ביתה של הנשמה הקדומה, ואתה/את מרגיש/ה זאת. כוכבים, ' + firstName + ': יש בך חיבור לאנרגיות גדולות יותר מהיומיום. המפה שנוצרה עבורך מבשרת: ברגע שתחזור/תחזרי לטבע, תקבל/י שם תשובה לשאלה שעומדת לפניך.',
+            'הכוכבים רואים: מי שמרגיש/ה בבית בטבע נמצא/ת בהדהוד עם המקצבים הקוסמיים עצמם. ' + firstName + ', הפרק הבא בחייך יכיל יותר טבע, והוא יביא איתו בהירות.'
         ]),
         'בזיכרון': pick([
-            firstName + ', הזיכרון שמרגיש כמו בית הוא לא חולשה — הוא ידיעה שמשהו יקר קרה. כוכבים, ' + firstName + ' נשמה שיש בה עומק היסטורי — שמרגישה את משקל הזמן. המפה שנוצרה עבורך: הזיכרון הזה הוא מפתח לפרק הבא, לא עוגן לעבר.',
-            'הכוכבים מגלים: מי שחי/ה בזיכרון כבית, לומד/ת מהעבר באופן עמוק. ' + firstName + ', מה שלמדת/ה מהזמנים שהיו — הפרק הקרוב יזמין אותך ליישם.'
+            firstName + ', הזיכרון שמרגיש כמו בית הוא לא חולשה, הוא ידיעה שמשהו יקר קרה. כוכבים, ' + firstName + ' נשמה שיש בה עומק היסטורי, שמרגישה את משקל הזמן. המפה שנוצרה עבורך: הזיכרון הזה הוא מפתח לפרק הבא, לא עוגן לעבר.',
+            'הכוכבים מגלים: מי שחי/ה בזיכרון כבית, לומד/ת מהעבר באופן עמוק. ' + firstName + ', מה שלמדת/ה מהזמנים שהיו, הפרק הקרוב יזמין אותך ליישם.'
         ]),
         'במקום שלא קיים יותר': pick([
             firstName + ', מי שביתו/ה נעלם הוא/היא מי שכבר עבר/ה דרך האש ויצא/ה עם ידע שאחרים לא מסוגלים לו. כוכבים, ' + firstName + ': יש בך כח שנולד ממה שהיה ואינו עוד. המפה שנוצרה עבורך מבשרת: מה שנבנה הלאה יהיה חזק יותר ממה שהיה.',
-            firstName + ' נושא/ת בתוכו/ה בית שנוצר ממה שאוהב — גם כשהוא אינו. זוהי עוצמה. הדרך שלפנייך מכילה בית חדש שייבנה על היסוד שכבר קיים בך.'
+            firstName + ' נושא/ת בתוכו/ה בית שנוצר ממה שאוהב, גם כשהוא אינו. זוהי עוצמה. הדרך שלפנייך מכילה בית חדש שייבנה על היסוד שכבר קיים בך.'
         ]),
         'עדיין מחפש/ת': pick([
-            firstName + ', המחפשים הם הנביאים — כי הם לא מסכימים להתיישב במקום שאינו מתאים. כוכבים, ' + firstName + ' נשמה שיודעת שיש לה יעד, גם אם עוד לא ראתה אותו. המפה שנוצרה עבורך מבשרת: הבית שאתה/את מחפש/ת קיים — ואתה/את מתקרב/ת אליו.',
-            'הכוכבים מגלים: ' + firstName + ' נמצא/ת בין שתי נחלות — זה שהיה, וזה שיהיה. המחפשים לא הולכים לאיבוד; הם ממפים שטחים שאחרים פחדו לגשת אליהם.'
+            firstName + ', המחפשים הם הנביאים, כי הם לא מסכימים להתיישב במקום שאינו מתאים. כוכבים, ' + firstName + ' נשמה שיודעת שיש לה יעד, גם אם עוד לא ראתה אותו. המפה שנוצרה עבורך מבשרת: הבית שאתה/את מחפש/ת קיים, ואתה/את מתקרב/ת אליו.',
+            'הכוכבים מגלים: ' + firstName + ' נמצא/ת בין שתי נחלות, זה שהיה, וזה שיהיה. המחפשים לא הולכים לאיבוד; הם ממפים שטחים שאחרים פחדו לגשת אליהם.'
         ])
     };
     const homeMapEn = {
         '\u05d1\u05e2\u05d9\u05e8 \u05e9\u05dc\u05d9': pick([
-            firstName + ', your bond to your city is a root — the kind that allows a tree to grow tall. ' + firstName + ', a soul with deep commitment: to the earth, to the people, to identity. The map formed for you announces: your city will give you something in the coming year that you did not expect.',
-            'The stars reveal: ' + firstName + ', one who feels at home in their city carries deep roots — and that is the foundation from which everything is possible. The path ahead grows from where you already are.'
+            firstName + ', your bond to your city is a root, the kind that allows a tree to grow tall. ' + firstName + ', a soul with deep commitment: to the earth, to the people, to identity. The map formed for you announces: your city will give you something in the coming year that you did not expect.',
+            'The stars reveal: ' + firstName + ', one who feels at home in their city carries deep roots, and that is the foundation from which everything is possible. The path ahead grows from where you already are.'
         ]),
         '\u05d1\u05d7\u05d3\u05e8 \u05e9\u05dc\u05d9': pick([
-            firstName + ', your room is a sanctuary — the space where your soul breathes without masks. ' + firstName + ', a creative, deeply thoughtful soul that heals in quiet. The map formed for you reveals: what is created in your room soon will reach others — and touch them.',
+            firstName + ', your room is a sanctuary, the space where your soul breathes without masks. ' + firstName + ', a creative, deeply thoughtful soul that heals in quiet. The map formed for you reveals: what is created in your room soon will reach others, and touch them.',
             'The stars see: one who feels at home in their room is one who knows themselves. ' + firstName + ', this is a rare gift. The next chapter of your life will invite you to share the inside with the world.'
         ]),
         '\u05dc\u05d9\u05d3 \u05d0\u05d3\u05dd \u05de\u05e1\u05d5\u05d9\u05dd': pick([
-            firstName + ', your home is the energy of a person — this is the rarest kind of home. ' + firstName + ', a soul born for deep connection, for uncompromising love. The map formed for you announces: the connection that warms you right now is about to deepen further.',
-            'The stars see: one who feels at home near a certain person carries within them a capacity for love that most people are not capable of. ' + firstName + ', protect that bond — and protect yourself within it.'
+            firstName + ', your home is the energy of a person, this is the rarest kind of home. ' + firstName + ', a soul born for deep connection, for uncompromising love. The map formed for you announces: the connection that warms you right now is about to deepen further.',
+            'The stars see: one who feels at home near a certain person carries within them a capacity for love that most people are not capable of. ' + firstName + ', protect that bond, and protect yourself within it.'
         ]),
         '\u05d1\u05d8\u05d1\u05e2': pick([
-            firstName + ', nature is the home of the ancient soul — and you feel that. ' + firstName + ': there is in you a connection to forces larger than the everyday. The map formed for you announces: the moment you return to nature, you will receive there an answer to the question that stands before you.',
-            'The stars see: one who feels at home in nature is in resonance with the cosmic rhythms themselves. ' + firstName + ', the next chapter of your life will contain more nature — and it will bring clarity with it.'
+            firstName + ', nature is the home of the ancient soul, and you feel that. ' + firstName + ': there is in you a connection to forces larger than the everyday. The map formed for you announces: the moment you return to nature, you will receive there an answer to the question that stands before you.',
+            'The stars see: one who feels at home in nature is in resonance with the cosmic rhythms themselves. ' + firstName + ', the next chapter of your life will contain more nature, and it will bring clarity with it.'
         ]),
         '\u05d1\u05d6\u05d9\u05db\u05e8\u05d5\u05df': pick([
-            firstName + ', the memory that feels like home is not weakness — it is the knowledge that something precious happened. ' + firstName + ', a soul with historical depth — one that feels the weight of time. The map formed for you: that memory is a key to the next chapter, not an anchor to the past.',
-            'The stars reveal: one who lives in a memory as home, learns from the past at a deep level. ' + firstName + ', what you have learned from the times that were — the coming chapter will invite you to apply.'
+            firstName + ', the memory that feels like home is not weakness, it is the knowledge that something precious happened. ' + firstName + ', a soul with historical depth, one that feels the weight of time. The map formed for you: that memory is a key to the next chapter, not an anchor to the past.',
+            'The stars reveal: one who lives in a memory as home, learns from the past at a deep level. ' + firstName + ', what you have learned from the times that were, the coming chapter will invite you to apply.'
         ]),
         '\u05d1\u05de\u05e7\u05d5\u05dd \u05e9\u05dc\u05d0 \u05e7\u05d9\u05d9\u05dd \u05d9\u05d5\u05ea\u05e8': pick([
             firstName + ', one whose home has vanished is one who has already passed through the fire and emerged with knowledge others cannot access. ' + firstName + ': there is in you a strength born from what was and is no more. The map formed for you announces: what is built next will be stronger than what was.',
-            firstName + ' carries within a home built from what was loved — even when it is no longer. That is power. The path ahead contains a new home that will be built on the foundation that already exists in you.'
+            firstName + ' carries within a home built from what was loved, even when it is no longer. That is power. The path ahead contains a new home that will be built on the foundation that already exists in you.'
         ]),
         '\u05e2\u05d3\u05d9\u05d9\u05df \u05de\u05d7\u05e4\u05e9/\u05ea': pick([
-            firstName + ', seekers are the prophets — because they refuse to settle for a place that does not fit. ' + firstName + ', a soul that knows it has a destination, even if it has not yet seen it. The map formed for you announces: the home you seek exists — and you are getting closer.',
-            'The stars reveal: ' + firstName + ' stands between two territories — what was, and what will be. Seekers do not get lost; they map terrain others feared to enter.'
+            firstName + ', seekers are the prophets, because they refuse to settle for a place that does not fit. ' + firstName + ', a soul that knows it has a destination, even if it has not yet seen it. The map formed for you announces: the home you seek exists, and you are getting closer.',
+            'The stars reveal: ' + firstName + ' stands between two territories, what was, and what will be. Seekers do not get lost; they map terrain others feared to enter.'
         ])
     };
     const homeMsgHe = homeMap[aHome] || firstName + ', \u05ea\u05d7\u05d5\u05e9\u05ea \u05d4\u05d1\u05d9\u05ea \u05e9\u05dc\u05da \u05de\u05d3\u05d1\u05e8\u05ea \u05e2\u05dc \u05de\u05d4 \u05d4\u05db\u05d9 \u05de\u05d7\u05d6\u05d9\u05e7 \u05d0\u05d5\u05ea\u05da.';
@@ -1876,15 +1905,15 @@ function showInterpretationPanel(userVision) {
     const aChange = toHe(answers.change || '');
     const changeMap = {
         'החלטה שדוחה אותי': pick([
-            firstName + ', כוכבים מגלים: ההחלטה שמסרבת לרדת ממחשבתך אינה שם במקרה — היא שם כי היא בשלה. המפה שנוצרה עבורך מגלה: בסוף השבוע הקרוב יהיה לך רגע שבו הדבר הנכון לעשות יהיה ברור. בחר/בחרי לזהות אותו.',
-            'הכוכבים מגלים: ' + firstName + ' ההחלטה הנדחית מכילה תוך תוכה את המפתח לפרק הבא. הדחייה אינה חולשה — אבל הגיע הזמן. הקוסמוס מגבה אותך בצעד הזה.'
+            firstName + ', כוכבים מגלים: ההחלטה שמסרבת לרדת ממחשבתך אינה שם במקרה, היא שם כי היא בשלה. המפה שנוצרה עבורך מגלה: בסוף השבוע הקרוב יהיה לך רגע שבו הדבר הנכון לעשות יהיה ברור. בחר/בחרי לזהות אותו.',
+            'הכוכבים מגלים: ' + firstName + ' ההחלטה הנדחית מכילה תוך תוכה את המפתח לפרק הבא. הדחייה אינה חולשה, אבל הגיע הזמן. הקוסמוס מגבה אותך בצעד הזה.'
         ]),
         'שינוי שמתקרב': pick([
             firstName + ', כוכבים מגלים: מי שמרגיש/ה שינוי לפני שהוא מגיע נמצא/ת בהדהוד עם הזרם הגדול. המפה שנוצרה עבורך מבשרת: השינוי המתקרב הוא אחד שסימנת/ה לעצמך מזמן. הוא מגיע. הכן/הכיני עצמך לפגוש אותו פתוח/ה.',
             firstName + ' בתקופה שבה הכל עומד להשתנות, נשמות שחשות את השינוי מראש הן הנשמות שמכוונות אותו. לא מוכנעים על ידו. אתה/את אחד/ת מהן.'
         ]),
         'מערכת יחסים': pick([
-            firstName + ', כוכבים מגלים: מערכת היחסים שתופסת מקום בראשך כרגע מגיעה לנקודת מפנה. המפה שנוצרה עבורך מגלה: מה שלא נאמר עדיין — בפרק הקרוב תהיה לך הזדמנות לומר אותו. ואתה/את מוכן/ה.',
+            firstName + ', כוכבים מגלים: מערכת היחסים שתופסת מקום בראשך כרגע מגיעה לנקודת מפנה. המפה שנוצרה עבורך מגלה: מה שלא נאמר עדיין, בפרק הקרוב תהיה לך הזדמנות לומר אותו. ואתה/את מוכן/ה.',
             'הכוכבים מגלים: ' + firstName + ' יש בך ידיעה על מערכת היחסים הזו שעדיין לא שיתפת/ה איתה. הפרק הקרוב יביא רגע שבו תוכל/תוכלי לעשות זאת. והתוצאה תפתיע אותך לטובה.'
         ]),
         'המקום שלי בעולם': pick([
@@ -1892,33 +1921,33 @@ function showInterpretationPanel(userVision) {
             firstName + ' הנשמה שלך תפסה תמיד מקום גדול יותר ממה שהציגה. הפרק הקרוב יזמין אותך להציג אותה במלואה.'
         ]),
         'משהו שצריך לשחרר': pick([
-            firstName + ', כוכבים מגלים: מה שנושא/ת כרגע כבד ממה שהנשמה שלך יכולה לשאת לטווח ארוך. המפה שנוצרה עבורך מגלה: השחרור לא יוביל לריקנות — הוא יוביל לחופש שלא הרגשת/ה בתקופה ארוכה.',
-            'הכוכבים מגלים: ' + firstName + ' מה שצריך להניח — ברגע שתניח/תניחי, יפתחו ידיים שיאפשרו לך לאחוז במה שממתין. הפרק הקרוב מכיל דבר חדש שדורש ידיים פנויות.'
+            firstName + ', כוכבים מגלים: מה שנושא/ת כרגע כבד ממה שהנשמה שלך יכולה לשאת לטווח ארוך. המפה שנוצרה עבורך מגלה: השחרור לא יוביל לריקנות, הוא יוביל לחופש שלא הרגשת/ה בתקופה ארוכה.',
+            'הכוכבים מגלים: ' + firstName + ' מה שצריך להניח, ברגע שתניח/תניחי, יפתחו ידיים שיאפשרו לך לאחוז במה שממתין. הפרק הקרוב מכיל דבר חדש שדורש ידיים פנויות.'
         ]),
         'דבר שאני נמנע/ת ממנו': pick([
-            firstName + ', כוכבים מגלים: הנמנעות שלך אינה חולשה — היא שמירה. אבל המפה שנוצרה עבורך מגלה: הגיע הזמן לגשת אל מה שנמנעת/ה ממנו. הוא כבר לא גדול כמו שנראה מרחוק.',
-            firstName + ' מה שנמנעים ממנו לרוב מכיל בפנימיותו תשובה לשאלה הגדולה ביותר. הפרק הקרוב — גש/גשי אל מה שנמנעת/ה ממנו. אחת. ותראה/תראי.'
+            firstName + ', כוכבים מגלים: הנמנעות שלך אינה חולשה, היא שמירה. אבל המפה שנוצרה עבורך מגלה: הגיע הזמן לגשת אל מה שנמנעת/ה ממנו. הוא כבר לא גדול כמו שנראה מרחוק.',
+            firstName + ' מה שנמנעים ממנו לרוב מכיל בפנימיותו תשובה לשאלה הגדולה ביותר. הפרק הקרוב, גש/גשי אל מה שנמנעת/ה ממנו. אחת. ותראה/תראי.'
         ]),
         'תחושה שלא עוברת': pick([
-            firstName + ', כוכבים מגלים: תחושה שאינה עוברת היא תחושה שנושאת מסר חיוני. המפה שנוצרה עבורך מגלה: התחושה הזו אינה עצרה — היא מצפן. היא מכוונת אותך לעבר מה שחשוב.',
-            firstName + ' מה שמרגיש/ה ומסרב/ת לרדת הוא דבר שדורש הכרה — לא פתרון. הפרק הקרוב יביא מישהו שיאמר לך: כן, אני רואה.'
+            firstName + ', כוכבים מגלים: תחושה שאינה עוברת היא תחושה שנושאת מסר חיוני. המפה שנוצרה עבורך מגלה: התחושה הזו אינה עצרה, היא מצפן. היא מכוונת אותך לעבר מה שחשוב.',
+            firstName + ' מה שמרגיש/ה ומסרב/ת לרדת הוא דבר שדורש הכרה, לא פתרון. הפרק הקרוב יביא מישהו שיאמר לך: כן, אני רואה.'
         ]),
         'אני עוד לא יודע/ת לקרוא לזה בשם': pick([
-            firstName + ', כוכבים מגלים: מה שאין לו עדיין שם הוא גדול מדי לשם. הוא מסרב לתכולת המלים הרגילות. המפה שנוצרה עבורך מגלה: הפרק הקרוב יביא לך את השם — ואיתו, הבהירות.',
-            'הכוכבים מגלים: ' + firstName + ' מה שאין לו שם הוא בדרך כלל החלק הכי חשוב בנשמה — זה שמעבר לשפה. תן/תני לו להיות. הוא יתגלה בזמן הנכון.'
+            firstName + ', כוכבים מגלים: מה שאין לו עדיין שם הוא גדול מדי לשם. הוא מסרב לתכולת המלים הרגילות. המפה שנוצרה עבורך מגלה: הפרק הקרוב יביא לך את השם, ואיתו, הבהירות.',
+            'הכוכבים מגלים: ' + firstName + ' מה שאין לו שם הוא בדרך כלל החלק הכי חשוב בנשמה, זה שמעבר לשפה. תן/תני לו להיות. הוא יתגלה בזמן הנכון.'
         ])
     };
     const changeMapEn = {
         '\u05d4\u05d7\u05dc\u05d8\u05d4 \u05e9\u05d3\u05d5\u05d7\u05d4 \u05d0\u05d5\u05ea\u05d9': pick([
-            firstName + ', the stars reveal: the decision that refuses to leave your mind is not there by accident — it is there because it is ripe. The map formed for you reveals: in the coming days there will be a moment when the right thing to do will be clear. Choose to recognise it.',
-            'The stars reveal: ' + firstName + ', the postponed decision contains within it the key to the next chapter. Postponement is not weakness — but the time has come. The cosmos supports you in this step.'
+            firstName + ', the stars reveal: the decision that refuses to leave your mind is not there by accident, it is there because it is ripe. The map formed for you reveals: in the coming days there will be a moment when the right thing to do will be clear. Choose to recognise it.',
+            'The stars reveal: ' + firstName + ', the postponed decision contains within it the key to the next chapter. Postponement is not weakness, but the time has come. The cosmos supports you in this step.'
         ]),
         '\u05e9\u05d9\u05e0\u05d5\u05d9 \u05e9\u05de\u05ea\u05e7\u05e8\u05d1': pick([
             firstName + ', the stars reveal: one who feels a change before it arrives is in resonance with the great current. The map formed for you announces: the approaching change is one you signed up for a long time ago. It is coming. Prepare yourself to meet it openly.',
             firstName + ', in a time when everything is about to shift, souls that sense the change in advance are the souls directing it. Not overwhelmed by it. You are one of them.'
         ]),
         '\u05de\u05e2\u05e8\u05db\u05ea \u05d9\u05d7\u05e1\u05d9\u05dd': pick([
-            firstName + ', the stars reveal: the relationship occupying your mind right now is reaching a turning point. The map formed for you reveals: what has not yet been said — in the coming chapter you will have the opportunity to say it. And you are ready.',
+            firstName + ', the stars reveal: the relationship occupying your mind right now is reaching a turning point. The map formed for you reveals: what has not yet been said, in the coming chapter you will have the opportunity to say it. And you are ready.',
             'The stars reveal: ' + firstName + ', there is something you know about this relationship that you have not yet shared. The coming chapter will bring a moment when you can. And the outcome will surprise you for the better.'
         ]),
         '\u05d4\u05de\u05e7\u05d5\u05dd \u05e9\u05dc\u05d9 \u05d1\u05e2\u05d5\u05dc\u05dd': pick([
@@ -1926,47 +1955,47 @@ function showInterpretationPanel(userVision) {
             firstName + ', your soul has always occupied more space than it has presented. The coming chapter will invite you to present it in full.'
         ]),
         '\u05de\u05e9\u05d4\u05d5 \u05e9\u05e6\u05e8\u05d9\u05da \u05dc\u05e9\u05d7\u05e8\u05e8': pick([
-            firstName + ', the stars reveal: what you carry now is heavier than your soul can bear long-term. The map formed for you reveals: the release will not lead to emptiness — it will lead to a freedom you have not felt in a long time.',
-            'The stars reveal: ' + firstName + ', what needs to be set down — once you set it down, hands will open that allow you to hold what is waiting. The coming chapter contains something new that needs free hands.'
+            firstName + ', the stars reveal: what you carry now is heavier than your soul can bear long-term. The map formed for you reveals: the release will not lead to emptiness, it will lead to a freedom you have not felt in a long time.',
+            'The stars reveal: ' + firstName + ', what needs to be set down, once you set it down, hands will open that allow you to hold what is waiting. The coming chapter contains something new that needs free hands.'
         ]),
         '\u05d3\u05d1\u05e8 \u05e9\u05d0\u05e0\u05d9 \u05e0\u05de\u05e0\u05e2/\u05ea \u05de\u05de\u05e0\u05d5': pick([
-            firstName + ', the stars reveal: your avoidance is not weakness — it is protection. But the map formed for you reveals: the time has come to approach what you have been avoiding. It is no longer as large as it appeared from a distance.',
-            firstName + ', what we avoid most often contains within it the answer to the biggest question. The coming chapter — approach what you have been avoiding. Once. And see.'
+            firstName + ', the stars reveal: your avoidance is not weakness, it is protection. But the map formed for you reveals: the time has come to approach what you have been avoiding. It is no longer as large as it appeared from a distance.',
+            firstName + ', what we avoid most often contains within it the answer to the biggest question. The coming chapter, approach what you have been avoiding. Once. And see.'
         ]),
         '\u05ea\u05d7\u05d5\u05e9\u05d4 \u05e9\u05dc\u05d0 \u05e2\u05d5\u05d1\u05e8\u05ea': pick([
-            firstName + ', the stars reveal: a feeling that will not pass is a feeling carrying a vital message. The map formed for you reveals: this feeling is not a stopping point — it is a compass. It is pointing you toward what matters.',
-            firstName + ', what is felt and refuses to leave demands recognition — not resolution. The coming chapter will bring someone who will say to you: yes, I see.'
+            firstName + ', the stars reveal: a feeling that will not pass is a feeling carrying a vital message. The map formed for you reveals: this feeling is not a stopping point, it is a compass. It is pointing you toward what matters.',
+            firstName + ', what is felt and refuses to leave demands recognition, not resolution. The coming chapter will bring someone who will say to you: yes, I see.'
         ]),
         '\u05d0\u05e0\u05d9 \u05e2\u05d5\u05d3 \u05dc\u05d0 \u05d9\u05d5\u05d3\u05e2/\u05ea \u05dc\u05e7\u05e8\u05d0 \u05dc\u05d6\u05d4 \u05d1\u05e9\u05dd': pick([
-            firstName + ', the stars reveal: what does not yet have a name is too large for a name. It refuses to fit inside ordinary words. The map formed for you reveals: the coming chapter will bring you the name — and with it, clarity.',
-            'The stars reveal: ' + firstName + ', what has no name is usually the most important part of the soul — the part beyond language. Let it be. It will reveal itself at the right time.'
+            firstName + ', the stars reveal: what does not yet have a name is too large for a name. It refuses to fit inside ordinary words. The map formed for you reveals: the coming chapter will bring you the name, and with it, clarity.',
+            'The stars reveal: ' + firstName + ', what has no name is usually the most important part of the soul, the part beyond language. Let it be. It will reveal itself at the right time.'
         ])
     };
     const changeMsgHe = changeMap[aChange] || firstName + ', \u05de\u05d4 \u05e9\u05de\u05e9\u05de\u05e9 \u05d0\u05ea \u05d4\u05de\u05d7\u05e9\u05d1\u05d5\u05ea \u05e9\u05dc\u05da \u05db\u05e8\u05d2\u05e2 \u05d4\u05d5\u05d0 \u05de\u05e6\u05e4\u05df \u2014 \u05dc\u05d0 \u05e0\u05d8\u05dc.';
-    const changeMsgEn = changeMapEn[aChange] || firstName + ', what occupies your thoughts is not distraction — it is your mind pointing at something important. It deserves your attention.';
+    const changeMsgEn = changeMapEn[aChange] || firstName + ', what occupies your thoughts is not distraction, it is your mind pointing at something important. It deserves your attention.';
 
     // ── REQUEST interpretations: what the person needs ──
     const aRequest = toHe(answers.request || '');
     const requestMap = {
         'כיוון': pick([
-            firstName + ', כוכבים מגלים נשמה שעומדת בצומת דרכים — לא כי היא אבודה, אלא כי היא גדולה מדי למסלול אחד. המפה שנוצרה עבורך מבשרת: הכיוון שאתה/את מחפש/ת לא מגיע מבחוץ — הוא מתגלה מתוך המפה שבנית לעצמך כאן.',
-            firstName + ' זקוק/ה לכיוון — וזו הכרת אמת. המפה שנוצרה עבורך מגלה: תוך שלושה חודשים, נקודה אחת תהפוך ברורה יותר. הכן/הכיני עצמך לזהות אותה.'
+            firstName + ', כוכבים מגלים נשמה שעומדת בצומת דרכים, לא כי היא אבודה, אלא כי היא גדולה מדי למסלול אחד. המפה שנוצרה עבורך מבשרת: הכיוון שאתה/את מחפש/ת לא מגיע מבחוץ, הוא מתגלה מתוך המפה שבנית לעצמך כאן.',
+            firstName + ' זקוק/ה לכיוון, וזו הכרת אמת. המפה שנוצרה עבורך מגלה: תוך שלושה חודשים, נקודה אחת תהפוך ברורה יותר. הכן/הכיני עצמך לזהות אותה.'
         ]),
         'אומץ': pick([
-            firstName + ', כוכבים מגלים: האומץ שאתה/את מחפש/ת כבר קיים בך — הוא פשוט ממתין לאות. המפה שנוצרה עבורך מבשרת: יש בך עוצמה שנצברה מכל מה שעברת/ה. הפעולה הנדרשת קטנה ממה שנדמה.',
-            'הכוכבים מגלים: ' + firstName + ' עמד/ה כבר בפני דברים שדרשו אומץ — ועמד/ה בהם. המפה שלך מגלה: מה שמחכה לפנייך עכשיו קטן יותר מהם. אבל תחושת הפחד דומה. אמון/י.'
+            firstName + ', כוכבים מגלים: האומץ שאתה/את מחפש/ת כבר קיים בך, הוא פשוט ממתין לאות. המפה שנוצרה עבורך מבשרת: יש בך עוצמה שנצברה מכל מה שעברת/ה. הפעולה הנדרשת קטנה ממה שנדמה.',
+            'הכוכבים מגלים: ' + firstName + ' עמד/ה כבר בפני דברים שדרשו אומץ, ועמד/ה בהם. המפה שלך מגלה: מה שמחכה לפנייך עכשיו קטן יותר מהם. אבל תחושת הפחד דומה. אמון/י.'
         ]),
         'שקט': pick([
-            firstName + ', כוכבים מגלים: מה שנראה כצורך בשקט חיצוני הוא למעשה צורך בשקט פנימי — שהמחשבות יתיישבו. המפה שנוצרה עבורך מבשרת: הפרק הקרוב יביא שקט אם תבחר/תבחרי לפנות לו מרחב.',
-            firstName + ' נמצא/ת בגל גבוה. כל הגלים נגמרים. גם זה. הפרק שאחריו יהיה שקט יותר — אבל הוא ידרוש שתעצור/תעצרי ותרשה/תרשי לאדים להתפזר.'
+            firstName + ', כוכבים מגלים: מה שנראה כצורך בשקט חיצוני הוא למעשה צורך בשקט פנימי, שהמחשבות יתיישבו. המפה שנוצרה עבורך מבשרת: הפרק הקרוב יביא שקט אם תבחר/תבחרי לפנות לו מרחב.',
+            firstName + ' נמצא/ת בגל גבוה. כל הגלים נגמרים. גם זה. הפרק שאחריו יהיה שקט יותר, אבל הוא ידרוש שתעצור/תעצרי ותרשה/תרשי לאדים להתפזר.'
         ]),
         'אישור': pick([
-            firstName + ', כוכבים, רואים: מי שמחפש/ת אישור הוא/היא מי שכבר יודע/ת — אבל עדיין לא סומך/ת על הידיעה שלו/שלה. המפה שנוצרה עבורך מגלה: האישור שאתה/את מחפש/ת יגיע — ברגע שתסמוך/כי על מה שכבר בפנים.',
-            'הכוכבים מגלים: ' + firstName + ' ראוי/ה לאישור — וגם לתת אישור לעצמך. הפרק שלפנייך מכיל מישהו שיראה בך בדיוק מה שאתה/את מחפש/ת לשמוע. הכן/הכיני עצמך לקבל.'
+            firstName + ', כוכבים, רואים: מי שמחפש/ת אישור הוא/היא מי שכבר יודע/ת, אבל עדיין לא סומך/ת על הידיעה שלו/שלה. המפה שנוצרה עבורך מגלה: האישור שאתה/את מחפש/ת יגיע, ברגע שתסמוך/כי על מה שכבר בפנים.',
+            'הכוכבים מגלים: ' + firstName + ' ראוי/ה לאישור, וגם לתת אישור לעצמך. הפרק שלפנייך מכיל מישהו שיראה בך בדיוק מה שאתה/את מחפש/ת לשמוע. הכן/הכיני עצמך לקבל.'
         ]),
         'התחלה': pick([
-            firstName + ', כוכבים מגלים: אתה/את עומד/ת בשער. לא לפניו — בשערו ממש. המפה שנוצרה עבורך מבשרת: ההתחלה שאתה/את מחפש/ת לא דורשת תנאים מיוחדים. היא דורשת רגל אחת. יש לך אותה.',
-            firstName + ' כבר התחיל/ה — כאן, בשיטוט הזה, בשאלות שענית/ה. ההתחלה לא ממתינה לאחרי. היא כבר קרה. מה הצעד הבא?'
+            firstName + ', כוכבים מגלים: אתה/את עומד/ת בשער. לא לפניו, בשערו ממש. המפה שנוצרה עבורך מבשרת: ההתחלה שאתה/את מחפש/ת לא דורשת תנאים מיוחדים. היא דורשת רגל אחת. יש לך אותה.',
+            firstName + ' כבר התחיל/ה, כאן, בשיטוט הזה, בשאלות שענית/ה. ההתחלה לא ממתינה לאחרי. היא כבר קרה. מה הצעד הבא?'
         ]),
         'שחרור': pick([
             firstName + ', כוכבים מגלים: מה שאתה/את צריך/ה לשחרר לא ייעלם עם השחרור — הוא יהפוך לחלק אחר של הסיפור שלך. המפה שנוצרה עבורך מגלה: השחרור קרב. הוא מחכה לרגע שתפנה/י לו.',
@@ -2168,65 +2197,65 @@ function showInterpretationPanel(userVision) {
     const aUnresolved = toHe(answers.unresolved || '');
     const unresolvedMap = {
         'מערכות יחסים': pick([
-            firstName + ', כוכבים מגלים: הבהירות שחסרה לך במערכות יחסים מסמנת פרק שבו מה שלא אמרת/ה מבקש לצאת. המפה שנוצרה עבורך מגלה: הרגע הנכון לאמת הזו מתקרב — וכשיגיע, אתה/את תדע/תדעי.',
+            firstName + ', כוכבים מגלים: הבהירות שחסרה לך במערכות יחסים מסמנת פרק שבו מה שלא אמרת/ה מבקש לצאת. המפה שנוצרה עבורך מגלה: הרגע הנכון לאמת הזו מתקרב, וכשיגיע, אתה/את תדע/תדעי.',
             'הכוכבים מגלים: ' + firstName + ' הבהירות שמחפש/ת במערכות יחסים תגיע ברגע שתבחר/תבחרי לומר את מה שעוד לא נאמר. הפרק הקרוב מכיל שיחה שתשנה הכל.'
         ]),
         'הקריירה שלי': pick([
-            firstName + ', כוכבים מגלים: הבהירות שחסרה בקריירה מגיעה מהפרש בין מה שנבנה ובין מה שמבקש להיבנות. המפה שנוצרה עבורך מגלה: הכיוון הנכון כבר ידוע לך — הוא רק ממתין לאישורך.',
-            firstName + ' הקריירה שלך עומדת בפרק של מפנה. לא ניתן לדחות אותו — ולא כדאי. הפרק הקרוב מכיל הזדמנות שתתאים לנשמה שלך יותר מכל דבר שהיה עד כה.'
+            firstName + ', כוכבים מגלים: הבהירות שחסרה בקריירה מגיעה מהפרש בין מה שנבנה ובין מה שמבקש להיבנות. המפה שנוצרה עבורך מגלה: הכיוון הנכון כבר ידוע לך, הוא רק ממתין לאישורך.',
+            firstName + ' הקריירה שלך עומדת בפרק של מפנה. לא ניתן לדחות אותו, ולא כדאי. הפרק הקרוב מכיל הזדמנות שתתאים לנשמה שלך יותר מכל דבר שהיה עד כה.'
         ]),
         'מי אני': pick([
             firstName + ', כוכבים מגלים: מי ששואל/ת "מי אני" הוא/היא מי שכבר עבר/ה את הגרסה הפשוטה של עצמו/ה ומגיע/ה לגרסה העמוקה. המפה שנוצרה עבורך מגלה: הגרסה הזו מתגלה בסיפור שנבנה כאן.',
-            'הכוכבים מגלים: ' + firstName + ' "מי אני" היא שאלה חיה — היא אינה מקבלת תשובה אחת. הפרק הקרוב יוסיף שכבה חדשה לתשובה, ואיתה — יותר שלמות.'
+            'הכוכבים מגלים: ' + firstName + ' "מי אני" היא שאלה חיה, היא אינה מקבלת תשובה אחת. הפרק הקרוב יוסיף שכבה חדשה לתשובה, ואיתה, יותר שלמות.'
         ]),
         'לאן אני הולך/ת': pick([
-            firstName + ', כוכבים מגלים: הכיוון שאתה/את מחפש/ת מסומן בכוכבים שנוצרו כאן עבורך. כל בחירה שבחרת/ה הייתה חלק מהמפה הזו. הדרך שלפנייך מכילה את מה שתמיד חיפשת/ה — רק בצורה שעדיין לא ציפית לה.',
+            firstName + ', כוכבים מגלים: הכיוון שאתה/את מחפש/ת מסומן בכוכבים שנוצרו כאן עבורך. כל בחירה שבחרת/ה הייתה חלק מהמפה הזו. הדרך שלפנייך מכילה את מה שתמיד חיפשת/ה, רק בצורה שעדיין לא ציפית לה.',
             firstName + ' הדרך שלפנייך אינה מקרית. היא נבנית מהתשובות שנתת/ה כאן. כל כוכב ב' + firstName + ' הוא נקודה על הדרך הזו.'
         ]),
         'מה שהיה': pick([
-            firstName + ', כוכבים מגלים: מה שהיה הוא הבסיס — לא הגג. המפה שנוצרה עבורך מגלה: הפרק הקרוב יאפשר לך לראות את העבר שלך לא כעוגן, אלא כגשר.',
-            'הכוכבים מגלים: ' + firstName + ' הבהירות על מה שהיה תגיע ברגע שתבחר/תבחרי לשחרר את הצורך להבין הכל. לפעמים מה שקרה לא זקוק להסבר — רק להכרה.'
+            firstName + ', כוכבים מגלים: מה שהיה הוא הבסיס, לא הגג. המפה שנוצרה עבורך מגלה: הפרק הקרוב יאפשר לך לראות את העבר שלך לא כעוגן, אלא כגשר.',
+            'הכוכבים מגלים: ' + firstName + ' הבהירות על מה שהיה תגיע ברגע שתבחר/תבחרי לשחרר את הצורך להבין הכל. לפעמים מה שקרה לא זקוק להסבר, רק להכרה.'
         ]),
         'מה שיהיה': pick([
-            firstName + ', כוכבים מגלים: מה שיהיה כבר מתעצב — ואתה/את חלק מהעיצוב הזה. המפה שנוצרה עבורך אינה ניחוש — היא בניה. כל תשובה שנתת/ה היא לבנה.',
-            firstName + ' הבהירות על מה שיהיה לא תגיע דרך ידיעה — היא תגיע דרך בניה. הפרק הקרוב: בנה/בני. צעד קטן, בכוונה.'
+            firstName + ', כוכבים מגלים: מה שיהיה כבר מתעצב, ואתה/את חלק מהעיצוב הזה. המפה שנוצרה עבורך אינה ניחוש, היא בניה. כל תשובה שנתת/ה היא לבנה.',
+            firstName + ' הבהירות על מה שיהיה לא תגיע דרך ידיעה, היא תגיע דרך בניה. הפרק הקרוב: בנה/בני. צעד קטן, בכוונה.'
         ]),
         'עצמי': pick([
-            firstName + ', כוכבים מגלים: הבהירות על עצמך היא הבהירות הנדירה ביותר — ולך יש את הכלים לה. המפה שנוצרה עבורך היא ראי: מה שראית/ה בה הוא לא אקראי.',
+            firstName + ', כוכבים מגלים: הבהירות על עצמך היא הבהירות הנדירה ביותר, ולך יש את הכלים לה. המפה שנוצרה עבורך היא ראי: מה שראית/ה בה הוא לא אקראי.',
             'הכוכבים מגלים: ' + firstName + ' הבהירות על עצמך מגיעה בגלים. הגל הבא מתקרב. והפעם הוא יביא איתו שכבה שלא ידעת/ה שהיא שם.'
         ]),
         'כל הנ"ל': pick([
-            firstName + ', כוכבים מגלים: נשמה שמחפשת בהירות בכל הממדים בו-זמנית נמצאת בשלב של עיבוד גדול. המפה שנוצרה עבורך מגלה: לא הכל יתברר בבת-אחת — אבל חלק אחד, הפרק הקרוב, יהיה ברור מאוד.',
-            firstName + ' מי שזקוק/ה לבהירות בכל מקום בו-זמנית — הוא/היא נשמה שעוברת שינוי רדיקלי. תן/תני לו להתרחש. הכוכבים מגבים.'
+            firstName + ', כוכבים מגלים: נשמה שמחפשת בהירות בכל הממדים בו-זמנית נמצאת בשלב של עיבוד גדול. המפה שנוצרה עבורך מגלה: לא הכל יתברר בבת-אחת, אבל חלק אחד, הפרק הקרוב, יהיה ברור מאוד.',
+            firstName + ' מי שזקוק/ה לבהירות בכל מקום בו-זמנית, הוא/היא נשמה שעוברת שינוי רדיקלי. תן/תני לו להתרחש. הכוכבים מגבים.'
         ])
     };
     const unresolvedMapEn = {
         '\u05de\u05e2\u05e8\u05db\u05d5\u05ea \u05d9\u05d7\u05e1\u05d9\u05dd': pick([
-            firstName + ', the stars reveal: the clarity missing for you in relationships marks a chapter where what has not been said is asking to emerge. The map formed for you reveals: the right moment for this truth is approaching — and when it comes, you will know.',
+            firstName + ', the stars reveal: the clarity missing for you in relationships marks a chapter where what has not been said is asking to emerge. The map formed for you reveals: the right moment for this truth is approaching, and when it comes, you will know.',
             firstName + ', the clarity you seek in relationships will come the moment you choose to say what has not yet been said. The coming chapter contains a conversation that will change everything.'
         ]),
         '\u05d4\u05e7\u05e8\u05d9\u05d9\u05e8\u05d4 \u05e9\u05dc\u05d9': pick([
-            firstName + ', the stars reveal: the clarity missing in your career comes from the gap between what has been built and what is asking to be built. The map formed for you reveals: the right direction is already known to you — it is only waiting for your confirmation.',
-            firstName + ', your career is standing at a pivot point. It cannot be postponed — and it should not be. The coming chapter contains an opportunity that will fit your soul more than anything before.'
+            firstName + ', the stars reveal: the clarity missing in your career comes from the gap between what has been built and what is asking to be built. The map formed for you reveals: the right direction is already known to you, it is only waiting for your confirmation.',
+            firstName + ', your career is standing at a pivot point. It cannot be postponed, and it should not be. The coming chapter contains an opportunity that will fit your soul more than anything before.'
         ]),
         '\u05de\u05d9 \u05d0\u05e0\u05d9': pick([
             firstName + ', the stars reveal: one who asks "who am I" has already moved beyond the simple version of themselves and is arriving at the deeper one. The map formed for you reveals: this version is revealing itself in the story being built here.',
-            firstName + ', "who am I" is a living question — it does not receive a single answer. The coming chapter will add a new layer to the answer, and with it — more wholeness.'
+            firstName + ', "who am I" is a living question, it does not receive a single answer. The coming chapter will add a new layer to the answer, and with it, more wholeness.'
         ]),
         '\u05dc\u05d0\u05df \u05d0\u05e0\u05d9 \u05d4\u05d5\u05dc\u05da/\u05ea': pick([
-            firstName + ', the stars reveal: the direction you seek is marked in the stars formed here for you. Every choice you made was part of this map. The path ahead contains what you have always sought — only in a form you have not yet expected.',
+            firstName + ', the stars reveal: the direction you seek is marked in the stars formed here for you. Every choice you made was part of this map. The path ahead contains what you have always sought, only in a form you have not yet expected.',
             firstName + ', the path before you is not random. It is being built from the answers you gave here. Every star in ' + firstName + ' is a point on that path.'
         ]),
         '\u05de\u05d4 \u05e9\u05d4\u05d9\u05d4': pick([
-            firstName + ', the stars reveal: what was is the foundation — not the ceiling. The map formed for you reveals: the coming chapter will allow you to see your past not as an anchor, but as a bridge.',
-            firstName + ', the clarity about what was will come the moment you choose to release the need to understand everything. Sometimes what happened does not need explanation — only recognition.'
+            firstName + ', the stars reveal: what was is the foundation, not the ceiling. The map formed for you reveals: the coming chapter will allow you to see your past not as an anchor, but as a bridge.',
+            firstName + ', the clarity about what was will come the moment you choose to release the need to understand everything. Sometimes what happened does not need explanation, only recognition.'
         ]),
         '\u05de\u05d4 \u05e9\u05d9\u05d4\u05d9\u05d4': pick([
-            firstName + ', the stars reveal: what will be is already taking shape — and you are part of that shaping. The map formed for you is not a guess — it is a construction. Every answer you gave is a building block.',
-            firstName + ', clarity about what will be will not come through knowing — it will come through building. The coming chapter: build. One small step, with intention.'
+            firstName + ', the stars reveal: what will be is already taking shape, and you are part of that shaping. The map formed for you is not a guess, it is a construction. Every answer you gave is a building block.',
+            firstName + ', clarity about what will be will not come through knowing, it will come through building. The coming chapter: build. One small step, with intention.'
         ]),
         '\u05d4\u05db\u05d5\u05dc': pick([
-            firstName + ', the stars reveal: a soul seeking clarity in every dimension simultaneously is in a phase of major processing. The map formed for you reveals: not everything will become clear at once — but one part, in the coming chapter, will be very clear.',
+            firstName + ', the stars reveal: a soul seeking clarity in every dimension simultaneously is in a phase of major processing. The map formed for you reveals: not everything will become clear at once, but one part, in the coming chapter, will be very clear.',
             firstName + ', one who needs clarity everywhere simultaneously is a soul going through a radical transformation. Allow it to happen. The stars support it.'
         ])
     };
@@ -2236,22 +2265,22 @@ function showInterpretationPanel(userVision) {
     // ── BIRTH MONTH interpretation (from dob question) ──
     const birthMonth = answers.dob ? new Date(answers.dob).getMonth() + 1 : 0;
     const monthMapHe = {
-        1:  firstName + ', ינואר הוא חודש של ראשיתות שנולדות מתוך הקור — שלג שמכסה, אבל שורשים שגדלים. מי שנולד/ה בינואר יודע/ת שהסוד הוא הסבלנות. הפרק שמגיע עבורך יידרוש אותה.',
-        2:  firstName + ', פברואר הוא החודש שבין — לא חורף ולא אביב. אנשי פברואר חיים בין עולמות ויודעים לנווט בשני מקביל. הכוכבים מראים: הגבול שמציק לך הוא בדיוק המקום שבו תמצא/י את החלק הבא שלך.',
-        3:  firstName + ', מרץ הוא חודש הפריחה שלא מבקשת רשות — היא פורצת. נולדת/ה בחודש שמגלם אומץ טבעי. הצורה שנוצרה כאן מגלה: יש בך כוח שמחכה לאות. האות הגיע.',
-        4:  firstName + ', אפריל הוא חודש הגשם שמכין את האדמה לקציר. מי שנולד/ה בו/בה מבינ/ה שהתנאים הקשים הם ההכנה. הקונסטלציה שלך מגלה: מה שגדל עכשיו הוא כבר שם — הוא רק ממתין לרגע הנכון.',
-        5:  firstName + ', מאי הוא שיא הבריחה לתוך החיים — כוחות שנפתחים, צבעים שמוצפים, חושים שמתחדדים. אנשי מאי הם עמוקים ועדינים בו-זמנית. הכוכבים מראים: אתה/את בשיא הכוח הטבעי שלך.',
-        6:  firstName + ', יוני הוא חודש של אמצע — האור הכי ארוך, הכוח בשיאו. מי שנולד/ה ביוני מנהל/ת ניגודים פנימיים בחן. הכוכבים מגלים: מה שנראה כחלוקה הוא בעצם שלמות של שני פנים.',
-        7:  firstName + ', יולי הוא חום שלא מתנצל — ישיר, עמוק, מוחשי. אנשי יולי מרגישים כל דבר בעוצמה. הפרק שמגיע מגלה: העוצמה הזו היא המתנה, לא הנטל.',
-        8:  firstName + ', אוגוסט הוא שיא הקיץ — רגע לפני פנייה. מי שנולד/ה באוגוסט חי/ה על הסף בין שני עידנים. הכוכבים מגלים: השינוי שמרגיש/ה בא — הוא כבר כאן.',
+        1:  firstName + ', ינואר הוא חודש של ראשיתות שנולדות מתוך הקור, שלג שמכסה, אבל שורשים שגדלים. מי שנולד/ה בינואר יודע/ת שהסוד הוא הסבלנות. הפרק שמגיע עבורך יידרוש אותה.',
+        2:  firstName + ', פברואר הוא החודש שבין, לא חורף ולא אביב. אנשי פברואר חיים בין עולמות ויודעים לנווט בשני מקביל. הכוכבים מראים: הגבול שמציק לך הוא בדיוק המקום שבו תמצא/י את החלק הבא שלך.',
+        3:  firstName + ', מרץ הוא חודש הפריחה שלא מבקשת רשות, היא פורצת. נולדת/ה בחודש שמגלם אומץ טבעי. הצורה שנוצרה כאן מגלה: יש בך כוח שמחכה לאות. האות הגיע.',
+        4:  firstName + ', אפריל הוא חודש הגשם שמכין את האדמה לקציר. מי שנולד/ה בו/בה מבינ/ה שהתנאים הקשים הם ההכנה. הקונסטלציה שלך מגלה: מה שגדל עכשיו הוא כבר שם, הוא רק ממתין לרגע הנכון.',
+        5:  firstName + ', מאי הוא שיא הבריחה לתוך החיים, כוחות שנפתחים, צבעים שמוצפים, חושים שמתחדדים. אנשי מאי הם עמוקים ועדינים בו-זמנית. הכוכבים מראים: אתה/את בשיא הכוח הטבעי שלך.',
+        6:  firstName + ', יוני הוא חודש של אמצע, האור הכי ארוך, הכוח בשיאו. מי שנולד/ה ביוני מנהל/ת ניגודים פנימיים בחן. הכוכבים מגלים: מה שנראה כחלוקה הוא בעצם שלמות של שני פנים.',
+        7:  firstName + ', יולי הוא חום שלא מתנצל, ישיר, עמוק, מוחשי. אנשי יולי מרגישים כל דבר בעוצמה. הפרק שמגיע מגלה: העוצמה הזו היא המתנה, לא הנטל.',
+        8:  firstName + ', אוגוסט הוא שיא הקיץ, רגע לפני פנייה. מי שנולד/ה באוגוסט חי/ה על הסף בין שני עידנים. הכוכבים מגלים: השינוי שמרגיש/ה בא, הוא כבר כאן.',
         9:  firstName + ', ספטמבר הוא תחילת הקצירה אחרי הגידול. אנשי ספטמבר יודעים לקחת מה שגדלו ולהפוך אותו למוחשי. הקונסטלציה מגלה: הגיע הזמן לאסוף מה שצמח בשנים האחרונות.',
-        10: firstName + ', אוקטובר הוא זמן של עלים שנושרים מבחירה — לא כישלון, אלא שחרור. מי שנולד/ה בו/ה הוא/היא מאסטר/ית של שחרור. הכוכבים מגלים: מה שאתה/את מוכן/ה לשחרר פותח מרחב לדבר הבא.',
-        11: firstName + ', נובמבר הוא חושך שמכיל אור — ירח ולא שמש. אנשי נובמבר הם נביאי הפנים, מי שמכיר/ה את האמת לפני שהיא מגיעה לאחרים. הקונסטלציה אומרת: הידיעה שיש בך — סמוך/י עליה.',
-        12: firstName + ', דצמבר הוא סוף וראשית בו-זמנית — ה-12 חודשים הולכים, ה-12 הבאים כבר בדרך. מי שנולד/ה בדצמבר נושא/ת בתוכו/ה גם סיכום וגם הבטחה. הכוכבים אומרים: הפרק הבא גדול מהקודם.'
+        10: firstName + ', אוקטובר הוא זמן של עלים שנושרים מבחירה, לא כישלון, אלא שחרור. מי שנולד/ה בו/ה הוא/היא מאסטר/ית של שחרור. הכוכבים מגלים: מה שאתה/את מוכן/ה לשחרר פותח מרחב לדבר הבא.',
+        11: firstName + ', נובמבר הוא חושך שמכיל אור, ירח ולא שמש. אנשי נובמבר הם נביאי הפנים, מי שמכיר/ה את האמת לפני שהיא מגיעה לאחרים. הקונסטלציה אומרת: הידיעה שיש בך, סמוך/י עליה.',
+        12: firstName + ', דצמבר הוא סוף וראשית בו-זמנית, ה-12 חודשים הולכים, ה-12 הבאים כבר בדרך. מי שנולד/ה בדצמבר נושא/ת בתוכו/ה גם סיכום וגם הבטחה. הכוכבים אומרים: הפרק הבא גדול מהקודם.'
     };
     const monthMsgHe = monthMapHe[birthMonth] || '';
 
-    // ── PAREIDOLIA WORD — specific tarot interpretation ──
+    // ── PAREIDOLIA WORD, specific tarot interpretation ──
     const _rawVision = (answers.pareidolia || '').trim();
     const _cleanVision = _rawVision.replace(/^ה/, ''); // remove definite article if present
     
@@ -3840,8 +3869,7 @@ function renderQ() {
             const toX=p=>(p.x-mcx)*sc_svg/(CAM*SR);
             const toY=p=>(30-(p.y-mcy)*sc_svg)/(CAM*SR);
 
-            // 5. WebGL coordList: SINGLE-SIDED only (the Rorschach is only in the SVG lineart).
-            // The prismatic WebGL constellation shows only the right-hand shape for a clean look.
+            // 5. WebGL coordList: BILATERAL (Rorschach) — matches the SVG lineart.
             const J=0.01;
             const coordList=[], vertexSet=new Set();
             allPts.forEach(p=>{
@@ -3849,7 +3877,13 @@ function renderQ() {
                 const jx=(Math.random()-.5)*J, jy=(Math.random()-.5)*J;
                 if (p.isVertex) { vertexSet.add(coordList.length); }
                 coordList.push([nx+jx, ny+jy, p.isVertex?1:0]);
-                // Single-sided only — no bilateral mirror (matches the SVG lineart drawSide(1) exactly)
+            });
+            // Mirrored side (left) for bilateral symmetry
+            allPts.forEach(p=>{
+                const nx=toX(p), ny=toY(p);
+                const jx=(Math.random()-.5)*J, jy=(Math.random()-.5)*J;
+                if (p.isVertex) { vertexSet.add(coordList.length); }
+                coordList.push([-nx+jx, ny+jy, p.isVertex?1:0]);
             });
 
             window._qDrawingPoints = coordList;  // [x, y, isVertex(0|1)]
@@ -5195,8 +5229,8 @@ async function buildSignalField() {
     } // end if (!window.isScreensaverMode)
 
     // ── STARFIELD — subtle night-sky background stars ──
-    const STARFIELD_COUNT = 900; // Rich night sky — like real stars
-    const skySpread = 12000; // wider spread for zoom-out
+    const STARFIELD_COUNT = 2000; // Dense night sky — real starfield
+    const skySpread = 18000; // very wide spread for zoom-out
     for (let i = 0; i < STARFIELD_COUNT; i++) {
         const sx = (Math.random() - 0.5) * skySpread * 2;
         const sy = (Math.random() - 0.5) * skySpread * 2;
@@ -5959,8 +5993,8 @@ function skyLoop(ts) {
     if (window.skyRevealState === 'revealed') {
         // Slow gentle 3D rotation for user constellation — like a display model
         ghostRotY += 0.00035; // Ghost constellations rotate independently
-        targetGlobalRotY += 0.0003; // Main constellation: very slow Y-axis auto-rotate (~3.5 min per revolution)
-        targetGlobalRotX = Math.sin(targetGlobalRotY * 0.7) * 0.15; // Gentle X-axis wobble for organic 3D feel
+        targetGlobalRotY += 0.0008; // Main constellation: visible Y-axis auto-rotate (~2 min per revolution)
+        targetGlobalRotX = Math.sin(targetGlobalRotY * 0.7) * 0.2; // X-axis wobble for organic 3D feel
         
         // Smoothly interpolate rotation — always active regardless of zoom level
         const parallaxFade = Math.max(0.3, smoothstep(0.2, 0.6, cam.scale)); // never fully zero
@@ -7705,68 +7739,68 @@ document.addEventListener('DOMContentLoaded', () => {
             const epilogueMap = {
                 'סרטן': {
                     title: 'השריון הרך.',
-                    body: firstName + ', מי שרואה סרטן בכוכבים נושא בתוכו עולם פנימי עשיר שמוגן בשריון חיצוני. הסרטן אינו חלש — הוא יודע שהרכות שבפנים היא הדבר הכי חזק שיש. הוא בונה בית מתוך עצמו, לא ממתין שמישהו יבנה לו.',
-                    insight: 'ההגנה שבנית סביבך אינה חולשה — היא חוכמה. אבל לפעמים השריון נשאר גם כשאין ממה להתגונן. שאל את עצמך: מה היה קורה אם היית מרשה לרכות לצאת החוצה?'
+                    body: firstName + ', מי שרואה/ת סרטן בכוכבים נושא/ת בתוכו/ה עולם פנימי עשיר שמוגן בשריון חיצוני. הסרטן אינו חלש, הוא יודע שהרכות שבפנים היא הדבר הכי חזק שיש. הוא בונה בית מתוך עצמו, לא ממתין שמישהו יבנה לו.',
+                    insight: 'ההגנה שבנית סביבך אינה חולשה, היא חוכמה. אבל לפעמים השריון נשאר גם כשאין ממה להתגונן. שאל/י את עצמך: מה היה קורה אם היית מרשה לרכות לצאת החוצה?'
                 },
                 'פרפר': {
                     title: 'הכנפיים שנבנו באפלה.',
-                    body: firstName + ', הפרפר הוא הסמל העתיק ביותר לשינוי שמגיע מבפנים. הכנפיים לא ניתנו לו — הן נבנו בחושך הגולם. מי שרואה פרפר בכוכבים עובר כרגע תהליך של התחדשות, גם אם מבחוץ נראה שום דבר לא זז.',
-                    insight: 'התקופה שאתה בה עכשיו דומה לגולם — סגור, חשוך, אבל מלא בבנייה. מה שאתה הולך להפוך אליו גדול ממה שהיית. תן לתהליך את הזמן שלו.'
+                    body: firstName + ', הפרפר הוא הסמל העתיק ביותר לשינוי שמגיע מבפנים. הכנפיים לא ניתנו לו, הן נבנו בחושך הגולם. מי שרואה/ת פרפר בכוכבים עובר/ת כרגע תהליך של התחדשות, גם אם מבחוץ נראה שום דבר לא זז.',
+                    insight: 'התקופה שאת/ה בה עכשיו דומה לגולם, סגור, חשוך, אבל מלאה בבנייה. מה שאת/ה הולך/ת להפוך אליו גדול ממה שהיית. תן/תני לתהליך את הזמן שלו.'
                 },
                 'עטלף': {
-                    title: 'הרואה בחושך.',
-                    body: firstName + ', העטלף נע בביטחון מוחלט במקום שאחרים לא מסוגלים לראות בו כלום. הוא לא זקוק לאור של אחרים — יש לו מערכת ניווט פנימית. מי שרואה עטלף בכוכבים סומך על אינטואיציה, לא על מה שנראה.',
-                    insight: 'יש לך יכולת לקרוא מצבים ואנשים בדיוק מפתיע. הבעיה: לפעמים אתה לא סומך על מה שאתה יודע כי אף אחד סביבך לא רואה את אותו הדבר. סמוך. אתה צודק יותר ממה שאתה חושב.'
+                    title: 'הרואה/ת בחושך.',
+                    body: firstName + ', העטלף נע בביטחון מוחלט במקום שאחרים לא מסוגלים לראות בו כלום. הוא לא זקוק לאור של אחרים, יש לו מערכת ניווט פנימית. מי שרואה/ת עטלף בכוכבים סומך/ת על אינטואיציה, לא על מה שנראה.',
+                    insight: 'יש לך יכולת לקרוא מצבים ואנשים בדיוק מפתיע. לפעמים את/ה לא סומך/ת על מה שאת/ה יודע/ת כי אף אחד סביבך לא רואה את אותו הדבר. סמוך/י. את/ה צודק/ת יותר ממה שאת/ה חושב/ת.'
                 },
                 'עש': {
-                    title: 'מי שהולך אל האור.',
-                    body: firstName + ', העש אינו טיפש כשהוא טס לאור — הוא עוקב אחרי מצפן פנימי שלא מוותר. יש בך משיכה למשהו שגדול ממך, גם כשזה כואב, גם כשזה שורף. העש הוא נאמנות לשליחות.',
-                    insight: 'הדבר שמושך אותך חזק — אדם, חלום, מקום — הוא לא אשליה. אבל הגישה צריכה להשתנות. תמשיך ללכת אליו, אבל אל תיתן לו לשרוף אותך. מצא את המרחק הנכון.'
+                    title: 'מי שהולך/ת אל האור.',
+                    body: firstName + ', העש אינו טיפש כשהוא טס לאור, הוא עוקב אחרי מצפן פנימי שלא מוותר. יש בך משיכה למשהו שגדול ממך, גם כשזה כואב, גם כשזה שורף. העש הוא נאמנות לשליחות.',
+                    insight: 'הדבר שמושך אותך חזק, אדם, חלום, מקום, הוא לא אשליה. אבל הגישה צריכה להשתנות. אל תיתן/תתני לו לשרוף אליו, אבל מצא/מצאי את המרחק הנכון.'
                 },
                 'עקרב': {
                     title: 'העוצמה השקטה.',
-                    body: firstName + ', העקרב הוא יצור של קיצוניות — מרגיש עמוק, לא מוותר, ויודע לשרוד מקומות שאחרים לא שורדים. מי שרואה עקרב בכוכבים נושא מבט חד שחותך דרך שטחיות.',
-                    insight: 'יש בך נאמנות קיצונית ויכולת לראות מה שאחרים מעדיפים לא לראות. השאלה שהכוכבים שואלים: מה עדיין לא הרשית לעצמך לשחרר — ומה מחכה להיוולד תחתיו?'
+                    body: firstName + ', העקרב הוא יצור של קיצוניות, מרגיש/ה עמוק, לא מוותר/ת, ויודע/ת לשרוד מקומות שאחרים לא שורדים. מי שרואה/ת עקרב בכוכבים נושא/ת מבט חד שחותך דרך שטחיות.',
+                    insight: 'יש בך נאמנות קיצונית ויכולת לראות מה שאחרים מעדיפים לא לראות. השאלה שהכוכבים שואלים: מה עדיין לא הרשית לעצמך לשחרר, ומה מחכה להיוולד תחתיו?'
                 },
                 'דב': {
                     title: 'הכוח שלא מוכיח את עצמו.',
-                    body: firstName + ', הדב לא מראה כוח — הוא פשוט חזק. אין בו צורך בהוכחות, אין בו צורך באישור. מי שרואה דב בכוכבים מחזיק בתוכו משאבים אדירים שפועלים בשקט.',
-                    insight: 'אתה לא צריך להוכיח לאף אחד מה שאתה שווה. הכוח שבך אמיתי ועובד גם כשאתה לא שם לב אליו. הגיע הזמן לסמוך עליו — בלי להתנצל, בלי להסביר.'
+                    body: firstName + ', הדב לא מראה כוח, הוא פשוט חזק. אין בו צורך בהוכחות, אין בו צורך באישור. מי שרואה/ת דב בכוכבים מחזיק/ה בתוכו/ה משאבים אדירים שפועלים בשקט.',
+                    insight: 'את/ה לא צריך/ה להוכיח לאף אחד מה שאת/ה שווה. הכוח שבך אמיתי ועובד גם כשאת/ה לא שם/ה לב אליו. הגיע הזמן לסמוך עליו, בלי להתנצל, בלי להסביר.'
                 },
                 'סוס': {
                     title: 'האנרגיה הצבורה.',
-                    body: firstName + ', הסוס רץ לא כי מישהו אמר לו לרוץ — הוא רץ כי זה מה שהוא. יש בך אנרגיה אדירה שצבורה ומחכה לכיוון. לא חסר לך כוח, חסר לך שדה פתוח.',
-                    insight: 'הרגע שבו תדע לאן — תרוץ כמו שלא רצת מעולם. השאלה לא "האם אני מסוגל" אלא "לאן אני רוצה להגיע". ברגע שתענה — שום דבר לא יעצור אותך.'
+                    body: firstName + ', הסוס רץ לא כי מישהו אמר לו לרוץ, הוא רץ כי זה מה שהוא. יש בך אנרגיה אדירה שצבורה ומחכה לכיוון. לא חסר לך כוח, חסר לך שדה פתוח.',
+                    insight: 'הרגע שבו תדע/י לאן, תרוץ כמו שלא רצת מעולם. השאלה לא "האם אני מסוגל/ת" אלא "לאן אני רוצה להגיע". ברגע שתענה/י, שום דבר לא יעצור אותך.'
                 },
                 'דבורה': {
-                    title: 'הבונה בשקט.',
-                    body: firstName + ', הדבורה עובדת ללא הפסקה על משהו שגדול ממנה. היא לא בונה בשביל עצמה — היא בונה מערכת שלמה. מי שרואה דבורה בכוכבים יוצר בעולם יותר ממה שהוא מודע לו.',
-                    insight: 'מה שאתה בונה ביום-יום — המילים, הפעולות, הקשרים — יוצר מבנה שלם שאתה לא רואה עדיין. הוא שם. הוא אמיתי. תמשיך.'
+                    title: 'הבונה/ת בשקט.',
+                    body: firstName + ', הדבורה עובדת ללא הפסקה על משהו שגדול ממנה. היא לא בונה בשביל עצמה, היא בונה מערכת שלמה. מי שרואה/ת דבורה בכוכבים יוצר/ת בעולם יותר ממה שהוא/היא מודע/ת לו.',
+                    insight: 'מה שאת/ה בונה/ת ביום-יום, המילים, הפעולות, הקשרים, יוצר מבנה שלם שאת/ה לא רואה/ת עדיין. הוא שם. הוא אמיתי. תמשיך.'
                 },
                 'ציפור': {
                     title: 'המבט מלמעלה.',
                     body: firstName + ', הציפור רואה את כל התמונה מגובה שאחרים לא מגיעים אליו. יש בך יכולת לראות דברים מנקודת מבט רחבה, לזהות דפוסים שאחרים מפספסים.',
-                    insight: 'אתה יודע דברים שאתה לא מסביר — פשוט רואה אותם. זה לא דמיון, זו פרספקטיבה. השאלה שלך היא: מה מונע ממך לעוף לשם?'
+                    insight: 'את/ה יודע/ת דברים שאת/ה לא מסביר/ה, פשוט רואה/ת אותם. זה לא דמיון, זו פרספקטיבה. השאלה שלך היא: מה מונע ממך לעוף לשם?'
                 },
                 'צפרדע': {
                     title: 'בין שני עולמות.',
-                    body: firstName + ', הצפרדע חיה במים וביבשה — בין העולם הנסתר לעולם הגלוי. מי שרואה צפרדע בכוכבים מכיר שני עולמות בו-זמנית ויודע לנוע ביניהם.',
-                    insight: 'הזהות הכפולה שלך — רגשי ושכלי, פנימי וחיצוני, חזק ורך — אינה סתירה. היא המתנה. אתה יכול לחיות בשניהם בלי לבחור.'
+                    body: firstName + ', הצפרדע חיה במים וביבשה, בין העולם הנסתר לעולם הגלוי. מי שרואה/ת צפרדע בכוכבים מכיר/ה שני עולמות בו-זמנית ויודע/ת לנוע ביניהם.',
+                    insight: 'הזהות הכפולה שלך, רגשי ושכלי, פנימי וחיצוני, חזק ורך, אינה סתירה. היא המתנה. את/ה יכול/ה לחיות בשניהם בלי לבחור.'
                 },
                 'בית': {
                     title: 'השורשים שלך.',
-                    body: firstName + ', הבית בכוכבים הוא המקום הפנימי ביותר — לא קירות אלא תחושה. מי שרואה בית מחפש שורש, שייכות, מקום שבו אפשר להיות בלי מסכה.',
-                    insight: 'הבית שאתה מחפש לא נמצא במפה — הוא נמצא בתוכך. כשתרגיש בטוח בתוך עצמך, כל מקום יהפוך לבית. התהליך הזה כבר התחיל.'
+                    body: firstName + ', הבית בכוכבים הוא המקום הפנימי ביותר, לא קירות אלא תחושה. מי שרואה/ת בית מחפש/ת שורש, שייכות, מקום שבו אפשר להיות בלי מסכה.',
+                    insight: 'הבית שאת/ה מחפש/ת לא נמצא במפה, הוא נמצא בתוכך. כשתרגיש/י בטוח/ה בתוך עצמך, כל מקום יהפוך לבית. התהליך הזה כבר התחיל.'
                 },
                 'אונייה': {
                     title: 'המסע.',
-                    body: firstName + ', האונייה אינה המטרה — היא הדרך. מי שרואה אונייה בכוכבים מרגיש שהוא באמצע מעבר, בין חוף אחד לשני, עדיין לא הגיע אבל כבר יצא.',
-                    insight: 'אתה בתנועה, גם אם מרגיש שאתה תקוע. האוקיינוס שאתה חוצה עכשיו הוא הפרק שבין מי שהיית למי שאתה הולך להיות. אל תנסה לחזור לחוף — המעבר הזה הכרחי.'
+                    body: firstName + ', האונייה אינה המטרה, היא הדרך. מי שרואה/ת אונייה בכוכבים מרגיש/ה שהוא/היא באמצע מעבר, בין חוף אחד לשני, עדיין לא הגיע אבל כבר יצא.',
+                    insight: 'את/ה בתנועה, גם אם מרגיש/ה שאת/ה תקוע/ה. האוקיינוס שאת/ה חוצה/ה עכשיו הוא הפרק שבין מי שהיית למי שאת/ה הולך/ת להיות. אל תנסה/תנסי לחזור לחוף, המעבר הזה הכרחי.'
                 },
                 'מטוס': {
                     title: 'הנמלט.',
-                    body: firstName + ', המטוס הוא חלום של עזיבה מהירה — היכולת להתרומם מעל הכל ברגע. מי שרואה מטוס בכוכבים מרגיש צורך חזק בשחרור, בתנועה, בהתרחקות ממשהו.',
-                    insight: 'השאלה האמיתית: ממה אתה רוצה להתרחק — ולאן אתה רוצה להגיע? לפעמים הבריחה היא לא מהמקום אלא מהתחושה. מצא מה צריך להשתנות — והכל ישתנה.'
+                    body: firstName + ', המטוס הוא חלום של עזיבה מהירה, היכולת להתרומם מעל הכל ברגע. מי שרואה/ת מטוס בכוכבים מרגיש/ה צורך חזק בשחרור, בתנועה, בהתרחקות ממשהו.',
+                    insight: 'השאלה האמיתית: ממה את/ה רוצה/ה להתרחק, ולאן את/ה רוצה/ה להגיע? לפעמים הבריחה היא לא מהמקום אלא מהתחושה. מצא/מצאי מה צריך להשתנות, והכל ישתנה.'
                 }
             };
             
@@ -7784,11 +7818,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else if (rawVision && contentEl && titleEl) {
                 // Fallback for unknown shapes
-                titleEl.textContent = 'מה שראית.';
+                titleEl.textContent = genderize('מה שראית.');
                 contentEl.innerHTML = `
-                    <p style="line-height: 1.7; margin-bottom: 1.5rem;">${genderize(firstName + ', הצורה שראית/ת בכוכבים — ' + cleanVision + ' — לא נבחרה במקרה. הנשמה בוחרת סמל מתוך אינסוף האפשרויות, וזה שעלה הוא השיקוף של מה שהכי חי בך ברגע הזה.')}</p>
+                    <p style="line-height: 1.7; margin-bottom: 1.5rem;">${genderize(firstName + ', הצורה שראית בכוכבים, ' + cleanVision + ', לא נבחרה במקרה. הנשמה בוחרת סמל מתוך אינסוף האפשרויות, וזה שעלה הוא השיקוף של מה שהכי חי בך ברגע הזה.')}</p>
                     <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 1.5rem auto; width: 60px;">
-                    <p class="epilogue-punchline" style="line-height: 1.7;">${genderize('שאל/י את עצמך: מה אומר/ת לך ' + cleanVision + '? התשובה שתעלה — היא המסר שהכוכבים השאירו בשבילך.')}</p>
+                    <p class="epilogue-punchline" style="line-height: 1.7;">${genderize('שאל/י את עצמך: מה אומר/ת לך ' + cleanVision + '? התשובה שתעלה היא המסר שהכוכבים השאירו בשבילך.')}</p>
                 `;
             }
             
