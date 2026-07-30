@@ -4896,6 +4896,12 @@ async function initSky() {
 
     cam.x = vp.camStartX; cam.y = vp.camStartY; cam.scale = vp.startScale;
     targetCam.x = vp.camStartX; targetCam.y = vp.camStartY; targetCam.scale = vp.startScale;
+    
+    // Override for screensaver — start zoomed out at origin
+    if (window.isScreensaverMode) {
+        cam.x = 0; cam.y = 0; cam.scale = 0.08;
+        targetCam.x = 0; targetCam.y = 0; targetCam.scale = 0.08;
+    }
 
     await buildSignalField();
 
@@ -7777,13 +7783,19 @@ if (window.location.hash === '#screensaver') {
     // ── SCREENSAVER / ATTRACT MODE ──
     // Shows ghost constellations floating in space, no interaction
     window.isScreensaverMode = true;
+    console.log('[PAGMAR] Screensaver mode activated');
     
     // Hide opening screen completely
     const scrOpen = document.getElementById('screen-opening');
     if (scrOpen) scrOpen.style.display = 'none';
     
+    // Hide questionnaire screen too
+    const scrQ = document.getElementById('screen-questionnaire');
+    if (scrQ) scrQ.style.display = 'none';
+    
     // Hide all UI elements that shouldn't show in screensaver
-    ['btn-sunrise', 'lang-toggle', 'sky-interpretation-panel', 'user-constellation-title'].forEach(id => {
+    ['btn-sunrise', 'lang-toggle', 'sky-interpretation-panel', 'user-constellation-title',
+     'dawn-overlay', 'epilogue-screen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -7793,14 +7805,26 @@ if (window.location.hash === '#screensaver') {
     buildVisualParams();
     window.skyRevealState = 'revealed';
     
-    initSky();
+    // Set camera to zoomed-out BEFORE initSky
+    cam.scale = 0.08;
+    cam.x = 0;
+    cam.y = 0;
+    targetCam.scale = 0.08;
+    targetCam.x = 0;
+    targetCam.y = 0;
     
-    setTimeout(() => {
-        targetCam.scale = 0.08;
-        targetCam.x = 0;
-        targetCam.y = 0;
-        cam.scale = 0.08;
-    }, 100);
+    // Async init — must await so render loop starts properly
+    (async () => {
+        try {
+            await initSky();
+            console.log('[PAGMAR] Screensaver sky initialized');
+            // Force camera to zoomed-out position after sky is ready
+            cam.scale = 0.08;
+            targetCam.scale = 0.08;
+        } catch(e) {
+            console.error('[PAGMAR] Screensaver initSky error:', e);
+        }
+    })();
     
     // Exit screensaver on any user interaction → go to normal start screen
     const exitScreensaver = () => {
