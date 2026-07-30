@@ -61,7 +61,7 @@ LavaPro_HL-*.otf
 debug.html
 test.html
 test_three.html
-detective.js
+# detective.js is needed in production (referenced by index.html)
 run_puppeteer.js
 test_app.js
 test_gen.js
