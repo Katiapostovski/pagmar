@@ -5042,12 +5042,23 @@ async function buildSignalField() {
             pt.mesh = mesh;
         });
         console.log('[PAGMAR] Screensaver starfield created:', skyPoints.length, 'stars, scene children:', scene.children.length);
-        // Visual debug: show star count on screen
+        
+        // TEST: Add a few simple visible meshes to verify THREE.js rendering
+        for (let ti = 0; ti < 20; ti++) {
+            const testGeo = new THREE.CircleGeometry(8, 16);
+            const testMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+            const testMesh = new THREE.Mesh(testGeo, testMat);
+            testMesh.position.set((ti - 10) * 40, (ti % 5 - 2) * 40, 50);
+            scene.add(testMesh);
+        }
+        console.log('[PAGMAR] Test meshes added, total scene children:', scene.children.length);
+        
+        // Visual debug
         const dbg = document.createElement('div');
         dbg.style.cssText = 'position:fixed;bottom:10px;left:10px;color:lime;font-size:14px;z-index:9999;font-family:monospace;';
-        dbg.textContent = 'SCR: ' + skyPoints.length + ' stars, ' + (window.ghostDefs ? window.ghostDefs.length : 0) + ' ghosts';
+        dbg.textContent = 'SCR: ' + skyPoints.length + ' stars + 20 test dots';
         document.body.appendChild(dbg);
-        setTimeout(() => dbg.remove(), 8000);
+        setTimeout(() => dbg.remove(), 15000);
         return;
     }
     
