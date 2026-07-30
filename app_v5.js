@@ -7942,8 +7942,9 @@ if (window.location.hash === '#screensaver') {
         { nameHe: 'הפרפר', color: [200,150,255], pts: [{x:0,y:0},{x:50,y:-40},{x:80,y:-10},{x:50,y:30},{x:-50,y:-40},{x:-80,y:-10},{x:-50,y:30},{x:0,y:-60},{x:0,y:50}], lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
     ];
     
-    // ── BUILD CONSTELLATIONS ──
+    // ── BUILD CONSTELLATIONS with PRISMATIC SHADERS ──
     const SCALE = 2.5;
+    const prismPlane = new THREE.PlaneGeometry(200, 200);
     const constellationGroups = [];
     
     scrGhosts.forEach((ghost, gi) => {
@@ -7960,40 +7961,47 @@ if (window.location.hash === '#screensaver') {
         const cx = -scrW/2 + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.15;
         const cy = scrH/2 - cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.15;
         
-        const r = ghost.color[0] / 255;
-        const g = ghost.color[1] / 255;
-        const b = ghost.color[2] / 255;
-        const baseColor = new THREE.Color(r, g, b);
-        const glowColor = new THREE.Color(r * 0.4, g * 0.4, b * 0.4);
+        const hue = Math.atan2(ghost.color[1] - 128, ghost.color[0] - 128) / (Math.PI * 2) + 0.5;
+        const baseColor = new THREE.Color().setHSL(hue, 0.9, 0.6);
         
         const pointMeshes = [];
         
-        // Draw points with glow halos
-        ghost.pts.forEach(pt => {
-            // Outer glow halo
-            const glowGeo = new THREE.CircleGeometry(14 * SCALE, 16);
-            const glowMat = new THREE.MeshBasicMaterial({
-                color: glowColor, transparent: true, opacity: 0.12,
-                blending: THREE.AdditiveBlending, depthWrite: false
-            });
-            const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-            glowMesh.position.set(pt.x * SCALE, pt.y * SCALE, 5);
-            group.add(glowMesh);
+        // Draw prismatic star points
+        ghost.pts.forEach((pt, pi) => {
+            const types = [0.0, 1.0, 2.0]; // blade, crystal, shard
+            const typeVal = types[pi % 3];
+            const angle = Math.random() * Math.PI * 2;
             
-            // Core bright star
-            const starGeo = new THREE.CircleGeometry(4 * SCALE, 12);
-            const starMat = new THREE.MeshBasicMaterial({
-                color: baseColor, transparent: true, opacity: 0.85,
-                blending: THREE.AdditiveBlending, depthWrite: false
+            const mat = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                uniforms: {
+                    uTime: { value: Math.random() * 100 },
+                    uColor: { value: baseColor.clone() },
+                    uType: { value: typeVal },
+                    uOpacity: { value: 1.2 },
+                    uGlow: { value: 0.6 },
+                    uState: { value: 1.0 },
+                    uZoom: { value: 1.0 },
+                    uDepth: { value: 1.0 },
+                    uHasLabel: { value: 0.0 },
+                    uSeed: { value: Math.random() }
+                },
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
-            const starMesh = new THREE.Mesh(starGeo, starMat);
-            starMesh.position.set(pt.x * SCALE, pt.y * SCALE, 10);
-            group.add(starMesh);
             
-            pointMeshes.push({ glow: glowMesh, star: starMesh, phase: Math.random() * Math.PI * 2 });
+            const mesh = new THREE.Mesh(prismPlane, mat);
+            mesh.position.set(pt.x * SCALE, pt.y * SCALE, 10);
+            mesh.rotation.z = angle;
+            mesh.scale.set(0.35, 0.35, 1);
+            group.add(mesh);
+            
+            pointMeshes.push({ mesh, phase: Math.random() * Math.PI * 2, baseAngle: angle });
         });
         
-        // Draw constellation lines
+        // Draw constellation lines with glow
         ghost.lines.forEach(([a, bi]) => {
             if (ghost.pts[a] && ghost.pts[bi]) {
                 const lineGeo = new THREE.BufferGeometry();
@@ -8002,7 +8010,7 @@ if (window.location.hash === '#screensaver') {
                     ghost.pts[bi].x * SCALE, ghost.pts[bi].y * SCALE, 3
                 ], 3));
                 const lineMat = new THREE.LineBasicMaterial({
-                    color: baseColor, transparent: true, opacity: 0.25,
+                    color: baseColor, transparent: true, opacity: 0.35,
                     blending: THREE.AdditiveBlending
                 });
                 group.add(new THREE.LineSegments(lineGeo, lineMat));
@@ -8012,7 +8020,7 @@ if (window.location.hash === '#screensaver') {
         // Add Hebrew label
         const labelDiv = document.createElement('div');
         labelDiv.textContent = ghost.nameHe;
-        labelDiv.style.cssText = 'position:fixed;color:rgba(' + ghost.color.join(',') + ',0.5);font-family:Noto Sans Hebrew,sans-serif;font-size:15px;z-index:101;pointer-events:none;text-align:center;letter-spacing:3px;width:120px;';
+        labelDiv.style.cssText = 'position:fixed;color:rgba(' + ghost.color.join(',') + ',0.55);font-family:Noto Sans Hebrew,sans-serif;font-size:15px;z-index:101;pointer-events:none;text-align:center;letter-spacing:3px;width:120px;';
         document.body.appendChild(labelDiv);
         
         group.position.set(cx, cy, 0);
@@ -8031,6 +8039,7 @@ if (window.location.hash === '#screensaver') {
     function scrLoop() {
         requestAnimationFrame(scrLoop);
         const now = performance.now() * 0.001;
+        const dt = 0.016;
         
         // Twinkle starfield
         starData.forEach(s => {
@@ -8049,13 +8058,19 @@ if (window.location.hash === '#screensaver') {
             // Very slow rotation
             cg.group.rotation.z += cg.rotSpeed;
             
-            // Pulse star points
+            // Animate prismatic points
             cg.pointMeshes.forEach(pm => {
+                const u = pm.mesh.material.uniforms;
+                u.uTime.value += dt;
+                // Pulsing glow
                 const pulse = 0.5 + 0.5 * Math.sin(now * 1.8 + pm.phase);
-                pm.glow.material.opacity = 0.08 + pulse * 0.12;
-                pm.star.material.opacity = 0.55 + pulse * 0.4;
-                const s = 0.9 + Math.sin(now * 1.2 + pm.phase) * 0.2;
-                pm.star.scale.set(s, s, 1);
+                u.uGlow.value = 0.4 + pulse * 0.5;
+                u.uOpacity.value = 0.8 + pulse * 0.5;
+                // Gentle rotation
+                pm.mesh.rotation.z = pm.baseAngle + now * 0.08;
+                // Breathing scale
+                const s = 0.3 + Math.sin(now * 1.2 + pm.phase) * 0.08;
+                pm.mesh.scale.set(s, s, 1);
             });
             
             // Update label position (world → screen)
