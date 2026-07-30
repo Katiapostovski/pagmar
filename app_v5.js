@@ -7894,14 +7894,13 @@ if (window.location.hash === '#screensaver') {
     });
     
     // ── STANDALONE THREE.JS SCREENSAVER ──
-    // Bypass initSky entirely — create our own renderer
     const scrW = window.innerWidth;
     const scrH = window.innerHeight;
     
     const scrRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     scrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     scrRenderer.setSize(scrW, scrH);
-    scrRenderer.setClearColor(0x000000, 1);
+    scrRenderer.setClearColor(0x000508, 1);
     scrRenderer.domElement.style.cssText = 'position:fixed;top:0;left:0;z-index:100;';
     document.body.appendChild(scrRenderer.domElement);
     
@@ -7909,98 +7908,168 @@ if (window.location.hash === '#screensaver') {
     const scrCam = new THREE.OrthographicCamera(-scrW/2, scrW/2, scrH/2, -scrH/2, 1, 1000);
     scrCam.position.z = 100;
     
-    // Create 3000 starfield dots
+    // ── STARFIELD BACKGROUND ──
     const starData = [];
-    for (let i = 0; i < 3000; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 3;
-        const sy = (Math.random() - 0.5) * scrH * 3;
+    for (let i = 0; i < 2000; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 2.5;
+        const sy = (Math.random() - 0.5) * scrH * 2.5;
         const roll = Math.random();
-        const bright = roll < 0.05 ? 0.9 : roll < 0.2 ? 0.5 : 0.2;
-        const size = roll < 0.05 ? 4 : roll < 0.2 ? 2.5 : 1.5;
-        const geo = new THREE.CircleGeometry(size, 8);
-        const hue = Math.random();
-        const col = new THREE.Color().setHSL(hue, 0.3, 0.7 + bright * 0.3);
+        const bright = roll < 0.03 ? 0.7 : roll < 0.12 ? 0.35 : 0.12;
+        const size = roll < 0.03 ? 2.5 : roll < 0.12 ? 1.5 : 0.8;
+        const geo = new THREE.CircleGeometry(size, 6);
+        const col = new THREE.Color().setHSL(Math.random(), 0.2, 0.6 + bright * 0.4);
         const mat = new THREE.MeshBasicMaterial({
             color: col, transparent: true, opacity: bright,
             blending: THREE.AdditiveBlending, depthWrite: false
         });
         const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(sx, sy, 0);
+        mesh.position.set(sx, sy, -10);
         scrScene.add(mesh);
         starData.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
     }
     
-    // Create ghost constellations
-    answers = {};
-    buildVisualParams();
-    window.skyRevealState = 'revealed';
+    // ── CONSTELLATION DEFINITIONS ──
+    const scrGhosts = [
+        { nameHe: 'הירח', color: [200,230,255], pts: [{x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},{x:-20,y:30},{x:-30,y:0},{x:-20,y:-30}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]] },
+        { nameHe: 'הנחש', color: [120,255,180], pts: [{x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},{x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]] },
+        { nameHe: 'הצב', color: [150,255,200], pts: [{x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},{x:30,y:55},{x:60,y:20},{x:50,y:-30},{x:0,y:-60},{x:0,y:70}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
+        { nameHe: 'הכלב', color: [255,220,150], pts: [{x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},{x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60}], lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]] },
+        { nameHe: 'הדב', color: [255,180,100], pts: [{x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},{x:100,y:90},{x:40,y:90},{x:0,y:50},{x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,7],[7,8],[0,9],[9,10]] },
+        { nameHe: 'הכוכב', color: [255,255,180], pts: [{x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},{x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20}], lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7]] },
+        { nameHe: 'העכביש', color: [255,150,150], pts: [{x:0,y:0},{x:50,y:-50},{x:70,y:-20},{x:70,y:20},{x:50,y:50},{x:-50,y:50},{x:-70,y:20},{x:-70,y:-20},{x:-50,y:-50}], lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]] },
+        { nameHe: 'האריה', color: [255,200,100], pts: [{x:0,y:0},{x:40,y:-60},{x:80,y:-20},{x:60,y:40},{x:0,y:80},{x:-60,y:40},{x:-80,y:-20},{x:-40,y:-60}], lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]] },
+        { nameHe: 'הדבורה', color: [255,220,60], pts: [{x:0,y:-40},{x:30,y:-20},{x:30,y:20},{x:0,y:40},{x:-30,y:20},{x:-30,y:-20},{x:60,y:-30},{x:-60,y:-30},{x:50,y:0},{x:-50,y:0}], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[0,7],[2,8],[4,9]] },
+        { nameHe: 'הפרפר', color: [200,150,255], pts: [{x:0,y:0},{x:50,y:-40},{x:80,y:-10},{x:50,y:30},{x:-50,y:-40},{x:-80,y:-10},{x:-50,y:30},{x:0,y:-60},{x:0,y:50}], lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6],[6,0],[0,7],[0,8]] },
+    ];
     
-    // Use ghostDefs for constellation shapes
-    const ghostConstellations = [];
-    if (typeof ghostDefs !== 'undefined' && ghostDefs.length > 0) {
-        ghostDefs.forEach((ghost, gi) => {
-            const angle = (gi / ghostDefs.length) * Math.PI * 2;
-            const radius = Math.min(scrW, scrH) * 0.35;
-            const cx = Math.cos(angle) * radius;
-            const cy = Math.sin(angle) * radius;
-            
-            // Draw constellation points
-            ghost.points.forEach(pt => {
-                const px = cx + pt[0] * 0.15;
-                const py = cy + pt[1] * 0.15;
-                const geo = new THREE.CircleGeometry(3, 12);
-                const mat = new THREE.MeshBasicMaterial({
-                    color: 0xaaccff, transparent: true, opacity: 0.7,
-                    blending: THREE.AdditiveBlending, depthWrite: false
-                });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(px, py, 10);
-                scrScene.add(mesh);
+    // ── BUILD CONSTELLATIONS ──
+    const SCALE = 2.5;
+    const constellationGroups = [];
+    
+    scrGhosts.forEach((ghost, gi) => {
+        const group = new THREE.Group();
+        const count = scrGhosts.length;
+        
+        // Spread across screen in a pleasing layout
+        const cols = Math.ceil(Math.sqrt(count * (scrW / scrH)));
+        const rows = Math.ceil(count / cols);
+        const col = gi % cols;
+        const row = Math.floor(gi / cols);
+        const cellW = scrW / cols;
+        const cellH = scrH / rows;
+        const cx = -scrW/2 + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.15;
+        const cy = scrH/2 - cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.15;
+        
+        const r = ghost.color[0] / 255;
+        const g = ghost.color[1] / 255;
+        const b = ghost.color[2] / 255;
+        const baseColor = new THREE.Color(r, g, b);
+        const glowColor = new THREE.Color(r * 0.4, g * 0.4, b * 0.4);
+        
+        const pointMeshes = [];
+        
+        // Draw points with glow halos
+        ghost.pts.forEach(pt => {
+            // Outer glow halo
+            const glowGeo = new THREE.CircleGeometry(14 * SCALE, 16);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: glowColor, transparent: true, opacity: 0.12,
+                blending: THREE.AdditiveBlending, depthWrite: false
             });
+            const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+            glowMesh.position.set(pt.x * SCALE, pt.y * SCALE, 5);
+            group.add(glowMesh);
             
-            // Draw constellation lines
-            if (ghost.lines) {
-                ghost.lines.forEach(([a, b]) => {
-                    if (ghost.points[a] && ghost.points[b]) {
-                        const ax = cx + ghost.points[a][0] * 0.15;
-                        const ay = cy + ghost.points[a][1] * 0.15;
-                        const bx = cx + ghost.points[b][0] * 0.15;
-                        const by = cy + ghost.points[b][1] * 0.15;
-                        const lineGeo = new THREE.BufferGeometry();
-                        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute([ax,ay,10, bx,by,10], 3));
-                        const lineMat = new THREE.LineBasicMaterial({ color: 0x6688bb, transparent: true, opacity: 0.4 });
-                        scrScene.add(new THREE.LineSegments(lineGeo, lineMat));
-                    }
-                });
-            }
+            // Core bright star
+            const starGeo = new THREE.CircleGeometry(4 * SCALE, 12);
+            const starMat = new THREE.MeshBasicMaterial({
+                color: baseColor, transparent: true, opacity: 0.85,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            const starMesh = new THREE.Mesh(starGeo, starMat);
+            starMesh.position.set(pt.x * SCALE, pt.y * SCALE, 10);
+            group.add(starMesh);
             
-            ghostConstellations.push({ cx, cy, name: ghost.name || '' });
+            pointMeshes.push({ glow: glowMesh, star: starMesh, phase: Math.random() * Math.PI * 2 });
         });
-    }
+        
+        // Draw constellation lines
+        ghost.lines.forEach(([a, bi]) => {
+            if (ghost.pts[a] && ghost.pts[bi]) {
+                const lineGeo = new THREE.BufferGeometry();
+                lineGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+                    ghost.pts[a].x * SCALE, ghost.pts[a].y * SCALE, 3,
+                    ghost.pts[bi].x * SCALE, ghost.pts[bi].y * SCALE, 3
+                ], 3));
+                const lineMat = new THREE.LineBasicMaterial({
+                    color: baseColor, transparent: true, opacity: 0.25,
+                    blending: THREE.AdditiveBlending
+                });
+                group.add(new THREE.LineSegments(lineGeo, lineMat));
+            }
+        });
+        
+        // Add Hebrew label
+        const labelDiv = document.createElement('div');
+        labelDiv.textContent = ghost.nameHe;
+        labelDiv.style.cssText = 'position:fixed;color:rgba(' + ghost.color.join(',') + ',0.5);font-family:Noto Sans Hebrew,sans-serif;font-size:15px;z-index:101;pointer-events:none;text-align:center;letter-spacing:3px;width:120px;';
+        document.body.appendChild(labelDiv);
+        
+        group.position.set(cx, cy, 0);
+        scrScene.add(group);
+        
+        constellationGroups.push({
+            group, pointMeshes, ghost, labelDiv, cx, cy,
+            driftX: (Math.random() - 0.5) * 12,
+            driftY: (Math.random() - 0.5) * 10,
+            driftPhase: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.0003
+        });
+    });
     
-    console.log('[PAGMAR] Screensaver scene built:', scrScene.children.length, 'objects');
-    
-    // Slow rotation animation
-    let scrAngle = 0;
+    // ── ANIMATION LOOP ──
     function scrLoop() {
         requestAnimationFrame(scrLoop);
-        scrAngle += 0.0003;
-        
-        // Rotate entire scene slowly
-        scrScene.rotation.z = scrAngle;
-        
-        // Twinkle stars
         const now = performance.now() * 0.001;
+        
+        // Twinkle starfield
         starData.forEach(s => {
             const twinkle = 0.5 + 0.5 * Math.sin(now * 1.5 + s.phase * 10);
-            s.mesh.material.opacity = s.baseOp * (0.4 + twinkle * 0.6);
+            s.mesh.material.opacity = s.baseOp * (0.3 + twinkle * 0.7);
+        });
+        
+        // Animate constellations
+        constellationGroups.forEach(cg => {
+            // Gentle drift
+            const dx = Math.sin(now * 0.12 + cg.driftPhase) * cg.driftX;
+            const dy = Math.cos(now * 0.09 + cg.driftPhase * 1.3) * cg.driftY;
+            cg.group.position.x = cg.cx + dx;
+            cg.group.position.y = cg.cy + dy;
+            
+            // Very slow rotation
+            cg.group.rotation.z += cg.rotSpeed;
+            
+            // Pulse star points
+            cg.pointMeshes.forEach(pm => {
+                const pulse = 0.5 + 0.5 * Math.sin(now * 1.8 + pm.phase);
+                pm.glow.material.opacity = 0.08 + pulse * 0.12;
+                pm.star.material.opacity = 0.55 + pulse * 0.4;
+                const s = 0.9 + Math.sin(now * 1.2 + pm.phase) * 0.2;
+                pm.star.scale.set(s, s, 1);
+            });
+            
+            // Update label position (world → screen)
+            const screenX = cg.group.position.x + scrW / 2;
+            const screenY = -cg.group.position.y + scrH / 2 + 40;
+            cg.labelDiv.style.left = (screenX - 60) + 'px';
+            cg.labelDiv.style.top = screenY + 'px';
         });
         
         scrRenderer.render(scrScene, scrCam);
     }
     scrLoop();
     
-    // Exit screensaver on any user interaction
+    // Exit screensaver on any interaction (after 2s grace)
     const exitScreensaver = () => {
         window.location.hash = '';
         window.location.reload();
