@@ -3300,9 +3300,12 @@ function initConstellationSystem(userVision) {
             
             // Visible if camera is NEAR this ghost (navigated to it)
             const distToGhost = Math.hypot(cam.x - ghost.offset.x, cam.y - ghost.offset.y);
-            const proximityReveal = smoothstep(1500, 400, distToGhost);
+            const proximityReveal = smoothstep(3000, 500, distToGhost);
             
-            const exploreFade = Math.max(zoomOutReveal, panReveal, proximityReveal);
+            // Focused ghost is always visible at full intensity
+            const isFocused = (window._focusedGhostIndex === gi);
+            
+            const exploreFade = isFocused ? 1.0 : Math.max(zoomOutReveal, panReveal, proximityReveal);
             
             // Age factor: older (low gi) = weaker glow, newer (high gi) = brighter glow
             const ageIntensity = 0.15 + (gi / ghostDefs.length) * 0.85; // 0.15 to 1.0
@@ -3315,15 +3318,16 @@ function initConstellationSystem(userVision) {
             let targetAlpha = 0;
             if (window.isScreensaverMode) {
                 targetAlpha = intensity; // Always visible in screensaver
-            } else if (onScreen) {
+            } else {
                 targetAlpha = exploreFade * intensity;
             }
             
             // Apply restrictions
             if (!timeMet) targetAlpha = Math.max(0, targetAlpha);
 
-            // Smooth alpha
-            gs.alpha += (targetAlpha - gs.alpha) * 0.06;
+            // Smooth alpha — faster for focused ghost, moderate for others
+            const alphaSpeed = isFocused ? 0.15 : 0.08;
+            gs.alpha += (targetAlpha - gs.alpha) * alphaSpeed;
 
             const a = gs.alpha;
 
@@ -5125,15 +5129,15 @@ async function buildSignalField() {
     } // end if (!window.isScreensaverMode)
 
     // ── STARFIELD — subtle night-sky background stars ──
-    const STARFIELD_COUNT = 200;
+    const STARFIELD_COUNT = 400;
     const skySpread = 8000; // spread across a large area
     for (let i = 0; i < STARFIELD_COUNT; i++) {
         const sx = (Math.random() - 0.5) * skySpread * 2;
         const sy = (Math.random() - 0.5) * skySpread * 2;
         const sz = (Math.random() - 0.5) * 200;
-        const sfScale = 0.08 + Math.random() * 0.15; // very small
-        const sfOpacity = 0.08 + Math.random() * 0.15; // very dim
-        const sfGlow = 0.1 + Math.random() * 0.3;
+        const sfScale = 0.10 + Math.random() * 0.18; // small dot scale
+        const sfOpacity = 0.15 + Math.random() * 0.25; // visible dots
+        const sfGlow = 0.15 + Math.random() * 0.35;
         skyPoints.push({
             x: sx, y: sy, z: sz,
             originalX: sx, originalY: sy, originalZ: sz,
@@ -6622,15 +6626,15 @@ function updatePoint(pt, dt, isClosest) {
             if (window.skyRevealState === 'revealed' && (pt.theme === 'Rorschach' || pt.theme === 'Pareidolia')) {
                 opacity = pt.isMajor ? 0.38 : 0.20;
             } else if (pt.theme === 'Starfield') {
-                // Starfield always visible — very dim at zoom-in, bright at zoom-out
-                let sfOp = pt.starfieldOpacity || 0.18;
-                // Aggressively dim when zoomed into main shape
-                if (cam.scale > 0.8) {
-                    sfOp *= clamp(1.0 - (cam.scale - 0.8) * 1.2, 0.08, 1.0);
+                // Starfield always visible — subtle night sky dots
+                let sfOp = pt.starfieldOpacity || 0.25;
+                // Slightly dim when zoomed in very close, but stay visible
+                if (cam.scale > 1.5) {
+                    sfOp *= clamp(1.0 - (cam.scale - 1.5) * 0.3, 0.3, 1.0);
                 }
-                // Gentle Twinkling
+                // Gentle twinkling
                 const twinkle = Math.sin(now * 0.002 + pt.baseAngle * 10) * 0.5 + 0.5;
-                opacity = sfOp * (0.4 + twinkle * 0.6);
+                opacity = sfOp * (0.5 + twinkle * 0.5);
             } else {
                 opacity = Math.max(0.08, lanternSoft * (pt.isMajor ? 0.9 : 0.65));
             }
