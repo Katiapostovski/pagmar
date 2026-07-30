@@ -4962,8 +4962,85 @@ async function buildSignalField() {
     skyPoints = [];
     majorPoints = [];
     
-    // In screensaver mode, we ONLY want the ghost constellations, not the main user one
-    if (window.isScreensaverMode) return;
+    // In screensaver mode: create ONLY the background starfield, then return
+    if (window.isScreensaverMode) {
+        // ── STARFIELD for screensaver ──
+        const STARFIELD_COUNT = 3000;
+        const skySpread = 18000;
+        for (let i = 0; i < STARFIELD_COUNT; i++) {
+            const sx = (Math.random() - 0.5) * skySpread * 2;
+            const sy = (Math.random() - 0.5) * skySpread * 2;
+            const sz = (Math.random() - 0.5) * 200;
+            const roll = Math.random();
+            const isExtraBright = roll < 0.05;
+            const isBright = roll < 0.20;
+            let sfScale, sfOpacity, sfGlow, sfHue;
+            if (isExtraBright) {
+                sfScale = 0.35 + Math.random() * 0.30;
+                sfOpacity = 0.65 + Math.random() * 0.35;
+                sfGlow = 0.70 + Math.random() * 0.30;
+                sfHue = Math.random() < 0.3 ? (30 + Math.random() * 30) : (200 + Math.random() * 60);
+            } else if (isBright) {
+                sfScale = 0.20 + Math.random() * 0.20;
+                sfOpacity = 0.45 + Math.random() * 0.30;
+                sfGlow = 0.40 + Math.random() * 0.30;
+                sfHue = 200 + Math.random() * 80;
+            } else {
+                sfScale = 0.08 + Math.random() * 0.15;
+                sfOpacity = 0.20 + Math.random() * 0.25;
+                sfGlow = 0.15 + Math.random() * 0.25;
+                sfHue = 200 + Math.random() * 60;
+            }
+            skyPoints.push({
+                x: sx, y: sy, z: sz,
+                originalX: sx, originalY: sy, originalZ: sz,
+                targetX: sx, targetY: sy, targetZ: sz,
+                starX: sx, starY: sy,
+                anchorIdx: 0, isMajor: false, elementType: 'dot', theme: 'Starfield',
+                text: null, isBlurred: false, baseAngle: Math.random() * Math.PI * 2,
+                scale: sfScale, hue: sfHue,
+                isSeed: false, depthLayer: 2.0 + Math.random(),
+                fogRevealed: 0, hoverPulse: 0, permanentlyRevealed: true,
+                pulseClock: Math.random() * Math.PI * 2, state: 0, timeNearby: 0, glowP: 0, bloomP: 0,
+                revealProgress: 1, hasBeenRevealed: true, assemblyProgress: 1, isAssembling: false,
+                totalDwellTime: 0, visitCount: 0, lastVisitedTime: 0, maxRevealProgress: 1, neighborPts: [],
+                isVertexStar: false, isQPathStar: false,
+                starfieldOpacity: sfOpacity, starfieldGlow: sfGlow
+            });
+        }
+        // Create WebGL meshes for starfield
+        const planeGeo = new THREE.PlaneGeometry(200, 200);
+        skyMeshes = [];
+        skyPoints.forEach(pt => {
+            const ptColor = new THREE.Color().setHSL(pt.hue / 360, 1.0, 0.65);
+            const mat = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                uniforms: {
+                    uTime: { value: Math.random() * 100 },
+                    uColor: { value: ptColor },
+                    uType: { value: 3.0 }, // soft dot
+                    uOpacity: { value: 1.0 },
+                    uGlow: { value: pt.starfieldGlow },
+                    uState: { value: 1.0 },
+                    uZoom: { value: 0.08 },
+                    uDepth: { value: 0.4 },
+                    uHasLabel: { value: 0.0 },
+                    uSeed: { value: Math.random() }
+                },
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const mesh = new THREE.Mesh(planeGeo, mat);
+            mesh.rotation.z = pt.baseAngle || 0;
+            scene.add(mesh);
+            skyMeshes.push(mesh);
+            pt.mesh = mesh;
+        });
+        console.log('[PAGMAR] Screensaver starfield created:', skyPoints.length, 'stars');
+        return;
+    }
     
     const { rand, texts, dominantElement, topology, personalHue } = vp;
     const labelsDiv = document.getElementById('sky-labels');
