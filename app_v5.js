@@ -3411,10 +3411,10 @@ function initConstellationSystem(userVision) {
             const hGlow = gs._hoverGlow || 0;
             if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
             gs.pointMats.forEach(mat => {
-                // Unified opacity and glow to exactly match the active constellation
-                mat.uniforms.uOpacity.value = Math.min(1.5, a * 1.0 + hGlow * 0.5); // Reduced opacity to prevent blobs
+                // Unified opacity and glow — boost significantly on hover
+                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.0 + hGlow * 1.5);
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.3 + hGlow * 0.5; // Matched to main constellation glow range
+                mat.uniforms.uGlow.value = 0.3 + hGlow * 1.2; // Strong glow boost on hover
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -5203,7 +5203,7 @@ async function buildSignalField() {
     allQPts.forEach((pt) => {
         pt.revealDelay = qDelay;
         if (pt.isVertexStar) pt.isFirstWave = true;
-        qDelay += 0.02; // nearly simultaneous
+        qDelay += 0.06; // slower spacing between Q-shape stars
     });
     const qTotal = qDelay;
 
@@ -5212,7 +5212,7 @@ async function buildSignalField() {
     otherMajors.forEach((pt, i) => {
         pt.revealDelay = nextMajorDelay;
         if (i < 3) { pt.isFirstWave = true; }
-        nextMajorDelay += 0.3 + rand() * 0.3;
+        nextMajorDelay += 0.5 + rand() * 0.5;
     });
 
     // Minor ambient background stars: very last, barely visible
@@ -5224,7 +5224,7 @@ async function buildSignalField() {
             pt.appearP = 1.0;
         } else {
             pt.revealDelay = nextMinorDelay;
-            nextMinorDelay += 0.05 + rand() * 0.08;
+            nextMinorDelay += 0.10 + rand() * 0.12;
         }
     });
 
@@ -5860,8 +5860,10 @@ function skyLoop(ts) {
     }
 
     if (window.skyRevealState === 'revealed') {
-        // Do not auto-rotate the user prism (keep it perfectly flat/2D)
-        ghostRotY += 0.00035; // Ghost constellations rotate independently at their own pace
+        // Slow gentle 3D rotation for user constellation — like a display model
+        ghostRotY += 0.00035; // Ghost constellations rotate independently
+        targetGlobalRotY += 0.0003; // Main constellation: very slow Y-axis auto-rotate (~3.5 min per revolution)
+        targetGlobalRotX = Math.sin(targetGlobalRotY * 0.7) * 0.15; // Gentle X-axis wobble for organic 3D feel
         
         // Smoothly interpolate rotation
         // Fade out parallax when zoomed out so everything feels like a single layer
@@ -6277,7 +6279,7 @@ function updatePoint(pt, dt, isClosest) {
     // ── STAGGERED APPEAR: fade in after revealDelay (only during revelation, not recognition) ──
     if (pt.revealDelay !== undefined && pt.appearP < 1.0 && window.skyRevealState === 'revealed') {
         if (skyIntroTime >= pt.revealDelay) {
-            pt.appearP = clamp(pt.appearP + dt * 3.5, 0, 1); // ~0.29s per star — crisp one-by-one pop
+            pt.appearP = clamp(pt.appearP + dt * 1.8, 0, 1); // ~0.55s per star — slower, meditative build
             // Play a subtle chime when first-wave stars appear (only in revealed mode)
             if (pt.isFirstWave && pt.appearP > 0.01 && !pt._chimePlayedOnAppear) {
                 pt._chimePlayedOnAppear = true;
@@ -6570,7 +6572,7 @@ function updatePoint(pt, dt, isClosest) {
         // Starfield: allow natural scaling
         if (pt.theme === 'Starfield') {
             // Give starfield a tiny baseline so it doesn't vanish entirely
-            s = Math.max(s * 1.5, 0.05 * globalBreath); 
+            s = Math.max(s * 1.5, 0.08 * globalBreath); 
         }
 
         // Constellation beams: reasonable cap for clean single prisms
