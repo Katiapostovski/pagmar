@@ -3486,7 +3486,7 @@ function initConstellationSystem(userVision) {
             const exploreFade = isFocused ? 1.0 : Math.max(zoomOutReveal, panReveal, proximityReveal);
             
             // Age factor: varied brightness — each ghost has its own glow level
-            const ageIntensity = 0.45 + (gi / ghostDefs.length) * 0.55; // 0.45 to 1.0 (stronger base)
+            const ageIntensity = 0.52 + (gi / ghostDefs.length) * 0.48; // 0.52 to 1.0 (brighter base)
             
             // As you zoom in, they reach full 1.0 color intensity
             const zoomInFactor = smoothstep(0.3, 0.9, cam.scale); 
@@ -3590,9 +3590,9 @@ function initConstellationSystem(userVision) {
             if (gs.lineMat) gs.lineMat.opacity = window.isScreensaverMode ? gs.alpha * 0.3 : 0.0;
             gs.pointMats.forEach(mat => {
                 // Unified opacity and glow — boost significantly on hover
-                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.6 + hGlow * 1.5);
+                mat.uniforms.uOpacity.value = Math.min(2.0, a * 1.8 + hGlow * 1.5);
                 mat.uniforms.uZoom.value = Math.max(0.1, cam.scale);
-                mat.uniforms.uGlow.value = 0.55 + hGlow * 1.2; // Strong base glow for clear visibility
+                mat.uniforms.uGlow.value = 0.62 + hGlow * 1.2; // Extra bright base glow
                 mat.uniforms.uTime.value += 0.015;
             });
             
@@ -6139,12 +6139,15 @@ function skyLoop(ts) {
         // At cam.scale < 0.25 → fade out; above 0.45 → fade in (so it appears immediately upon reveal)
         const userAlpha = smoothstep(0.25, 0.45, cam.scale);
         if (userTitleEl && userTitleEl.style.opacity !== undefined) {
+            // When focused on a ghost, keep title visible even at low zoom
+            const isFocusingGhost = (window._focusedGhostIndex !== undefined && window._focusedGhostIndex >= 0);
+            const effectiveAlpha = isFocusingGhost ? Math.max(userAlpha, 0.9) : userAlpha;
             // Only override if not in the initial 0-opacity state (before it was revealed)
-            if (parseFloat(userTitleEl.style.opacity) > 0.01 || userAlpha > 0.01) {
-                userTitleEl.style.opacity = userAlpha.toFixed(3);
+            if (parseFloat(userTitleEl.style.opacity) > 0.01 || effectiveAlpha > 0.01) {
+                userTitleEl.style.opacity = effectiveAlpha.toFixed(3);
             }
             // Restore original user title when zooming out away from ghost
-            if (cam.scale < 0.48 && window._focusedGhostIndex !== undefined) {
+            if (cam.scale < 0.48 && window._focusedGhostIndex !== undefined && !isFocusingGhost) {
                 window._focusedGhostIndex = undefined;
                 if (window._originalConstellationTitle) {
                     const origName = window._originalConstellationTitle;
