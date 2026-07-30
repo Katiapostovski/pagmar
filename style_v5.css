@@ -653,7 +653,7 @@ html, body {
     padding: 16px 20px;
     background: rgba(5, 5, 10, 0.88);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
+    border-radius: 0;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     box-shadow: 0 4px 30px rgba(0,0,0,0.7), 0 0 60px rgba(0,0,0,0.4);
