@@ -7938,7 +7938,7 @@ if (window.location.hash === '#screensaver') {
         const mesh = new THREE.Mesh(dustPlane, mat);
         mesh.position.set(sx, sy, -5);
         mesh.rotation.z = Math.random() * Math.PI * 2;
-        const dustScale = 0.3 + Math.random() * 0.7;
+        const dustScale = 0.06 + Math.random() * 0.12;
         mesh.scale.set(dustScale, dustScale, 1);
         scrScene.add(mesh);
         dustStars.push({ mesh, phase: Math.random() * Math.PI * 2 });
@@ -8017,7 +8017,7 @@ if (window.location.hash === '#screensaver') {
                     uTime: { value: Math.random() * 100 },
                     uColor: { value: c.clone() },
                     uType: { value: 0.0 }, // blade — match main app
-                    uOpacity: { value: 1.8 }, // match main app: a * 1.8
+                    uOpacity: { value: 1.4 },
                     uGlow: { value: 0.62 }, // match main app
                     uState: { value: 1.0 },
                     uZoom: { value: 0.65 }, // match main app
@@ -8032,7 +8032,7 @@ if (window.location.hash === '#screensaver') {
             pointMats.push(mat);
             const mesh = new THREE.Mesh(ghostPlane, mat);
             mesh.rotation.z = gAngle;
-            const baseScale = pt.isDistractor ? (0.5 + Math.random() * 1.0) : (1.0 + Math.random() * 2.0);
+            const baseScale = pt.isDistractor ? (0.1 + Math.random() * 0.2) : (0.25 + Math.random() * 0.45);
             mesh.userData.baseScale = baseScale;
             mesh.scale.set(baseScale, baseScale, 1);
             mesh.position.set(pt.x, pt.y, pt.isDistractor ? -20 : 0);
@@ -8125,12 +8125,14 @@ if (window.location.hash === '#screensaver') {
             });
             posAttr.needsUpdate = true;
             
-            // Update shader uniforms (match main app values)
+            // Update shader uniforms — enchanting glow pulse
+            const breathe = 0.5 + 0.5 * Math.sin(now * 1.5 + ci * 0.7);
             cg.pointMats.forEach(mat => {
-                mat.uniforms.uOpacity.value = 1.8;
-                mat.uniforms.uGlow.value = 0.62;
+                mat.uniforms.uOpacity.value = 1.2 + breathe * 0.6;
+                mat.uniforms.uGlow.value = 0.5 + breathe * 0.25;
                 mat.uniforms.uTime.value += 0.015;
             });
+            cg.lineMesh.material.opacity = 0.2 + breathe * 0.15;
         });
         
         scrRenderer.render(scrScene, scrCam);
