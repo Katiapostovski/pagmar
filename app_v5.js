@@ -7908,25 +7908,42 @@ if (window.location.hash === '#screensaver') {
     const scrCam = new THREE.OrthographicCamera(-scrW/2, scrW/2, scrH/2, -scrH/2, 1, 1000);
     scrCam.position.z = 100;
     
-    // ── STARFIELD BACKGROUND ──
-    const starData = [];
-    for (let i = 0; i < 3000; i++) {
-        const sx = (Math.random() - 0.5) * scrW * 2.8;
-        const sy = (Math.random() - 0.5) * scrH * 2.8;
-        const roll = Math.random();
-        const bright = roll < 0.04 ? 0.85 : roll < 0.15 ? 0.45 : roll < 0.35 ? 0.2 : 0.08;
-        const size = roll < 0.04 ? 3.0 : roll < 0.15 ? 2.0 : roll < 0.35 ? 1.2 : 0.6;
-        const geo = new THREE.CircleGeometry(size, 6);
-        const starHue = roll < 0.04 ? (Math.random() < 0.4 ? 0.08 : 0.6) : Math.random();
-        const col = new THREE.Color().setHSL(starHue, 0.3 + roll * 0.3, 0.65 + bright * 0.35);
-        const mat = new THREE.MeshBasicMaterial({
-            color: col, transparent: true, opacity: bright,
-            blending: THREE.AdditiveBlending, depthWrite: false
+    // ── PRISMATIC DUST STARS (background) ──
+    // Use the SAME prismatic shader as constellations for consistent look
+    const dustPlane = new THREE.PlaneGeometry(200, 200);
+    const dustStars = [];
+    for (let i = 0; i < 120; i++) {
+        const sx = (Math.random() - 0.5) * scrW * 1.6;
+        const sy = (Math.random() - 0.5) * scrH * 1.6;
+        const dustHue = Math.random();
+        const dustColor = new THREE.Color().setHSL(dustHue, 0.5, 0.6);
+        const dustType = [0.0, 1.0, 2.0, 3.0][Math.floor(Math.random() * 4)];
+        const mat = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                uTime: { value: Math.random() * 200 },
+                uColor: { value: dustColor },
+                uType: { value: dustType },
+                uOpacity: { value: 0.3 + Math.random() * 0.4 },
+                uGlow: { value: 0.2 + Math.random() * 0.3 },
+                uState: { value: 1.0 },
+                uZoom: { value: 0.8 },
+                uDepth: { value: 0.5 },
+                uHasLabel: { value: 0.0 },
+                uSeed: { value: Math.random() }
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
         });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(sx, sy, -10);
+        const mesh = new THREE.Mesh(dustPlane, mat);
+        mesh.position.set(sx, sy, -5);
+        mesh.rotation.z = Math.random() * Math.PI * 2;
+        const dustScale = 0.08 + Math.random() * 0.15;
+        mesh.scale.set(dustScale, dustScale, 1);
         scrScene.add(mesh);
-        starData.push({ mesh, baseOp: bright, phase: Math.random() * Math.PI * 2 });
+        dustStars.push({ mesh, phase: Math.random() * Math.PI * 2 });
     }
     
     // ── CONSTELLATION DEFINITIONS ──
@@ -8011,7 +8028,7 @@ if (window.location.hash === '#screensaver') {
                     ghost.pts[bi].x * SCALE, ghost.pts[bi].y * SCALE, 3
                 ], 3));
                 const lineMat = new THREE.LineBasicMaterial({
-                    color: baseColor, transparent: true, opacity: 0.35,
+                    color: baseColor, transparent: true, opacity: 0.45,
                     blending: THREE.AdditiveBlending
                 });
                 group.add(new THREE.LineSegments(lineGeo, lineMat));
@@ -8038,10 +8055,9 @@ if (window.location.hash === '#screensaver') {
         const now = performance.now() * 0.001;
         const dt = 0.016;
         
-        // Twinkle starfield
-        starData.forEach(s => {
-            const twinkle = 0.5 + 0.5 * Math.sin(now * 1.5 + s.phase * 10);
-            s.mesh.material.opacity = s.baseOp * (0.3 + twinkle * 0.7);
+        // Animate dust stars (background prisms)
+        dustStars.forEach(ds => {
+            ds.mesh.material.uniforms.uTime.value += dt * 0.5;
         });
         
         // Animate constellations
