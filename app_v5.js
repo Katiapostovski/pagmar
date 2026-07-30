@@ -674,24 +674,40 @@ function genderize(text) {
 
     // Handle specific full-word replacements first
     const WORD_MAP = {
+        // ── PRONOUNS ──
         'את/ה':      { male: 'אתה', female: 'את' },
         'אתה/את':    { male: 'אתה', female: 'את' },
+        'שאת/ה':     { male: 'שאתה', female: 'שאת' },
+        'שאתה/את':   { male: 'שאתה', female: 'שאת' },
+        'ואת/ה':     { male: 'ואתה', female: 'ואת' },
+        'ואתה/את':   { male: 'ואתה', female: 'ואת' },
+        'כשאת/ה':    { male: 'כשאתה', female: 'כשאת' },
         'הוא/היא':   { male: 'הוא', female: 'היא' },
         'שהוא/היא':  { male: 'שהוא', female: 'שהיא' },
         'לו/לה':     { male: 'לו', female: 'לה' },
         'שלו/שלה':   { male: 'שלו', female: 'שלה' },
         'בו/בה':     { male: 'בו', female: 'בה' },
+        'בו/ה':      { male: 'בו', female: 'בה' },
         'עצמו/ה':    { male: 'עצמו', female: 'עצמה' },
         'אותו/ה':    { male: 'אותו', female: 'אותה' },
         'בתוכו/ה':   { male: 'בתוכו', female: 'בתוכה' },
         'שלו/ה':     { male: 'שלו', female: 'שלה' },
         'חייו/חייה': { male: 'חייו', female: 'חייה' },
+        'בשאיפתו/ה': { male: 'בשאיפתו', female: 'בשאיפתה' },
+        'בחדרו/ה':   { male: 'בחדרו', female: 'בחדרה' },
+        // ── VERBS — same form for both genders ──
         'רואה/ת':    { male: 'רואה', female: 'רואה' },
         'שרואה/ת':   { male: 'שרואה', female: 'שרואה' },
+        'הרואה/ת':   { male: 'הרואה', female: 'הרואה' },
         'בונה/ת':    { male: 'בונה', female: 'בונה' },
+        'הבונה/ת':   { male: 'הבונה', female: 'הבונה' },
         'רוצה/ה':    { male: 'רוצה', female: 'רוצה' },
         'רואה/ה':    { male: 'רואה', female: 'רואה' },
         'מרשה/ה':    { male: 'מרשה', female: 'מרשה' },
+        'חוצה/ה':    { male: 'חוצה', female: 'חוצה' },
+        'שוחה/ה':    { male: 'שוחה', female: 'שוחה' },
+        'קלה/ה':     { male: 'קל', female: 'קלה' },
+        // ── PAST TENSE — same for both ──
         'ראית/ת':    { male: 'ראית', female: 'ראית' },
         'שראית/ת':   { male: 'שראית', female: 'שראית' },
         'שראית/ה':   { male: 'שראית', female: 'שראית' },
@@ -701,14 +717,61 @@ function genderize(text) {
         'נולדת/ה':   { male: 'נולדת', female: 'נולדת' },
         'היית/ה':    { male: 'היית', female: 'היית' },
         'שהיית/ה':   { male: 'שהיית', female: 'שהיית' },
+        'שנתת/ה':    { male: 'שנתת', female: 'שנתת' },
+        'קיבלת/ה':   { male: 'קיבלת', female: 'קיבלת' },
+        'הרגשת/ה':   { male: 'הרגשת', female: 'הרגשת' },
+        'שנמנעת/ה':  { male: 'שנמנעת', female: 'שנמנעת' },
+        'אמרת/ה':    { male: 'אמרת', female: 'אמרת' },
+        'עשית/ה':    { male: 'עשית', female: 'עשית' },
+        'חיפשת/ה':   { male: 'חיפשת', female: 'חיפשת' },
+        'חצית/ה':    { male: 'חצית', female: 'חצית' },
+        'שענית/ה':   { male: 'שענית', female: 'שענית' },
+        'שעברת/ה':   { male: 'שעברת', female: 'שעברת' },
+        'שסימנת/ה':  { male: 'שסימנת', female: 'שסימנת' },
+        'שלמדת/ה':   { male: 'שלמדת', female: 'שלמדת' },
+        'שיתפת/ה':   { male: 'שיתפת', female: 'שיתפת' },
+        'שהתעלמת/ה': { male: 'שהתעלמת', female: 'שהתעלמת' },
+        'שהחלטת/ה':  { male: 'שהחלטת', female: 'שהחלטת' },
+        'ידעת/ה':    { male: 'ידעת', female: 'ידעת' },
+        'יצאת/ת':    { male: 'יצאת', female: 'יצאת' },
+        'עייפת/ה':   { male: 'עייפת', female: 'עייפת' },
+        'שתפס/ה':    { male: 'שתפס', female: 'שתפסה' },
+        'שנתן/ה':    { male: 'שנתן', female: 'שנתנה' },
+        // ── IMPERATIVE — masc/fem full alternates ──
         'סמוך/י':    { male: 'סמוך', female: 'סמכי' },
         'שאל/י':     { male: 'שאל', female: 'שאלי' },
         'קח/י':      { male: 'קח', female: 'קחי' },
         'שתדע/י':    { male: 'שתדע', female: 'שתדעי' },
+        'תדע/י':     { male: 'תדע', female: 'תדעי' },
         'תחכה/י':    { male: 'תחכה', female: 'תחכי' },
         'שתסמכ/י':   { male: 'שתסמוך', female: 'שתסמכי' },
         'בנה/י':     { male: 'בנה', female: 'בני' },
-        'כתוב/כתבי': { male: 'כתוב', female: 'כתבי' },
+        'תן/תני':    { male: 'תן', female: 'תני' },
+        'שמור/י':    { male: 'שמור', female: 'שמרי' },
+        'פתח/י':     { male: 'פתח', female: 'פתחי' },
+        'תעש/י':     { male: 'תעשה', female: 'תעשי' },
+        'תקבל/י':    { male: 'תקבל', female: 'תקבלי' },
+        'שתקבל/י':   { male: 'שתקבל', female: 'שתקבלי' },
+        'תמצא/י':    { male: 'תמצא', female: 'תמצאי' },
+        'תמהר/י':    { male: 'תמהר', female: 'תמהרי' },
+        'תמתין/י':   { male: 'תמתין', female: 'תמתיני' },
+        'תפנה/י':    { male: 'תפנה', female: 'תפני' },
+        'שתפנה/י':   { male: 'שתפנה', female: 'שתפני' },
+        'תפחד/י':    { male: 'תפחד', female: 'תפחדי' },
+        'תחפש/י':    { male: 'תחפש', female: 'תחפשי' },
+        'תחליט/י':   { male: 'תחליט', female: 'תחליטי' },
+        'שתחליט/י':  { male: 'שתחליט', female: 'שתחליטי' },
+        'תרשמ/י':    { male: 'תרשום', female: 'תרשמי' },
+        'תילחם/י':   { male: 'תילחם', female: 'תילחמי' },
+        'תיקח/י':    { male: 'תיקח', female: 'תיקחי' },
+        'שתענה/י':   { male: 'שתענה', female: 'שתעני' },
+        'תרגיש/י':   { male: 'תרגיש', female: 'תרגישי' },
+        'כשתרגיש/י': { male: 'כשתרגיש', female: 'כשתרגישי' },
+        'לימד/י':    { male: 'למד', female: 'למדי' },
+        'הכר/י':     { male: 'הכר', female: 'הכירי' },
+        'עוף/י':     { male: 'עוף', female: 'עופי' },
+        'גש/גשי':    { male: 'גש', female: 'גשי' },
+        // ── ADJECTIVES/PARTICIPLES ──
         'שואף/ת':    { male: 'שואף', female: 'שואפת' },
         'שואף/פת':   { male: 'שואף', female: 'שואפת' },
         'מאסטר/ית':  { male: 'מאסטר', female: 'מאסטרית' },
@@ -716,11 +779,33 @@ function genderize(text) {
         'שביתו/ה':   { male: 'שביתו', female: 'שביתה' },
         'עבר/ה':     { male: 'עבר', female: 'עברה' },
         'יצא/ה':     { male: 'יצא', female: 'יצאה' },
+        'ויצא/ה':    { male: 'ויצא', female: 'ויצאה' },
         'נמצא/ת':    { male: 'נמצא', female: 'נמצאת' },
+        'שנמצא/ת':   { male: 'שנמצא', female: 'שנמצאת' },
         'מתקרב/ת':   { male: 'מתקרב', female: 'מתקרבת' },
         'כותב/ת':    { male: 'כותב', female: 'כותבת' },
         'מבינ/ה':    { male: 'מבין', female: 'מבינה' },
-        'תן/תני':    { male: 'תן', female: 'תני' },
+        'ממשיכ/ת':   { male: 'ממשיך', female: 'ממשיכת' },
+        'משתתפ/ת':   { male: 'משתתף', female: 'משתתפת' },
+        'אמן/ית':    { male: 'אמן', female: 'אמנית' },
+        'אורח/ת':    { male: 'אורח', female: 'אורחת' },
+        'שלשותק/ת':  { male: 'ששותק', female: 'ששותקת' },
+        'התחיל/ה':   { male: 'התחיל', female: 'התחילה' },
+        'עמד/ה':     { male: 'עמד', female: 'עמדה' },
+        'ועמד/ה':    { male: 'ועמד', female: 'ועמדה' },
+        'שכבד/ה':    { male: 'שכבד', female: 'שכבדה' },
+        // ── ADJECTIVES with /ה or /ת (standard suffix) ──
+        // These work correctly with the generic regex, but listing for safety
+        'אכפתי/ת':   { male: 'אכפתי', female: 'אכפתית' },
+        'אמיתי/ת':   { male: 'אמיתי', female: 'אמיתית' },
+        // ── COMPOUND forms that would break regex ──
+        'כתוב/כתבי': { male: 'כתוב', female: 'כתבי' },
+        'אותך/ך':    { male: 'אותך', female: 'אותך' },
+        'קצבך/קצבך': { male: 'קצבך', female: 'קצבך' },
+        'אורך/אורך': { male: 'אורך', female: 'אורך' },
+        'עומקך/עומקך':{ male: 'עומקך', female: 'עומקך' },
+        'השפעתך/שפעתך': { male: 'השפעתך', female: 'השפעתך' },
+        'שידיך/ידיך': { male: 'שידיך', female: 'שידיך' },
     };
 
     // First pass: replace known full-word patterns (use placeholders to prevent re-processing)
@@ -733,10 +818,16 @@ function genderize(text) {
         }
     });
 
-    // Second pass: generic verb/adjective slash patterns (מרגיש/ה → male: מרגיש, female: מרגישה)
+    // Second pass: generic verb/adjective slash patterns
+    // Type 1: base/suffix (suffix 1-2 chars like ה,ת,ית) → female = base+suffix (e.g. מרגיש/ה → מרגישה)
+    // Type 2: fullMasc/fullFem (suffix ≥3 chars) → female = suffix only (e.g. תקום/תקומי → תקומי)
     result = result.replace(/(\S+)\/(\S+)/g, function(match, base, suffix) {
-        if (g === 'male') return base;            // masculine = base only
-        if (g === 'female') return base + suffix;  // feminine = base + suffix
+        if (g === 'male') return base;
+        if (g === 'female') {
+            // If suffix is 3+ chars, it's a full alternate feminine form
+            if (suffix.length >= 3) return suffix;
+            return base + suffix;
+        }
         return match;
     });
 
