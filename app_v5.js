@@ -5603,9 +5603,9 @@ async function buildSignalField() {
 
     // Spiderweb line segments
     const lineMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.60, depthWrite: false });
-    // Set the final state base zoom to be much closer
-    targetCam.x = 0; targetCam.y = 0; targetCam.scale = 1.35;
-    cam.x = 0; cam.y = 0; cam.scale = 1.35; 
+    // Set the final state base zoom — constellation builds at this distance
+    targetCam.x = 0; targetCam.y = 0; targetCam.scale = 0.75;
+    cam.x = 0; cam.y = 0; cam.scale = 0.75; 
     webglLineGeo = new THREE.BufferGeometry();
     // Cap line buffer: max 600 segments (each = 2 verts × 3 coords)
     const MAX_LINE_SEGS = 600;
@@ -6036,16 +6036,11 @@ async function buildSignalField() {
                                 }
                             }
                         });
-                        // Constellation zoom-in: pull camera closer to the shape as stars appear
-                        // then slowly drift out for free exploration after ~15s
+                        // Constellation builds at current zoom — no zoom animation
                         targetCam.x = 0; targetCam.y = 0;
-                        targetCam.scale = 1.35; // STAY ZOOMED IN while stars build
-                        cam.scale = 1.35;
+                        targetCam.scale = 0.75; // Build at this distance, no zoom-in/out
+                        cam.scale = 0.75;
                         window._constellationZoomOut = false;
-                        // After stars finish building (~18s), THEN zoom out gently
-                        setTimeout(() => {
-                            targetCam.scale = 0.65;
-                        }, 18000);
                         // No auto-zoom-out: user stays at this zoom and can freely scroll in/out
                         window.updateGlobalBackButton();
                         // *** BLOOM FIX: activate bloom so the initial huge glow fades naturally
@@ -6060,20 +6055,31 @@ async function buildSignalField() {
                         window.titleRevealed = true;
                         showInterpretationPanel(window.userConstellationName);
                         
-                        // ── CENTERED INTERPRETATION TEXT (appears after build) ──
+                        // ── CENTERED INTERPRETATION TEXT (appears during build) ──
                         setTimeout(() => {
                             const skyScr = document.getElementById('screen-sky');
                             if (!skyScr || document.getElementById('center-interp-text')) return;
                             
-                            // Pick the first color interpretation if available
-                            const interpData = window._pagmarInterpretations;
+                            // Try multiple sources for interpretation text
                             let interpText = '';
-                            if (interpData && interpData.color) {
-                                interpText = interpData.color;
-                            } else {
-                                // Fallback to the colorMap text from showInterpretationPanel
-                                const poolEls = document.querySelectorAll('.sky-data-label .sky-data-text');
-                                if (poolEls.length > 0) interpText = poolEls[0].textContent;
+                            const interpData = window._pagmarInterpretations;
+                            if (interpData) {
+                                interpText = interpData.color || interpData.time || interpData.element || '';
+                            }
+                            if (!interpText) {
+                                // Fallback: grab from any existing data label
+                                const labels = document.querySelectorAll('[class*="sky-data"] [class*="text"]');
+                                for (let li = 0; li < labels.length; li++) {
+                                    if (labels[li].textContent.length > 20) {
+                                        interpText = labels[li].textContent;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!interpText) {
+                                // Final fallback: use the user's vision name
+                                const vName = window.userConstellationName || '';
+                                interpText = vName ? `הכוכבים התיישרו לצורת ${vName} — קונסטלציה שנולדה מתוך המפה שלך.` : '';
                             }
                             if (!interpText) return;
                             
@@ -6087,37 +6093,44 @@ async function buildSignalField() {
                                 max-width: 420px;
                                 text-align: center;
                                 font-family: 'SimplerMono', 'Courier New', monospace;
-                                font-size: clamp(0.7rem, 1.3vw, 0.9rem);
-                                color: rgba(255,255,255,0.75);
-                                line-height: 1.9;
+                                font-size: clamp(0.75rem, 1.4vw, 0.95rem);
+                                color: rgba(255,255,255,0.8);
+                                line-height: 2.0;
                                 letter-spacing: 0.04em;
                                 pointer-events: none;
                                 z-index: 15;
                                 opacity: 0;
-                                transition: opacity 4s ease-in;
-                                text-shadow: 0 0 20px rgba(100,150,255,0.3);
+                                transition: opacity 3s ease-in;
+                                text-shadow: 0 0 25px rgba(100,150,255,0.4);
                                 direction: rtl;
                             `;
                             centerDiv.textContent = interpText;
                             skyScr.appendChild(centerDiv);
                             
-                            // Fade in after a brief moment
                             requestAnimationFrame(() => {
                                 requestAnimationFrame(() => {
                                     centerDiv.style.opacity = '1';
                                 });
                             });
                             
-                            // Fade out when user starts exploring (zoom out)
+                            // Fade out after 30s or when user zooms far out
                             const fadeWatcher = setInterval(() => {
-                                if (cam.scale < 0.55) {
+                                if (cam.scale < 0.4) {
                                     centerDiv.style.transition = 'opacity 2s ease-out';
                                     centerDiv.style.opacity = '0';
                                     setTimeout(() => centerDiv.remove(), 2500);
                                     clearInterval(fadeWatcher);
                                 }
                             }, 500);
-                        }, 12000); // Show after stars are mostly built
+                            setTimeout(() => {
+                                if (centerDiv.parentNode) {
+                                    centerDiv.style.transition = 'opacity 3s ease-out';
+                                    centerDiv.style.opacity = '0';
+                                    setTimeout(() => centerDiv.remove(), 3500);
+                                    clearInterval(fadeWatcher);
+                                }
+                            }, 35000);
+                        }, 6000); // Show after 6s — stars are building
                         const skyUi = document.querySelector('.sky-ui');
                         if (skyUi) {
                             skyUi.style.display = 'flex';
