@@ -1186,7 +1186,7 @@ function buildDOM() {
         <div id="recognition-overlay" style="position: absolute; bottom: 12vh; left: 0; right: 0; z-index: 100; text-align: center; padding: 0 2rem; pointer-events: none; display: none; flex-direction: column; align-items: center;">
             <h2 id="recog-question" style="font-family: var(--font-serif); font-weight: 300; font-size: clamp(1.4rem, 2.8vw, 2rem); margin-bottom: 1.5rem; letter-spacing: 0.08em; opacity: 0; transition: opacity 2s ease;"></h2>
             <div id="recog-input-wrap" class="q-input-wrap" style="position: static; transform: none; opacity: 0; transition: opacity 1.5s ease 0.8s; pointer-events: auto;">
-                <input id="recog-input" type="text" class="q-input" style="max-width: 360px;" dir="rtl">
+                <div id="recog-input" contenteditable="true" role="textbox" class="q-input" style="max-width: 360px; min-height: 1.6em; -webkit-user-modify: read-write-plaintext-only;" dir="rtl"></div>
                 <button id="recog-submit" class="btn"></button>
             </div>
         </div>
@@ -5959,12 +5959,12 @@ async function buildSignalField() {
             overlay.style.display = 'flex';
             if (currentLang === 'he') {
                 qEl.innerText = 'מה את/ה רואה?';
-                iEl.placeholder = '';
+                iEl.textContent = '';
                 iEl.dir = 'rtl';
                 bEl.innerText = 'חשפו את המפה';
             } else {
                 qEl.innerText = 'What do you see?';
-                iEl.placeholder = '';
+                iEl.textContent = '';
                 iEl.dir = 'ltr';
                 bEl.innerText = 'Reveal the map';
             }
@@ -5976,7 +5976,7 @@ async function buildSignalField() {
             
             // 5. Handle revelation trigger — dramatic reveal
             const triggerRevelation = async () => {
-                const userVision = iEl.value.trim();
+                const userVision = (iEl.textContent || '').trim();
                 if (!userVision) return;
                 answers.pareidolia = userVision;
                 
