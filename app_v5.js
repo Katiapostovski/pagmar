@@ -3130,7 +3130,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(200,230,255,',
             textHe: 'תמיד חלקי, אף פעם לא שלם — ובכל זאת שולט בגאות. הירח מלמד: השפעה אינה תלויה בשלמות.',
             textEn: 'Always partial, never whole — yet it commands the tides. The moon teaches: influence needs no perfection.',
-            offset: { x: -4200, y: -3400 },
+            offset: { x: -6700, y: -5400 },
             pts: [ {x:0,y:-60},{x:35,y:-45},{x:55,y:0},{x:35,y:45},{x:0,y:60},
                    {x:-20,y:30},{x:-30,y:0},{x:-20,y:-30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,7],[4,5]]
@@ -3140,7 +3140,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(120,255,180,',
             textHe: 'הנחש אינו מסוכן — הוא מסמן. כל התחלה חדשה קדם לה שלב שהשיל עור ישן.',
             textEn: 'The serpent is not danger — it is signal. Every new beginning is preceded by shedding old skin.',
-            offset: { x: -6100, y: 4200 },
+            offset: { x: -9800, y: 6700 },
             pts: [ {x:0,y:0},{x:40,y:-30},{x:90,y:-10},{x:130,y:-45},
                    {x:180,y:-20},{x:210,y:20},{x:170,y:50},{x:120,y:30} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
@@ -3150,7 +3150,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(150,255,200,',
             textHe: 'איטי מכוונה — לא מכשל. הצב מגיע תמיד, כי הוא לא עוצר לדאוג שהוא מגיע.',
             textEn: 'Slow by intention — not by failure. The turtle always arrives, because it never stops to worry that it will.',
-            offset: { x: 5500, y: 3500 },
+            offset: { x: 8800, y: 5600 },
             pts: [ {x:0,y:0},{x:-50,y:-30},{x:-60,y:20},{x:-30,y:55},
                    {x:30,y:55},{x:60,y:20},{x:50,y:-30},
                    {x:0,y:-60},{x:0,y:70} ],
@@ -3161,7 +3161,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,220,150,',
             textHe: 'נאמנות אינה חולשה — היא המצפן הפנימי. הכלב מוצא את הדרך הביתה ממקומות שאחרים לא נכנסו אליהם.',
             textEn: 'Loyalty is not weakness — it is the inner compass. The dog finds the way home from places others never entered.',
-            offset: { x: 4400, y: -3700 },
+            offset: { x: 7000, y: -5900 },
             pts: [ {x:0,y:0},{x:40,y:-50},{x:70,y:-80},{x:50,y:-100},
                    {x:20,y:-90},{x:60,y:10},{x:100,y:30},{x:80,y:60} ],
             lines: [[0,1],[1,2],[2,3],[3,4],[4,1],[0,5],[5,6],[6,7]]
@@ -3171,7 +3171,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,180,100,',
             textHe: 'כח שלא מוכיח את עצמו — כי הוא יודע שהוא שם. הדב לא נסוג; הוא ממתין בביטחון.',
             textEn: 'Power that does not prove itself — because it knows it is there. The bear does not retreat; it waits in certainty.',
-            offset: { x: 6300, y: -2700 },
+            offset: { x: 10100, y: -4300 },
             pts: [ {x:0,y:0},{x:60,y:-20},{x:120,y:0},{x:140,y:50},
                    {x:100,y:90},{x:40,y:90},{x:0,y:50},
                    {x:170,y:-10},{x:200,y:-40},{x:-30,y:-10},{x:-60,y:-40} ],
@@ -3182,7 +3182,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,255,180,',
             textHe: 'הכוכב שאתה/את רואה כבר אינו שם — אבל אורו עדיין מנחה. חלקים ממך שנסגרו ממשיכים לכוון אחרים.',
             textEn: 'The star you see may no longer exist — but its light still guides. Parts of you that have ended continue to illuminate others.',
-            offset: { x: 2700, y: 4600 },
+            offset: { x: 4300, y: 7400 },
             pts: [ {x:0,y:-70},{x:20,y:-20},{x:70,y:0},{x:20,y:20},
                    {x:0,y:70},{x:-20,y:20},{x:-70,y:0},{x:-20,y:-20} ],
             lines: [[0,2],[2,4],[4,6],[6,0],[1,5],[3,7],[0,4],[2,6]]
@@ -3192,7 +3192,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,150,150,',
             textHe: 'העכביש אורג את עולמו מתוך עצמו. כל חוט שהוא יוצר הוא גם מלכודת וגם פגיעות. מי שרואה עכביש בכוכבים יודע שהרשת שהוא בונה היא גם מה שמחזיק אותו.',
             textEn: 'The spider weaves its world from within itself. Every thread it creates is both trap and bridge. Those who see the spider in the stars know that the web they build is also what sustains them.',
-            offset: { x: -5800, y: -5000 },
+            offset: { x: -9300, y: -8000 },
             pts: [ {x:0,y:0}, {x:50,y:-50}, {x:70,y:-20}, {x:70,y:20}, {x:50,y:50}, {x:-50,y:50}, {x:-70,y:20}, {x:-70,y:-20}, {x:-50,y:-50} ],
             lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8]]
         },
@@ -3201,7 +3201,7 @@ function initConstellationSystem(userVision) {
             color: 'rgba(255,200,100,',
             textHe: 'מלך החיות לא שולט בכוח, אלא בנוכחות. האריה מלמד שהעוצמה האמיתית לא זקוקה לשאגה, היא פשוט קיימת. מי שרואה אריה בכוכבים נושא בתוכו עוצמה שלא דורשת הוכחה.',
             textEn: 'The king of beasts does not rule by force, but by presence. The lion teaches that true power needs no roar — it simply exists. Those who see the lion in the stars carry a quiet strength within.',
-            offset: { x: 7200, y: 2800 },
+            offset: { x: 11500, y: 4500 },
             pts: [ {x:0,y:0}, {x:40,y:-60}, {x:80,y:-20}, {x:60,y:40}, {x:0,y:80}, {x:-60,y:40}, {x:-80,y:-20}, {x:-40,y:-60} ],
             lines: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,1]]
         },
@@ -5611,6 +5611,9 @@ async function buildSignalField() {
     // Nodes
     skyMeshes = [];
     skyPoints.forEach(pt => {
+        // Assign individual spin speed for prism self-rotation
+        pt._spinSpeed = 0.01 + Math.random() * 0.04; // each prism spins at its own rate
+        
         // Prismatic language: bladeFn (0) = single beam, crystalFn (1) = 6-ray sparkle, dotFn (3) = soft dot
         let typeVal = 0.0; // blade — single dramatic prism beam (used for main constellation)
         if (pt.elementType === 'halo')    typeVal = 0.0; // halo — single prism beam
@@ -5655,6 +5658,58 @@ async function buildSignalField() {
         skyMeshes.push(mesh);
         pt.mesh = mesh;
     });
+    
+    // ── MICRO-PRISMS: tiny detail prisms revealed on zoom-in ──
+    // These appear only when cam.scale > 1.5, adding depth as users explore closer
+    const microPrisms = [];
+    const numMicro = 100;
+    const mainPts = skyPoints.filter(p => !p.isStarfield);
+    if (mainPts.length > 0) {
+        for (let mi = 0; mi < numMicro; mi++) {
+            // Scatter micro-prisms near existing constellation points
+            const parent = mainPts[Math.floor(rand() * mainPts.length)];
+            const mx = parent.clusterX + (rand() - 0.5) * 80;
+            const my = parent.clusterY + (rand() - 0.5) * 80;
+            const mz = (rand() - 0.5) * 40;
+            const mHue = parent.hue / 360 + (rand() - 0.5) * 0.08;
+            const mColor = new THREE.Color().setHSL(mHue, 0.9, 0.65);
+            
+            const mMat = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                uniforms: {
+                    uTime: { value: rand() * 100 },
+                    uColor: { value: mColor },
+                    uType: { value: 0.0 },
+                    uOpacity: { value: 0.0 }, // starts invisible
+                    uGlow: { value: 0.3 },
+                    uState: { value: 1.0 },
+                    uZoom: { value: 0.65 },
+                    uDepth: { value: 0.2 },
+                    uHasLabel: { value: 0.0 },
+                    uSeed: { value: Math.random() }
+                },
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const mMesh = new THREE.Mesh(planeGeo, mMat);
+            mMesh.rotation.z = rand() * Math.PI * 2;
+            const mScale = 0.15 + rand() * 0.25; // tiny prisms
+            mMesh.scale.set(mScale, mScale, 1);
+            mMesh.visible = false; // hidden until zoom
+            scene.add(mMesh);
+            
+            microPrisms.push({
+                mesh: mMesh, mat: mMat,
+                baseX: mx, baseY: my, baseZ: mz,
+                spinSpeed: 0.02 + rand() * 0.06,
+                phase: rand() * Math.PI * 2,
+                baseAngle: rand() * Math.PI * 2
+            });
+        }
+    }
+    window._microPrisms = microPrisms; // expose for skyLoop
 
     // ══════════════════════════════════════════════════════
     // RECOGNITION MODE SETUP
@@ -6206,9 +6261,9 @@ function skyLoop(ts) {
 
     if (window.skyRevealState === 'revealed') {
         // Slow gentle 3D rotation for user constellation — like a display model
-        ghostRotY += 0.00035; // Ghost constellations rotate independently
-        targetGlobalRotY += 0.0008; // Main constellation: visible Y-axis auto-rotate (~2 min per revolution)
-        targetGlobalRotX = Math.sin(targetGlobalRotY * 0.7) * 0.2; // X-axis wobble for organic 3D feel
+        ghostRotY += 0.00035;
+        targetGlobalRotY += 0.0018; // Faster rotation (~58s per revolution)
+        targetGlobalRotX = Math.sin(targetGlobalRotY * 0.7) * 0.35; // Stronger X-axis wobble
         
         // Smoothly interpolate rotation — always active regardless of zoom level
         const parallaxFade = Math.max(0.3, smoothstep(0.2, 0.6, cam.scale)); // never fully zero
@@ -6519,6 +6574,48 @@ function skyLoop(ts) {
         webglLineGeo.setDrawRange(0, lineIdx / 3);
         webglLineGeo.attributes.position.needsUpdate = true;
         webglLineGeo.attributes.color.needsUpdate = true;
+    }
+    // ── UPDATE MICRO-PRISMS (zoom-reveal detail) ──
+    if (window._microPrisms && window._microPrisms.length > 0) {
+        const microFade = smoothstep(1.5, 3.5, cam.scale); // appear from scale 1.5+
+        const cosY = Math.cos(globalRotY);
+        const sinY = Math.sin(globalRotY);
+        const cosX = Math.cos(globalRotX);
+        const sinX = Math.sin(globalRotX);
+        
+        window._microPrisms.forEach(mp => {
+            if (microFade <= 0.001) {
+                mp.mesh.visible = false;
+                return;
+            }
+            mp.mesh.visible = true;
+            
+            // 3D rotation (same as main constellation)
+            let rx = mp.baseX * cosY;
+            let rz = mp.baseX * sinY;
+            let ry = mp.baseY * cosX - rz * sinX;
+            rz = mp.baseY * sinX + rz * cosX;
+            
+            // Convert to screen
+            const sx = (rx - cam.x) * cam.scale + W * 0.5;
+            const sy = (ry - cam.y) * cam.scale + H * 0.5;
+            mp.mesh.position.x = sx - W / 2;
+            mp.mesh.position.y = -(sy - H / 2);
+            
+            // Self-spin
+            mp.mesh.rotation.z = mp.baseAngle + skyIntroTime * mp.spinSpeed;
+            
+            // Opacity based on zoom + gentle pulse
+            const pulse = 0.5 + 0.5 * Math.sin(now * 0.002 + mp.phase);
+            mp.mat.uniforms.uOpacity.value = microFade * (0.6 + pulse * 0.4);
+            mp.mat.uniforms.uGlow.value = 0.2 + pulse * 0.2;
+            mp.mat.uniforms.uTime.value += 0.015;
+            
+            // Scale with zoom
+            const baseS = 0.15 + Math.sin(now * 0.001 + mp.phase) * 0.03;
+            const zoomS = baseS * Math.min(cam.scale * 0.5, 1.5);
+            mp.mesh.scale.set(zoomS, zoomS, 1);
+        });
     }
 
     renderer.render(scene, threeCam);
@@ -6880,9 +6977,9 @@ function updatePoint(pt, dt, isClosest) {
     // Multi-layered breathing: slow deep breath + faster heartbeat + subtle flutter
     let globalBreath = 1.0;
     if (window.skyRevealState === 'revealed') {
-        const deepBreath = Math.sin(now * 0.001) * 0.10;       // Slow deep breath (6.3s cycle)
-        const heartbeat  = Math.sin(now * 0.004) * 0.04;       // Fast heartbeat
-        const flutter    = Math.sin(now * 0.0073) * 0.02;      // Subtle organic flutter
+        const deepBreath = Math.sin(now * 0.001) * 0.14;       // Deeper breath (was 0.10)
+        const heartbeat  = Math.sin(now * 0.004) * 0.06;       // Stronger heartbeat (was 0.04)
+        const flutter    = Math.sin(now * 0.0073) * 0.035;     // More flutter (was 0.02)
         globalBreath = 1.0 + deepBreath + heartbeat + flutter;
         
         // During initial bloom explosion, breathing is more intense
@@ -6961,8 +7058,9 @@ function updatePoint(pt, dt, isClosest) {
         // Each star appears at full size immediately and fades in gently
         const finalScale = s; // always full size from the first frame
         pt.mesh.scale.set(finalScale, finalScale, 1);
-        // Restore organic rotation based on baseAngle so prisms flow naturally
-        pt.mesh.rotation.z = -(pt.baseAngle + skyIntroTime * 0.015 * (vp.motionSpeed || 1.0) * rpEase);
+        // Enhanced prism rotation — each star spins individually
+        const selfSpin = (pt._spinSpeed || 0.02) * skyIntroTime;
+        pt.mesh.rotation.z = -(pt.baseAngle + skyIntroTime * 0.04 * (vp.motionSpeed || 1.0) * rpEase + selfSpin);
 
         // illum
         let illum;
