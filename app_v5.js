@@ -2691,8 +2691,8 @@ function showInterpretationPanel(userVision) {
 
     usedMajors.forEach(function(pt, idx) {
         // Labels point TOWARD constellation center — they appear inside the shape
-        var angleToCenter = Math.atan2(-pt.originalY, -pt.originalX) + (idx % 2 === 0 ? 0.25 : -0.25);
-        var dist = 40 + (idx % 3) * 16;
+        var angleToCenter = Math.atan2(-pt.originalY, -pt.originalX) + (idx % 2 === 0 ? 0.15 : -0.15);
+        var dist = 15 + (idx % 3) * 8;
         var offsetX = Math.cos(angleToCenter) * dist;
         var offsetY = Math.sin(angleToCenter) * dist;
 
@@ -4223,6 +4223,8 @@ function renderQ() {
                         inp.setAttribute('name', 'pagmar_' + Date.now() + '_' + Math.random().toString(36).slice(2));
                         inp.setAttribute('data-lpignore', 'true');
                         inp.setAttribute('data-form-type', 'other');
+                        inp.setAttribute('readonly', 'readonly');
+                        inp.addEventListener('focus', function() { setTimeout(() => { inp.removeAttribute('readonly'); }, 50); });
                         inp.placeholder = '';
                         
                         const next = document.createElement('button');
@@ -4290,6 +4292,8 @@ function renderQ() {
         inp.setAttribute('name', 'pagmar_' + Date.now() + '_' + Math.random().toString(36).slice(2));
         inp.setAttribute('data-lpignore', 'true');
         inp.setAttribute('data-form-type', 'other');
+        inp.setAttribute('readonly', 'readonly');
+        inp.addEventListener('focus', function() { setTimeout(() => { inp.removeAttribute('readonly'); }, 50); });
         inp.dir = currentLang === 'he' ? 'rtl' : 'ltr';
         if (q.placeholder) inp.placeholder = q.placeholder;
 
@@ -6054,83 +6058,7 @@ async function buildSignalField() {
                         // Show title immediately
                         window.titleRevealed = true;
                         showInterpretationPanel(window.userConstellationName);
-                        
-                        // ── CENTERED INTERPRETATION TEXT (appears during build) ──
-                        setTimeout(() => {
-                            const skyScr = document.getElementById('screen-sky');
-                            if (!skyScr || document.getElementById('center-interp-text')) return;
-                            
-                            // Try multiple sources for interpretation text
-                            let interpText = '';
-                            const interpData = window._pagmarInterpretations;
-                            if (interpData) {
-                                interpText = interpData.color || interpData.time || interpData.element || '';
-                            }
-                            if (!interpText) {
-                                // Fallback: grab from any existing data label
-                                const labels = document.querySelectorAll('[class*="sky-data"] [class*="text"]');
-                                for (let li = 0; li < labels.length; li++) {
-                                    if (labels[li].textContent.length > 20) {
-                                        interpText = labels[li].textContent;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!interpText) {
-                                // Final fallback: use the user's vision name
-                                const vName = window.userConstellationName || '';
-                                interpText = vName ? `הכוכבים התיישרו לצורת ${vName} — קונסטלציה שנולדה מתוך המפה שלך.` : '';
-                            }
-                            if (!interpText) return;
-                            
-                            const centerDiv = document.createElement('div');
-                            centerDiv.id = 'center-interp-text';
-                            centerDiv.style.cssText = `
-                                position: absolute;
-                                top: 50%;
-                                left: 50%;
-                                transform: translate(-50%, -50%);
-                                max-width: 420px;
-                                text-align: center;
-                                font-family: 'SimplerMono', 'Courier New', monospace;
-                                font-size: clamp(0.75rem, 1.4vw, 0.95rem);
-                                color: rgba(255,255,255,0.8);
-                                line-height: 2.0;
-                                letter-spacing: 0.04em;
-                                pointer-events: none;
-                                z-index: 15;
-                                opacity: 0;
-                                transition: opacity 3s ease-in;
-                                text-shadow: 0 0 25px rgba(100,150,255,0.4);
-                                direction: rtl;
-                            `;
-                            centerDiv.textContent = interpText;
-                            skyScr.appendChild(centerDiv);
-                            
-                            requestAnimationFrame(() => {
-                                requestAnimationFrame(() => {
-                                    centerDiv.style.opacity = '1';
-                                });
-                            });
-                            
-                            // Fade out after 30s or when user zooms far out
-                            const fadeWatcher = setInterval(() => {
-                                if (cam.scale < 0.4) {
-                                    centerDiv.style.transition = 'opacity 2s ease-out';
-                                    centerDiv.style.opacity = '0';
-                                    setTimeout(() => centerDiv.remove(), 2500);
-                                    clearInterval(fadeWatcher);
-                                }
-                            }, 500);
-                            setTimeout(() => {
-                                if (centerDiv.parentNode) {
-                                    centerDiv.style.transition = 'opacity 3s ease-out';
-                                    centerDiv.style.opacity = '0';
-                                    setTimeout(() => centerDiv.remove(), 3500);
-                                    clearInterval(fadeWatcher);
-                                }
-                            }, 35000);
-                        }, 6000); // Show after 6s — stars are building
+                        // (center interpretation text removed per user request)
                         const skyUi = document.querySelector('.sky-ui');
                         if (skyUi) {
                             skyUi.style.display = 'flex';
