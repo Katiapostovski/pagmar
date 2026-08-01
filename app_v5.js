@@ -6042,10 +6042,10 @@ async function buildSignalField() {
                         targetCam.scale = 1.35; // STAY ZOOMED IN while stars build
                         cam.scale = 1.35;
                         window._constellationZoomOut = false;
-                        // After stars finish building (~8s), THEN zoom out
+                        // After stars finish building (~18s), THEN zoom out gently
                         setTimeout(() => {
                             targetCam.scale = 0.65;
-                        }, 8000);
+                        }, 18000);
                         // No auto-zoom-out: user stays at this zoom and can freely scroll in/out
                         window.updateGlobalBackButton();
                         // *** BLOOM FIX: activate bloom so the initial huge glow fades naturally
@@ -6059,6 +6059,65 @@ async function buildSignalField() {
                         // Show title immediately
                         window.titleRevealed = true;
                         showInterpretationPanel(window.userConstellationName);
+                        
+                        // ── CENTERED INTERPRETATION TEXT (appears after build) ──
+                        setTimeout(() => {
+                            const skyScr = document.getElementById('screen-sky');
+                            if (!skyScr || document.getElementById('center-interp-text')) return;
+                            
+                            // Pick the first color interpretation if available
+                            const interpData = window._pagmarInterpretations;
+                            let interpText = '';
+                            if (interpData && interpData.color) {
+                                interpText = interpData.color;
+                            } else {
+                                // Fallback to the colorMap text from showInterpretationPanel
+                                const poolEls = document.querySelectorAll('.sky-data-label .sky-data-text');
+                                if (poolEls.length > 0) interpText = poolEls[0].textContent;
+                            }
+                            if (!interpText) return;
+                            
+                            const centerDiv = document.createElement('div');
+                            centerDiv.id = 'center-interp-text';
+                            centerDiv.style.cssText = `
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                max-width: 420px;
+                                text-align: center;
+                                font-family: 'SimplerMono', 'Courier New', monospace;
+                                font-size: clamp(0.7rem, 1.3vw, 0.9rem);
+                                color: rgba(255,255,255,0.75);
+                                line-height: 1.9;
+                                letter-spacing: 0.04em;
+                                pointer-events: none;
+                                z-index: 15;
+                                opacity: 0;
+                                transition: opacity 4s ease-in;
+                                text-shadow: 0 0 20px rgba(100,150,255,0.3);
+                                direction: rtl;
+                            `;
+                            centerDiv.textContent = interpText;
+                            skyScr.appendChild(centerDiv);
+                            
+                            // Fade in after a brief moment
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    centerDiv.style.opacity = '1';
+                                });
+                            });
+                            
+                            // Fade out when user starts exploring (zoom out)
+                            const fadeWatcher = setInterval(() => {
+                                if (cam.scale < 0.55) {
+                                    centerDiv.style.transition = 'opacity 2s ease-out';
+                                    centerDiv.style.opacity = '0';
+                                    setTimeout(() => centerDiv.remove(), 2500);
+                                    clearInterval(fadeWatcher);
+                                }
+                            }, 500);
+                        }, 12000); // Show after stars are mostly built
                         const skyUi = document.querySelector('.sky-ui');
                         if (skyUi) {
                             skyUi.style.display = 'flex';
@@ -6299,7 +6358,8 @@ function skyLoop(ts) {
 
     cam.x     = lerp(cam.x,     targetCam.x,     0.04);
     cam.y     = lerp(cam.y,     targetCam.y,     0.04);
-    const scaleLerp = (skyIntroTime < 3.0) ? 0.025 : 0.05;
+    // Slow zoom transition during intro so constellation doesn't rush away
+    const scaleLerp = (skyIntroTime < 25.0) ? 0.008 : 0.05;
     cam.scale = lerp(cam.scale, targetCam.scale, scaleLerp);
 
     // ══ ZOOM-OUT CLEARS USER CONSTELLATION INFO ══════════════════
