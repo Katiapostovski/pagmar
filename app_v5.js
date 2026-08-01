@@ -4219,6 +4219,7 @@ function renderQ() {
                         
                         const inp = document.createElement('input');
                         inp.className = 'q-input';
+                        inp.autocomplete = 'off';
                         inp.placeholder = '';
                         
                         const next = document.createElement('button');
@@ -4282,6 +4283,7 @@ function renderQ() {
         
         const inp = document.createElement('input');
         inp.className = 'q-input';
+        inp.autocomplete = 'off';
         inp.dir = currentLang === 'he' ? 'rtl' : 'ltr';
         if (q.placeholder) inp.placeholder = q.placeholder;
 
