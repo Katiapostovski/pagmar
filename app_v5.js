@@ -1308,8 +1308,9 @@ function buildDOM() {
                     letter-spacing: 0.04em;
                     text-shadow: 0 0 20px rgba(0,0,0,1);
                 "></p>
-                <textarea id="sky-pareidolia-input" rows="2" style="
+                <div id="sky-pareidolia-input" contenteditable="true" role="textbox" style="
                     width: 100%;
+                    min-height: 2.7em;
                     background: transparent;
                     border: none;
                     border-bottom: 1px solid rgba(255,255,255,0.3);
@@ -1318,14 +1319,14 @@ function buildDOM() {
                     font-size: 1.35rem;
                     font-weight: 300;
                     text-align: center;
-                    resize: none;
                     outline: none;
                     padding: 10px 0;
                     letter-spacing: 0.02em;
                     line-height: 1.6;
                     margin-bottom: 56px;
                     text-shadow: 0 0 20px rgba(0,0,0,1);
-                "></textarea>
+                    -webkit-user-modify: read-write-plaintext-only;
+                "></div>
                 <button class="btn" id="btn-sky-pareidolia-next"></button>
             </div>
         </div>
@@ -1337,7 +1338,7 @@ function buildDOM() {
             <h2 id="pareidolia-title" style="font-family: var(--font-serif); font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 300; margin-bottom: 16px; text-shadow: 0 4px 20px rgba(0,0,0,0.8); line-height: 1.3;"></h2>
             <p id="pareidolia-helper" style="font-family: var(--font-mono); font-size: 0.88rem; letter-spacing: 0.04em; opacity: 0.55; margin-bottom: 48px; line-height: 1.8;"></p>
             <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
-                <textarea id="pareidolia-input" rows="3" style="width: 100%; max-width: 420px; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.25); color: #fff; font-family: var(--font-serif); font-size: 1.4rem; font-weight: 300; text-align: center; resize: none; outline: none; padding: 12px 0; letter-spacing: 0.02em; line-height: 1.6;"></textarea>
+                <div id="pareidolia-input" contenteditable="true" role="textbox" style="width: 100%; max-width: 420px; min-height: 3.5em; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.25); color: #fff; font-family: var(--font-serif); font-size: 1.4rem; font-weight: 300; text-align: center; outline: none; padding: 12px 0; letter-spacing: 0.02em; line-height: 1.6; -webkit-user-modify: read-write-plaintext-only;"></div>
                 <button class="btn" id="btn-pareidolia-next" style="margin-top: 8px;"></button>
             </div>
         </div>
@@ -7369,14 +7370,14 @@ function showSkyPareidoliaOverlay() {
         : 'This image has no single correct name. Its meaning begins with what you recognize in it.';
 
     const input = document.getElementById('sky-pareidolia-input');
-    input.value = '';
-    input.placeholder = '';
+    input.textContent = '';
+    input.setAttribute('data-placeholder', '');
     input.dir = isHe ? 'rtl' : 'ltr';
 
     const nextBtn = document.getElementById('btn-sky-pareidolia-next');
     nextBtn.innerText = isHe ? 'המשך ←' : 'Continue →';
     nextBtn.onclick = () => {
-        const val = input.value.trim();
+        const val = (input.textContent || '').trim();
         if (val.length > 0) {
             window.selectedPareidolia = val;
             showHorizon();
