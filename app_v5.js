@@ -4219,7 +4219,10 @@ function renderQ() {
                         
                         const inp = document.createElement('input');
                         inp.className = 'q-input';
-                        inp.autocomplete = 'off';
+                        inp.autocomplete = 'new-password';
+                        inp.setAttribute('name', 'pagmar_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+                        inp.setAttribute('data-lpignore', 'true');
+                        inp.setAttribute('data-form-type', 'other');
                         inp.placeholder = '';
                         
                         const next = document.createElement('button');
@@ -4283,7 +4286,10 @@ function renderQ() {
         
         const inp = document.createElement('input');
         inp.className = 'q-input';
-        inp.autocomplete = 'off';
+        inp.autocomplete = 'new-password';
+        inp.setAttribute('name', 'pagmar_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+        inp.setAttribute('data-lpignore', 'true');
+        inp.setAttribute('data-form-type', 'other');
         inp.dir = currentLang === 'he' ? 'rtl' : 'ltr';
         if (q.placeholder) inp.placeholder = q.placeholder;
 
