@@ -2756,6 +2756,18 @@ function showInterpretationPanel(userVision) {
                     requestAnimationFrame(function() {
                         requestAnimationFrame(function() { panel.classList.add('visible'); });
                     });
+                    
+                    // Click-outside-to-close: clicking anywhere except the panel closes it
+                    setTimeout(function() {
+                        function outsideClickHandler(ev) {
+                            if (panel && panel.isConnected && !panel.contains(ev.target)) {
+                                panel.style.opacity = '0';
+                                setTimeout(function() { panel.remove(); }, 600);
+                                document.removeEventListener('pointerdown', outsideClickHandler, true);
+                            }
+                        }
+                        document.addEventListener('pointerdown', outsideClickHandler, true);
+                    }, 300); // Small delay so the opening click doesn't immediately close it
 
                     // Helper: reveal text word-by-word
                     function revealText(text, startDelay) {
@@ -3517,9 +3529,12 @@ function initConstellationSystem(userVision) {
                 gs.group.position.x = (rp.x - cam.x) * cam.scale;
                 gs.group.position.y = -(rp.y - cam.y) * cam.scale;
 
-                // Self-rotation: faster + X-axis wobble for organic 3D feel
+                // Self-rotation: unique speed & direction per ghost for organic variety
                 if (gs.selfRotY === undefined) gs.selfRotY = gi * 0.42;
-                gs.selfRotY += 0.006; 
+                // Each ghost gets unique speed (0.001-0.004) and direction (some reversed)
+                const ghostSpeed = 0.001 + (Math.abs(Math.sin(gi * 3.7 + 0.5)) * 0.003);
+                const ghostDir = (gi % 3 === 0) ? -1 : ((gi % 3 === 1) ? 1 : (gi % 2 === 0 ? -0.7 : 0.7));
+                gs.selfRotY += ghostSpeed * ghostDir; 
                 // Removed gs.group.rotation.y and .x so they don't turn edge-on and vanish!
                 gs.group.rotation.y = 0;
                 gs.group.rotation.x = 0;
