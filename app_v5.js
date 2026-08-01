@@ -6033,8 +6033,13 @@ async function buildSignalField() {
                         // Constellation zoom-in: pull camera closer to the shape as stars appear
                         // then slowly drift out for free exploration after ~15s
                         targetCam.x = 0; targetCam.y = 0;
-                        targetCam.scale = 0.65; // STAY at default zoom — no jump
+                        targetCam.scale = 1.35; // STAY ZOOMED IN while stars build
+                        cam.scale = 1.35;
                         window._constellationZoomOut = false;
+                        // After stars finish building (~8s), THEN zoom out
+                        setTimeout(() => {
+                            targetCam.scale = 0.65;
+                        }, 8000);
                         // No auto-zoom-out: user stays at this zoom and can freely scroll in/out
                         window.updateGlobalBackButton();
                         // *** BLOOM FIX: activate bloom so the initial huge glow fades naturally
@@ -7087,6 +7092,11 @@ function updatePoint(pt, dt, isClosest) {
             // Breathing glow in revealed state
             if (window.skyRevealState === 'revealed') {
                 opacity += (globalBreath - 1.0) * 1.2;
+                // Per-point brightness variation — each prism glows at its own intensity & phase
+                const ptPhase = (pt.baseAngle || 0) * 7.3 + (pt._spinSpeed || 0.02) * 200;
+                const brightWave = Math.sin(now * 0.0012 + ptPhase) * 0.35;
+                const dimWave = Math.sin(now * 0.0005 + ptPhase * 1.7) * 0.2;
+                opacity *= (0.65 + brightWave + dimWave); // range ~0.1 to 1.2 multiplier
             }
         } else {
             // In prism view, give background lobes ambient visibility
