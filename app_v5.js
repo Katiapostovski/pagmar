@@ -2857,12 +2857,22 @@ function showInterpretationPanel(userVision) {
         return Math.hypot(a.pt.x, a.pt.y) - Math.hypot(b.pt.x, b.pt.y);
     });
     window.labelDataSorted.forEach(function(item, i) {
-        // Labels only appear when zoomed in close (scale > 0.8+)
-        item.zoomThreshold = 0.80 + i * 0.12;
+        // Labels appear at moderate zoom — first label at 0.55, others gradually
+        item.zoomThreshold = 0.55 + i * 0.08;
     });
 
     // ── UPDATE LOOP — Proximity & Zoom reveal ──────────────
     window._labelRevealStates = labelData.map(function() { return { revealed: false, alpha: 0, hasPlayedSound: false }; });
+
+    // Auto-reveal first label after 10s so user doesn't wait forever
+    setTimeout(function() {
+        if (window._labelRevealStates && window._labelRevealStates.length > 0) {
+            var first = window._labelRevealStates[0];
+            if (!first.timeEligibleAt) {
+                first.timeEligibleAt = performance.now();
+            }
+        }
+    }, 10000);
 
 
     window.updateDataLabels = function() {
@@ -2946,7 +2956,7 @@ function showInterpretationPanel(userVision) {
             const precedingRevealed = window._labelRevealStates
                 ? window._labelRevealStates.filter((rs, ri) => ri < idx && rs.timeRevealed).length
                 : 0;
-            const staggerMs = precedingRevealed * 2500; // 2.5s between each label
+            const staggerMs = precedingRevealed * 1500; // 1.5s between each label (was 2.5s)
             const timeSinceEligible = revState2.timeEligibleAt
                 ? performance.now() - revState2.timeEligibleAt : 0;
             const isActiveLabel = isZoomEligible && timeSinceEligible >= staggerMs;
@@ -3436,6 +3446,10 @@ function initConstellationSystem(userVision) {
     titleEl.textContent = formattedTitle ? `— ${formattedTitle} —` : '';
     
     titleEl.onclick = function() {
+        // Zoom back home to the user's constellation
+        targetCam.x = 0;
+        targetCam.y = 0;
+        targetCam.scale = 0.75;
         showConstellationInfo(formattedTitle);
     };
     
