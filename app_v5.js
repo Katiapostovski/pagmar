@@ -7445,7 +7445,7 @@ function showPareidoliaPrompt() {
         if (window.skyRevealState === 'recognition') return;
         // Reset dwell timer on any interaction
         window._dwellLastMove = performance.now();
-        const zf = e.deltaY < 0 ? 1.022 : 0.978; // Smooth, controllable zoom
+        const zf = e.deltaY < 0 ? 1.010 : 0.990; // Gentle, soft zoom
         const newScale = clamp(targetCam.scale * zf, 0.18, 12.0);
         
         if (newScale !== targetCam.scale) {
